@@ -17,6 +17,7 @@ namespace VelocityRivals
     {
         public int schemaVersion = 1;
         public string playerName = "Rival";
+        public string relayUrl = "";
         public int xp;
         public int wins;
         public int events;

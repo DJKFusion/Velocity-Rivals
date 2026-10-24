@@ -114,6 +114,46 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator NetworkWorldHasNoLocalAiOrTimeAttackGhostAndDoesNotAutoStart()
+        {
+            root = new GameObject("Test network world");
+            var session = root.AddComponent<GameSession>();
+            foreach (var mode in new[] { GameMode.TimeAttack, GameMode.ArenaClash })
+            {
+                session.StartMatch(mode, 3, 0, Color.cyan, true);
+                yield return null;
+                Assert.IsTrue(session.NetworkControlled);
+                Assert.AreEqual(1, Object.FindObjectsByType<VehicleController>(FindObjectsSortMode.None).Length);
+                Assert.IsNull(Object.FindFirstObjectByType<GhostReplay>());
+                Assert.IsFalse(session.Player.ControlsEnabled);
+                session.SetPaused(true);
+                Assert.IsFalse(session.Paused, "A local pause must not stop a network world.");
+                Assert.AreEqual(1, Time.timeScale);
+                Assert.AreEqual(0, session.Elapsed);
+                if (mode == GameMode.ArenaClash) Assert.IsNotNull(session.NetworkCore);
+                session.ReturnToMenu();
+                yield return null;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator NetworkProxyPresentationDoesNotEnableLocalPhysics()
+        {
+            root = new GameObject("Test proxy session");
+            var session = root.AddComponent<GameSession>();
+            session.StartMatch(GameMode.FreePlay, 3, 0, Color.cyan, true);
+            var car = session.Player;
+            car.GetComponent<Rigidbody>().isKinematic = true;
+            car.SetNetworkPresentation(Vector3.forward * 20, .4f, true, true);
+            yield return new WaitForFixedUpdate();
+            Assert.AreEqual(72, car.SpeedKmh, .01f);
+            Assert.AreEqual(.4f, car.BoostAmount, .01f);
+            Assert.IsTrue(car.IsBoosting);
+            Assert.IsFalse(car.ControlsEnabled);
+            Assert.IsTrue(car.GetComponent<Rigidbody>().isKinematic);
+        }
+
+        [UnityTest]
         public IEnumerator SoundtrackImportsAndSwitchesBetweenMenuAndRace()
         {
             root = new GameObject("Test soundtrack");

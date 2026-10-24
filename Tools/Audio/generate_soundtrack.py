@@ -18,10 +18,10 @@ def frequency(note):
     return 440 * 2 ** ((note - 69) / 12)
 
 
-def compose(name, playlist, bpm, roots, seed, intensity):
+def compose(name, playlist, bpm, roots, seed, intensity, bars=24, style=0):
     rng = np.random.default_rng(seed)
     beat = 60 / bpm
-    duration = beat * 4 * 24  # 24 bars, including introduction and closing section.
+    duration = beat * 4 * bars
     mix = np.zeros((round(duration * RATE), 2), dtype=np.float64)
 
     def add(signal, at, pan=0):
@@ -47,22 +47,25 @@ def compose(name, playlist, bpm, roots, seed, intensity):
             pump = 1
         return signal * env * pump * level
 
-    for bar in range(24):
+    for bar in range(bars):
         root = roots[(bar // 2) % len(roots)]
         at = bar * 4 * beat
-        full = 4 <= bar < 20
+        full = 4 <= bar < bars - 4 and not (style > 0 and bars // 2 <= bar < bars // 2 + 4)
         for interval, pan in zip((0, 3, 7, 10), (-.6, .35, -.25, .6)):
             add(tone(root + 12 + interval, 4.4 * beat, .065, True), at, pan)
         for eighth in range(8):
             note = root - 12 + (12 if eighth in (3, 7) else 0)
             add(tone(note, beat * .48, .27 if full else .16), at + eighth * beat / 2, -.05)
         pattern = (0, 7, 12, 3, 10, 7, 15, 12) if seed % 2 else (12, 7, 3, 10, 7, 0, 3, 15)
+        if style > 0:
+            patterns = ((0, 3, 7, 10, 12, 10, 7, 3), (7, 12, 15, 19, 15, 12, 10, 7), (0, 12, 7, 15, 3, 10, 7, 12))
+            pattern = patterns[(style + bar // 8) % len(patterns)]
         for step, interval in enumerate(pattern):
             phrase = tone(root + 24 + interval, beat * .7, .095 if full else .05)
             pan = .45 * (-1 if step % 2 else 1)
             add(phrase, at + step * beat / 2, pan)
             add(phrase * .24, at + step * beat / 2 + beat * .75, -pan)
-        if bar < 2 or bar >= 23:
+        if bar < 2 or bar >= bars - 1:
             continue
         for kick_at in (0, 1, 2, 3):
             t = np.arange(round(RATE * .38)) / RATE
@@ -110,11 +113,20 @@ def compose(name, playlist, bpm, roots, seed, intensity):
 
 
 if __name__ == '__main__':
-    tracks = [
+    import sys
+    report = ROOT / 'Tools/Audio/validation.json'
+    tracks = json.loads(report.read_text())['tracks'][:3] if '--expand' in sys.argv else [
         compose('01 - Midnight Grid', 'Menu', 100, (45, 41, 48, 43), 101, .65),
         compose('01 - Neon Pursuit', 'Race', 128, (45, 48, 43, 41), 202, 1),
         compose('02 - Afterburn', 'Race', 140, (42, 45, 40, 38), 303, 1.1),
     ]
-    report = ROOT / 'Tools/Audio/validation.json'
+    tracks.extend([
+        compose('02 - Skyline Dreams', 'Menu', 96, (47, 43, 50, 45), 404, .6, 40, 1),
+        compose('03 - Solar Drift', 'Menu', 88, (40, 43, 38, 45), 505, .55, 40, 2),
+        compose('03 - Hyperdrive', 'Race', 150, (42, 38, 45, 40), 606, 1.15, 48, 1),
+        compose('04 - Chrome Horizon', 'Race', 124, (47, 50, 45, 43), 707, .95, 48, 2),
+        compose('05 - Ion Storm', 'Race', 138, (40, 43, 47, 38), 808, 1.1, 48, 3),
+        compose('06 - Final Overdrive', 'Race', 144, (45, 41, 43, 48), 909, 1.2, 48, 4),
+    ])
     report.write_text(json.dumps({'generator': 'Original additive synthesis; no external samples', 'tracks': tracks}, indent=2) + '\n')
     print(json.dumps(tracks, indent=2))

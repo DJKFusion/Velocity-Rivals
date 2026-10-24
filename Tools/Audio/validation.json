@@ -33,6 +33,72 @@
       "bytes": 620688,
       "decoded_peak": 0.9354922771453857,
       "passed": true
+    },
+    {
+      "track": "02 - Skyline Dreams",
+      "playlist": "Menu",
+      "bpm": 96,
+      "seconds": 100.0,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1348613,
+      "decoded_peak": 0.8822813630104065,
+      "passed": true
+    },
+    {
+      "track": "03 - Solar Drift",
+      "playlist": "Menu",
+      "bpm": 88,
+      "seconds": 109.091,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1317877,
+      "decoded_peak": 0.857914388179779,
+      "passed": true
+    },
+    {
+      "track": "03 - Hyperdrive",
+      "playlist": "Race",
+      "bpm": 150,
+      "seconds": 76.8,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1197918,
+      "decoded_peak": 0.9089919924736023,
+      "passed": true
+    },
+    {
+      "track": "04 - Chrome Horizon",
+      "playlist": "Race",
+      "bpm": 124,
+      "seconds": 92.903,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1455097,
+      "decoded_peak": 0.9339836239814758,
+      "passed": true
+    },
+    {
+      "track": "05 - Ion Storm",
+      "playlist": "Race",
+      "bpm": 138,
+      "seconds": 83.478,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1272619,
+      "decoded_peak": 0.9655962586402893,
+      "passed": true
+    },
+    {
+      "track": "06 - Final Overdrive",
+      "playlist": "Race",
+      "bpm": 144,
+      "seconds": 80.0,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1239461,
+      "decoded_peak": 0.9533007740974426,
+      "passed": true
     }
   ]
 }

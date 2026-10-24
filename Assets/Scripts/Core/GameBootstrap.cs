@@ -7,6 +7,7 @@ namespace VelocityRivals
     /// <summary>The checked-in entry scene creates the integrated game from this component.</summary>
     public sealed class GameBootstrap : MonoBehaviour
     {
+        private VolumeProfile ownedProfile;
         private void Awake()
         {
             Application.targetFrameRate = 60;
@@ -26,12 +27,19 @@ namespace VelocityRivals
             var volume = new GameObject("Global post processing").AddComponent<Volume>();
             volume.transform.SetParent(transform);
             volume.isGlobal = true;
-            volume.profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            ownedProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+            volume.profile = ownedProfile;
             var bloom = volume.profile.Add<Bloom>(true);
             bloom.intensity.Override(.45f);
             bloom.threshold.Override(1f);
+            bloom.scatter.Override(.65f);
             var tone = volume.profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
+            var colour = volume.profile.Add<ColorAdjustments>(true);
+            colour.contrast.Override(10); colour.saturation.Override(8);
+            var vignette = volume.profile.Add<Vignette>(true);
+            vignette.intensity.Override(.18f); vignette.smoothness.Override(.4f);
         }
+        private void OnDestroy() { if (ownedProfile) Destroy(ownedProfile); }
     }
 }

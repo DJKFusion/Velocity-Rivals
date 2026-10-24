@@ -58,6 +58,11 @@ namespace VelocityRivals.Editor
                 AssetDatabase.CreateAsset(surface, "Assets/Resources/VelocitySurface.mat");
             }
             AssetDatabase.SaveAssets();
+            var retained = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/VelocitySurface.mat");
+            retained.SetTexture("_BumpMap", Resources.Load<Texture2D>("SurfaceTextures/AsphaltNormal"));
+            retained.EnableKeyword("_NORMALMAP");
+            EditorUtility.SetDirty(retained);
+            AssetDatabase.SaveAssets();
         }
 
         [MenuItem("Velocity Rivals/Open Game")]

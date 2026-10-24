@@ -41,6 +41,6 @@ Reports/logs are in `Artifacts`. Test failure, missing reports and zero executed
 
 ## Check the actual player before sharing
 
-Launch the extracted EXE, hear menu/race music, complete all modes and a three-round championship, test controller input, pause/resume and alt-tab, quit/reopen to verify progress saves, and run on a second Windows PC. Check frame rate and memory during repeated events. Test experimental LAN separately with two instances. Full acceptance checks are in [TESTING.md](TESTING.md).
+Launch the extracted EXE, hear menu/race music, complete all modes and a three-round championship, test controller input, pause/resume and alt-tab, quit/reopen to verify progress saves, and run on a second Windows PC. Check frame rate and memory during repeated events. Test LAN with two instances and private online play after [deploying the relay](ONLINE.md). Full acceptance checks are in [TESTING.md](TESTING.md).
 
 Building does not finish the outstanding game design, graphics tuning, online services or platform release work. See [STATUS.md](STATUS.md) for the current scope and remaining work.

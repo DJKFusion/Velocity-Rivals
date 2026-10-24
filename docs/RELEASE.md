@@ -18,7 +18,7 @@ Once authorized: implement platform storage/user selection, privilege and parent
 
 ## Networking and cross-play
 
-Use the LAN sprint for development only. For a production direction, evaluate pinned Unity Netcode for GameObjects + Unity Transport + Multiplayer Services/Relay, moving competitive physics/results to trusted dedicated servers. Measure bandwidth, CPU per match and expected concurrency before choosing hosting commitments. Add account identity, authenticated sessions, rate limits, matchmaking, reconnect behavior, telemetry and moderation appropriate to the released features. Cross-play additionally requires platform permissions, service agreements and testing on every participating platform. No cross-play functionality is claimed.
+The three two-player modes and private-room WebSocket relay are development implementations; the relay is not deployed and Unity sessions remain untested. Follow [ONLINE.md](ONLINE.md) to deploy a private test service. For production, evaluate supported networking stacks and move competitive physics/results to trusted dedicated servers. Measure bandwidth, CPU per match and expected concurrency before choosing hosting commitments. Add account identity, authenticated sessions, matchmaking, reconnect behavior, telemetry and operational abuse controls. Cross-play additionally requires platform permissions, service agreements and testing on every participating platform. No cross-play functionality is claimed.
 
 ## Asset and project rights
 

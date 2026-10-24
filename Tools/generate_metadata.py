@@ -22,6 +22,10 @@ for path in sorted(assets.rglob('*')):
         body = 'NativeFormatImporter:\n  externalObjects: {}\n  mainObjectFileID: 11400000\n'
     elif path.suffix == '.prefab':
         body = 'PrefabImporter:\n  externalObjects: {}\n'
+    elif path.suffix == '.shader':
+        body = 'ShaderImporter:\n  externalObjects: {}\n  defaultTextures: []\n  nonModifiableTextures: []\n'
+    elif path.suffix == '.png':
+        body = 'TextureImporter:\n  externalObjects: {}\n  serializedVersion: 13\n  maxTextureSize: 2048\n  textureType: 0\n  textureShape: 1\n'
     elif path.suffix.lower() == '.fbx':
         # Leave importer settings at Editor defaults; preserve a stable identity.
         body = 'ModelImporter:\n  serializedVersion: 22200\n  internalIDToNameTable: []\n  externalObjects: {}\n  materials:\n    materialImportMode: 0\n'

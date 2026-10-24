@@ -2,7 +2,7 @@
 
 An original Unity 6 arcade racing and vehicle-sports project for DJKFusion.
 
-This delivery contains integrated development source, a bootstrap scene, six vehicle prefabs and tunable stat assets, six generated car meshes, procedural environments, six local modes, menus, saves, an original synthwave soundtrack, synthesized effects, and an experimental two-player LAN gate sprint. It is **not a tested Windows executable or a finished release**. Unity import, compilation, physics tuning, multiplayer playtests and GPU profiling remain required.
+This delivery contains integrated development source, a bootstrap scene, six vehicle prefabs and tunable stat assets, six generated car meshes, procedural environments, six local modes, menus, saves, nine original synthwave tracks, and three two-player modes with direct LAN or private online-room transport. It is **not a tested Windows executable or a finished release**. The online relay is implemented but **not publicly deployed**. Unity import, compilation, physics tuning, multiplayer playtests and GPU profiling remain required.
 
 ## Open the game
 
@@ -27,7 +27,7 @@ If Unity reports a compile/import error, copy the first red Console error with i
 | Recover car | R | North / Y |
 | Pause local event | Escape | Start |
 | Menu navigation | Mouse, arrows, Enter | D-pad, South / A |
-| LAN development controls | F8 | Use menu to host; IP typing needs keyboard |
+| Multiplayer room controls | F8 | Use menu to host; address/code typing needs keyboard |
 
 ## What is connected
 
@@ -46,13 +46,15 @@ The garage saves paint, wheel size, trail colour, stripe/spoiler and finish choi
 
 The garage includes a rotating preview of the selected model's paint and finish. Select Rookie, Rival or Elite difficulty before an event; it changes AI acceleration and maximum speed. Settings include steering sensitivity. Countdown, jump, drift, boost, impact, power-up and goal audio are synthesized placeholders; hit and pickup particles are generated at runtime. These new integrations require Unity playtesting.
 
-Multiplayer is a separate **LAN gate sprint**, not networked championship or Arena Clash. See [multiplayer scope and test steps](docs/MULTIPLAYER.md).
+Multiplayer now offers **Circuit Duel**, **Arena Duel** and **Gate Sprint**, with a lobby, synchronized countdown, selected cars and rematches. Choose **MULTIPLAYER → ONLINE ROOM** for room-code play or **LOCAL NETWORK / LAN** for direct connections. Friends in different homes need the included relay deployed once: [online setup guide](docs/ONLINE.md). No public matchmaking or production anti-cheat is connected. [Multiplayer scope and tests](docs/MULTIPLAYER.md).
+
+The new visual pass adds themed skies/clouds/stars, textured and normal-mapped roads, sky reflections, headlights, tyre trails, drift smoke and color grading. Performance graphics disables smoke and headlights. [Update details and remaining validation](docs/UPDATE-ONLINE-VISUALS.md). These effects have not yet been rendered or profiled in Unity here.
 
 The latest update adds a live map with the next checkpoint, current/last/best lap times, wrong-way warnings, a car-shaped Time Attack ghost, How to Play screens, and local-event auto-pause when the application loses focus. Lap bests are for the current round; event records and ghosts still persist separately. These HUD and gameplay integrations require Unity verification.
 
 ## Music
 
-Three original synthwave tracks are included: **Midnight Grid**, **Neon Pursuit** and **Afterburn**. Menu and event playlists change automatically with crossfades and reduced music volume during pause. **Settings → Soundtrack** shows the current track and lets you skip or change volume.
+Nine original synthwave tracks are included, with three menu songs and six racing songs. New additions include **Skyline Dreams**, **Solar Drift**, **Hyperdrive**, **Chrome Horizon**, **Ion Storm** and **Final Overdrive**. Menu and event playlists change automatically with crossfades and reduced music volume during local pause. **Settings → Soundtrack** shows the current track and lets you skip or change volume.
 
 To add your own songs, stop Play Mode and use **Velocity Rivals → Music → Import Race Track** or **Import Menu Track**, then choose an MP3, WAV or OGG file. Start Play Mode again to refresh the playlist. Songs are included in subsequent Windows builds. [Full music instructions](docs/MUSIC.md).
 
@@ -81,8 +83,9 @@ These compile the **same** checkpoint, combat, lap timing, playlist, network fra
 - `Assets/Scripts/Core`: entry point and runtime composition.
 - `Vehicles`, `Cameras`: Rigidbody driving, four suspension rays, Input System actions and follow camera.
 - `Gameplay`: generated world, match state, race progress, AI, arena scoring and ghost playback.
-- `UI`, `Audio`, `SaveSystem`: menus/HUD, original synthesized placeholder audio and profile persistence.
-- `Multiplayer`: independent host-authoritative LAN sprint and bounded message framing.
+- `UI`, `Audio`, `SaveSystem`: menus/HUD, original soundtrack/synthesized effects and profile persistence.
+- `Multiplayer`: host-authoritative duel rules, TCP framing and bounded WebSocket transport.
+- `Tools/Relay`: private online room server, tests and Docker deployment files; `render.yaml` provides a hosting blueprint.
 - `Assets/Resources/VehicleStats`: editable ScriptableObjects used by matches.
 - `Assets/Prefabs`: six physics vehicle prefabs; visual meshes are instantiated on Play. **Velocity Rivals → Regenerate Entry Scene and Vehicle Assets** can bake visual prefabs inside Unity. That command replaces the generated entry scene and prefabs; preserve intentional hand edits before running it.
 - `Tools/Blender`: repeatable original asset generators and an offline contact sheet. [Art documentation](docs/ART.md).

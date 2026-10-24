@@ -72,7 +72,7 @@ namespace VelocityRivals
         private void Update()
         {
             var session = GameSession.Instance;
-            bool racing = (session != null && session.Running && !session.Finished) || (lan != null && lan.Active);
+            bool racing = (session != null && !session.NetworkControlled && session.Running && !session.Finished) || (lan != null && lan.RoundActive);
             if (racing != raceMusic) { raceMusic = racing; AdvanceTrack(); }
             duck = Mathf.MoveTowards(duck, session != null && session.Paused ? .4f : 1, Time.unscaledDeltaTime * 2);
             fade = Mathf.Clamp01(fade + Time.unscaledDeltaTime / fadeDuration);

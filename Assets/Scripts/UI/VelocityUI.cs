@@ -28,6 +28,7 @@ namespace VelocityRivals
         private bool showingResults;
         private LanRaceSession lan;
         private bool networkWasActive;
+        private int selectedNetworkMode = 1;
         private readonly Color cyan = new Color(0.12f, 0.9f, 0.95f);
         public static readonly Color[] Paints = {
             new Color(0.05f, 0.85f, 1), new Color(1, 0.18f, 0.32f), new Color(0.55f, 0.25f, 1),
@@ -98,8 +99,9 @@ namespace VelocityRivals
             if (lan != null && lan.Active)
             {
                 if (!networkWasActive) { ClearPanel(); networkWasActive = true; }
-                hud.text = "LAN GATE SPRINT\n" + lan.ConnectionStatus;
-                hint.text = "Drive through the numbered gates in order. F8 opens LAN controls.\nLAN sessions continue running when menus lose focus.";
+                hud.text = "MULTIPLAYER\n" + lan.MatchStatus;
+                if (session.Player) hud.text += $"\n{session.Player.SpeedKmh:0} km/h    BOOST {session.Player.BoostAmount * 100:0}%";
+                hint.text = "WASD / triggers + stick: drive · Shift / B: boost · Space / A: jump · R / Y: recover\nF8: room controls / leave · Matches continue when you switch windows.";
                 return;
             }
             if (networkWasActive) { networkWasActive = false; MainMenu(); }
@@ -218,7 +220,7 @@ namespace VelocityRivals
             Button("RECORDS & ACHIEVEMENTS", Records);
             Button("SETTINGS", () => Settings(false));
             Button("HOW TO PLAY", () => HowToPlay(false));
-            Button("MULTIPLAYER STATUS", Multiplayer);
+            Button("MULTIPLAYER", Multiplayer);
             Button("CREDITS", Credits);
             Button("QUIT", () => Application.Quit());
             Label(panel, "Complete events to earn XP. Each 500 XP unlocks another vehicle.", 22, 58);
@@ -363,9 +365,25 @@ namespace VelocityRivals
         }
         private void Multiplayer()
         {
-            Page("LAN gate sprint", "Experimental two-player direct-IP multiplayer • Unity playtesting pending");
-            Label(panel, "Host on one PC and join its LAN IP from another. For two instances on one PC use 127.0.0.1.\n\nBoth players race through four gates for two minutes. The host simulates vehicles and decides results.\n\nNo public matchmaking, account service or console networking is connected.", 23, 230);
+            Page("Multiplayer", "Two players • private online rooms or direct LAN • host starts each match");
+            Focus(Cycle("Event", LanRaceSession.ModeNames, () => selectedNetworkMode, value => selectedNetworkMode = value));
+            Cycle("Environment", GameSession.EnvironmentNames, () => selectedEnvironment, value => selectedEnvironment = value);
+            Label(panel, "Circuit Duel: first to complete three laps wins.\nArena Duel: push the core into your rival's goal. First to five wins.\nGate Sprint: collect the most gates in two minutes.\nYour selected garage vehicle is used in multiplayer.", 24, 190);
+            Button("ONLINE ROOM", OnlineMenu);
+            Button("LOCAL NETWORK / LAN", LanMenu);
+            Button("BACK", MainMenu);
+        }
+
+        private void ConfigureNetwork()
+        {
+            lan.SelectedMode = (LanMode)selectedNetworkMode;
+            lan.SelectedEnvironment = selectedEnvironment;
+        }
+
+        private InputField NetworkField(string name, string value, int limit)
+        {
             var fieldObject = new GameObject("Host IP", typeof(RectTransform), typeof(Image), typeof(InputField), typeof(LayoutElement));
+            fieldObject.name = name;
             fieldObject.transform.SetParent(panel, false);
             fieldObject.GetComponent<Image>().color = new Color(.08f, .12f, .18f);
             fieldObject.GetComponent<LayoutElement>().preferredHeight = 55;
@@ -373,17 +391,40 @@ namespace VelocityRivals
             var label = Label(fieldObject.transform, "", 25, 0);
             Stretch(label.rectTransform, 10);
             address.textComponent = label;
-            address.characterLimit = 45;
-            address.text = "127.0.0.1";
-            Focus(Button("HOST LAN SESSION", () => { if (lan != null) lan.StartHost(); }));
+            address.characterLimit = limit;
+            address.text = value ?? "";
+            return address;
+        }
+
+        private void OnlineMenu()
+        {
+            Page("Private online room", "Play with a friend in another home. Both players use the same relay address.");
+            Label(panel, "RELAY ADDRESS (wss://…)", 22, 30);
+            var endpoint = NetworkField("Relay address", SaveStore.Current.relayUrl, 256);
+            Label(panel, "ROOM CODE (only needed when joining)", 22, 30);
+            var code = NetworkField("Room code", "", 8);
+            Action saveAddress = () => { SaveStore.Current.relayUrl = endpoint.text.Trim(); SaveStore.Save(); ConfigureNetwork(); };
+            Focus(Button("CREATE ROOM", () => { saveAddress(); lan.CreateOnlineRoom(endpoint.text); }));
+            Button("JOIN ROOM", () => { saveAddress(); lan.JoinOnlineRoom(endpoint.text, code.text); });
+            Label(panel, "The host shares the eight-character room code, then presses START MATCH.\nNo relay address yet? The host needs to complete the one-time setup below.", 22, 100);
+            Button("RELAY SETUP GUIDE", () => Application.OpenURL("https://github.com/DJKFusion/Velocity-Rivals/blob/main/docs/ONLINE.md"));
+            Button("BACK", Multiplayer);
+        }
+
+        private void LanMenu()
+        {
+            Page("Local network", "Connect two computers on the same home network, or test with 127.0.0.1 on one PC.");
+            Label(panel, "HOST IP ADDRESS", 22, 40);
+            var address = NetworkField("Host IP", "127.0.0.1", 45);
+            Focus(Button("HOST LAN SESSION", () => { if (lan != null) { ConfigureNetwork(); lan.StartHost(); } }));
             Button("JOIN ENTERED IP", () => { if (lan != null) lan.Join(address.text.Trim()); });
             Label(panel, lan != null ? lan.ConnectionStatus : "LAN component is missing from the entry scene.", 20, 60);
-            Button("BACK", MainMenu);
+            Button("BACK", Multiplayer);
         }
         private void Credits()
         {
             Page("Credits", "VELOCITY RIVALS • Original game project for DJKFusion");
-            Label(panel, "Original vehicles, environments and electronic soundtrack.\nMidnight Grid • Neon Pursuit • Afterburn\n\nBuilt with Unity and the Universal Render Pipeline.\nVehicle models created with Blender.\n\nGame project for DJKFusion.", 25, 350);
+            Label(panel, "Original vehicles, environments and electronic soundtrack.\nMidnight Grid • Skyline Dreams • Solar Drift\nNeon Pursuit • Afterburn • Hyperdrive\nChrome Horizon • Ion Storm • Final Overdrive\n\nBuilt with Unity and the Universal Render Pipeline.\nVehicle models created with Blender.\n\nGame project for DJKFusion.", 25, 350);
             Focus(Button("BACK", MainMenu));
         }
     }

@@ -143,7 +143,7 @@ namespace VelocityRivals
             probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
             probe.resolution = 128; probe.size = new Vector3(280, 80, 260);
             probe.boxProjection = true; probe.nearClipPlane = .3f; probe.farClipPlane = 250;
-            probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.SolidColor;
+            probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
             probe.backgroundColor = new Color(.18f, .25f, .35f);
         }
         void OnDestroy()

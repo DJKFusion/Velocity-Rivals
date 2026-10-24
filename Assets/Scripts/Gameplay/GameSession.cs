@@ -33,6 +33,8 @@ namespace VelocityRivals
         public IReadOnlyList<VehicleController> Vehicles => cars;
         public int NextCheckpoint => playerProgress != null ? playerProgress.NextCheckpoint : -1;
         public bool HasArenaCore => core != null;
+        public bool NetworkControlled { get; private set; }
+        public Rigidbody NetworkCore => NetworkControlled ? core : null;
         public Vector3 ArenaCorePosition => core != null ? core.position : Vector3.zero;
         public LapTiming LapTimes { get; private set; } = new LapTiming();
         public bool WrongWay => wrongWaySeconds >= 1.5f;
@@ -72,8 +74,9 @@ namespace VelocityRivals
         private void Awake() { Instance = this; }
         private void OnDestroy() { Time.timeScale = 1; if (Instance == this) Instance = null; Cleanup(); }
 
-        public void StartMatch(GameMode newMode, int newEnvironment, int vehicle, Color color)
+        public void StartMatch(GameMode newMode, int newEnvironment, int vehicle, Color color, bool networkControlled = false)
         {
+            NetworkControlled = networkControlled;
             mode = newMode;
             initialEnvironment = environment = Mathf.Clamp(newEnvironment, 0, 4);
             selectedVehicle = Mathf.Clamp(vehicle, 0, 5);
@@ -100,13 +103,14 @@ namespace VelocityRivals
             ResultText = "";
             world = new GameObject("Velocity Rivals — " + EnvironmentNames[environment]).transform;
             BuildWorld();
+            WorldAtmosphere.Build(world, environment);
             WorldScenery.Build(world, track, environment, racing);
             Vector3 start = racing ? track[0] + Vector3.up * 1.2f : new Vector3(0, 1.2f, -18);
             Quaternion facing = racing ? Quaternion.LookRotation(track[1] - track[0]) : Quaternion.identity;
             Player = SpawnCar(selectedVehicle, start, facing, paint, true);
             previousPlayer = Player.transform.position;
             playerProgress = racing ? new RaceProgress(track.Count, TotalLaps) : null;
-            if (mode == GameMode.Championship || mode == GameMode.ArenaClash || mode == GameMode.BoostBattle)
+            if (!NetworkControlled && (mode == GameMode.Championship || mode == GameMode.ArenaClash || mode == GameMode.BoostBattle))
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -116,7 +120,7 @@ namespace VelocityRivals
                     racers.Add(new Racer { Car = car, Previous = p, Progress = new RaceProgress(Mathf.Max(3, track.Count), TotalLaps), Id = i + 1 });
                 }
             }
-            if (mode == GameMode.BoostBattle)
+            if (!NetworkControlled && mode == GameMode.BoostBattle)
             {
                 battle = world.gameObject.AddComponent<ArenaBattle>();
                 battle.Initialize(this, cars);
@@ -131,7 +135,7 @@ namespace VelocityRivals
             var follow = camera.GetComponent<FollowCamera>() ?? camera.gameObject.AddComponent<FollowCamera>();
             follow.enabled = true;
             follow.Target = Player;
-            if (mode == GameMode.TimeAttack)
+            if (!NetworkControlled && mode == GameMode.TimeAttack)
             {
                 ghost = world.gameObject.AddComponent<GhostReplay>();
                 ghost.Begin(environment, selectedVehicle, Player.transform);
@@ -148,6 +152,7 @@ namespace VelocityRivals
         }
         public void ReturnToMenu()
         {
+            NetworkControlled = false;
             Running = Finished = Paused = false;
             Time.timeScale = 1;
             Cleanup();
@@ -155,7 +160,7 @@ namespace VelocityRivals
         }
         public void SetPaused(bool value)
         {
-            if (!Running || Finished) return;
+            if (!Running || Finished || NetworkControlled) return;
             Paused = value;
             Time.timeScale = value ? 0 : 1;
             foreach (var car in cars) if (car != null) car.ControlsEnabled = !value && countdown <= 0 && car.enabled;
@@ -163,7 +168,7 @@ namespace VelocityRivals
 
         private void OnApplicationFocus(bool focused)
         {
-            if (!focused && !Application.isBatchMode && Running && !Finished) SetPaused(true);
+            if (!focused && !Application.isBatchMode && !NetworkControlled && Running && !Finished) SetPaused(true);
         }
 
         private VehicleController SpawnCar(int index, Vector3 position, Quaternion rotation, Color color, bool player)
@@ -198,7 +203,7 @@ namespace VelocityRivals
 
         private void Update()
         {
-            if (!Running || Paused || Finished || Player == null) return;
+            if (!Running || Paused || Finished || Player == null || NetworkControlled) return;
             if (countdown > 0)
             {
                 countdown -= Time.deltaTime;
@@ -431,6 +436,12 @@ namespace VelocityRivals
             Color[] colors = { new Color(.1f, .9f, 1), new Color(.7f, .3f, 1), new Color(1, .6f, .1f), new Color(1, .1f, .6f), new Color(.4f, .8f, 1) };
             Color accent = colors[environment];
             Material road = Material("Road", new Color(.07f, .09f, .13f));
+            road.color = environment == 4 ? new Color(.5f,.65f,.72f) : new Color(.42f,.46f,.5f);
+            road.SetTexture("_BaseMap", Resources.Load<Texture2D>("SurfaceTextures/Asphalt"));
+            road.SetTextureScale("_BaseMap", new Vector2(4,4));
+            road.SetTexture("_BumpMap", Resources.Load<Texture2D>("SurfaceTextures/AsphaltNormal"));
+            road.EnableKeyword("_NORMALMAP"); road.SetFloat("_BumpScale", .5f);
+            road.SetFloat("_Smoothness", environment == 4 ? .8f : environment == 0 || environment == 3 ? .65f : .25f);
             Material terrain = Material("Terrain", environment == 2 ? new Color(.38f, .23f, .12f) : environment == 4 ? new Color(.65f, .8f, .9f) : new Color(.025f, .035f, .07f));
             Material rail = Material("Energy rail", accent, true);
             Material architecture = Material("Architecture", new Color(.12f, .16f, .24f));

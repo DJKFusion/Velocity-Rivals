@@ -10,11 +10,24 @@ namespace VelocityRivals
         public VehicleStats Stats;
         public bool IsPlayer;
         public bool ControlsEnabled = true;
-        public float SpeedKmh => body == null ? 0f : body.linearVelocity.magnitude * 3.6f;
+        public bool NetworkProxy { get; private set; }
+        public bool AllowLocalRecovery = true;
+        private Vector3 networkVelocity;
+        private bool networkBoost;
+        public Vector3 Velocity => NetworkProxy ? networkVelocity : body == null ? Vector3.zero : body.linearVelocity;
+        public float SpeedKmh => Velocity.magnitude * 3.6f;
         public float BoostAmount { get; private set; } = 1f;
         public bool Grounded { get; private set; }
         public int StuntScore { get; private set; }
-        public bool IsBoosting => ControlsEnabled && input.Boost && BoostAmount > .01f;
+        public bool IsBoosting => NetworkProxy ? networkBoost : ControlsEnabled && input.Boost && BoostAmount > .01f;
+        public bool IsDrifting => Grounded && SpeedKmh > 35 && (input.Brake || Mathf.Abs(Vector3.Dot(Velocity, transform.right)) > 5);
+
+        public void SetNetworkPresentation(Vector3 velocity, float boostFuel, bool boosting, bool grounded)
+        {
+            NetworkProxy = true; ControlsEnabled = false;
+            networkVelocity = velocity; networkBoost = boosting;
+            BoostAmount = Mathf.Clamp01(boostFuel); Grounded = grounded;
+        }
         Rigidbody body;
         DriveInput input;
         InputActionMap controls;
@@ -37,6 +50,7 @@ namespace VelocityRivals
 
         void Start()
         {
+            if (!GetComponent<VehicleEffects>()) gameObject.AddComponent<VehicleEffects>();
             if (paintMaterial == null) BuildVisuals(Color.cyan);
             foreach (var wheel in wheels) if (wheel != null && !wheelScales.ContainsKey(wheel)) wheelScales[wheel] = wheel.localScale;
             if (IsPlayer && engine == null) CreateEngineAudio();
@@ -93,7 +107,7 @@ namespace VelocityRivals
                 float airRollInput = rollAxis.ReadValue<float>();
                 SetInput(new DriveInput { Throttle = throttle.ReadValue<float>(), Steering = Mathf.Clamp((Mathf.Abs(airRollInput) > .1f ? airRollInput : steering.ReadValue<float>()) * SaveStore.Current.steeringSensitivity, -1, 1),
                     Brake = brake.IsPressed(), Boost = boost.IsPressed(), Jump = jump.IsPressed(), AirRoll = roll.IsPressed() || Mathf.Abs(airRollInput) > .1f });
-                if (reset.WasPressedThisFrame()) Respawn(safePosition + Vector3.up, safeRotation);
+                if (AllowLocalRecovery && reset.WasPressedThisFrame()) Respawn(safePosition + Vector3.up, safeRotation);
                 if (IsBoosting) SoundDirector.Instance?.Cue(GameCue.Boost);
                 if (Grounded && input.Brake && SpeedKmh > 35) SoundDirector.Instance?.Cue(GameCue.Drift);
             }
@@ -103,12 +117,13 @@ namespace VelocityRivals
             if (engine != null)
             {
                 engine.pitch = .55f + Mathf.Clamp01(SpeedKmh / 180f) * 1.5f;
-                engine.volume = (ControlsEnabled ? .10f + Mathf.Abs(input.Throttle) * .04f : .015f) * SaveStore.Current.effectsVolume;
+                engine.volume = (ControlsEnabled || NetworkProxy ? .10f + Mathf.Clamp01(SpeedKmh / 160) * .04f : .015f) * SaveStore.Current.effectsVolume;
             }
         }
 
         void FixedUpdate()
         {
+            if (NetworkProxy) return;
             if (!ControlsEnabled) { input = default; jumpQueued = false; }
             float acceleration = Stats != null ? Stats.Acceleration : 24f;
             float maxSpeed = Stats != null ? Stats.MaxSpeed : 38f;
@@ -183,7 +198,7 @@ namespace VelocityRivals
             if (body.linearVelocity.magnitude > cap) body.linearVelocity = body.linearVelocity.normalized * cap;
             if (Vector3.Dot(transform.up, Vector3.up) < .15f && SpeedKmh < 5f) invertedTime += Time.fixedDeltaTime;
             else invertedTime = 0;
-            if (invertedTime > 3f || transform.position.y < -25f) Respawn(safePosition + Vector3.up, safeRotation);
+            if (AllowLocalRecovery && (invertedTime > 3f || transform.position.y < -25f)) Respawn(safePosition + Vector3.up, safeRotation);
             if (Grounded && Vector3.Dot(transform.up, Vector3.up) > .85f && Time.time - lastJump > 1f)
             { safePosition = transform.position; safeRotation = Quaternion.Euler(0, transform.eulerAngles.y, 0); }
         }

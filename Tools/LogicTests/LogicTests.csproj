@@ -10,6 +10,9 @@
     <Compile Include="../../Assets/Scripts/Gameplay/LapTiming.cs" Link="LapTiming.cs" />
     <Compile Include="../../Assets/Scripts/Audio/ShufflePlaylist.cs" Link="ShufflePlaylist.cs" />
     <Compile Include="../../Assets/Editor/WindowsArchive.cs" Link="WindowsArchive.cs" />
+    <Compile Include="../../Assets/Scripts/Multiplayer/LanMatchRules.cs" Link="LanMatchRules.cs" />
+    <Compile Include="../../Assets/Scripts/Multiplayer/RelayTransport.cs" Link="RelayTransport.cs" />
+    <Compile Include="RelayIntegration.cs" />
     <Compile Include="../../Assets/Scripts/Multiplayer/LanFrameBuffer.cs" Link="LanFrameBuffer.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>

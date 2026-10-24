@@ -14,10 +14,11 @@ static class Program
     static void Test(string name, Action test) { test(); passed++; Console.WriteLine("PASS " + name); }
     static void Throws<T>(Action action) where T : Exception
     { try { action(); } catch (T) { return; } throw new Exception("Expected " + typeof(T).Name); }
-    static int Main()
+    static int Main(string[] args)
     {
         try
         {
+            if (args.Length == 2 && args[0] == "--relay") { RelayIntegration.Run(args[1]).GetAwaiter().GetResult(); return 0; }
             Test("finish gate and skipped checkpoint cannot award lap", () => {
                 var p = new RaceProgress(32, 3);
                 Check(!p.Cross(0, true) && !p.Cross(4, true) && p.CompletedLaps == 0);
@@ -150,6 +151,46 @@ static class Program
                     Throws<IOException>(() => WindowsArchive.Create(exe, zip));
                     Check(File.ReadAllText(zip) == "previous package");
                 });
+            });
+            Test("network match waits for loaded peers and full countdown", () => {
+                var match = new LanMatchRules(LanMode.CircuitDuel, 4);
+                match.Tick(100); Check(match.Remaining == 600 && !match.CrossGate(0, 1, true));
+                Check(match.Start() && !match.Start()); match.Tick(2);
+                Check(match.Phase == LanPhase.Countdown && !match.CrossGate(0, 1, true));
+                match.Tick(2); Check(match.Phase == LanPhase.Racing && match.Remaining == 599);
+            });
+            Test("network circuit requires three ordered laps and locks first winner", () => {
+                var match = new LanMatchRules(LanMode.CircuitDuel, 4); match.Start(); match.Tick(3);
+                Check(!match.CrossGate(1, 0, true) && !match.CrossGate(1, 2, true) && !match.CrossGate(1, 1, false));
+                for (int lap = 0; lap < 3; lap++) foreach (int gate in new[] { 1, 2, 3, 0 }) Check(match.CrossGate(1, gate, true));
+                Check(match.Phase == LanPhase.Complete && match.Winner == 1 && match.Score(1) == 12);
+                Check(!match.CrossGate(0, 1, true) && !match.Goal(0)); match.Tick(999); Check(match.Winner == 1);
+            });
+            Test("network arena ends at five goals and ignores race gates", () => {
+                var match = new LanMatchRules(LanMode.ArenaDuel, 4); Check(!match.Goal(0)); match.Start(); match.Tick(3);
+                Check(!match.CrossGate(0, 0, true)); for (int i = 0; i < 5; i++) Check(match.Goal(0));
+                Check(match.Winner == 0 && !match.Goal(1) && match.Score(0) == 5);
+            });
+            Test("network timeout resolves scores and draws, new rematch resets progress", () => {
+                var match = new LanMatchRules(LanMode.GateSprint, 4); match.Start(); match.Tick(3); match.CrossGate(1, 0, true);
+                Check(!match.CrossGate(1, 0, true)); match.Tick(120); Check(match.Winner == 1);
+                var next = new LanMatchRules(LanMode.GateSprint, 4); Check(next.Score(1) == 0 && next.NextGate(1) == 0);
+                next.Start(); next.Tick(123); Check(next.Phase == LanPhase.Complete && next.Winner == -1);
+            });
+            Test("network rules reject invalid configuration and clocks", () => {
+                Throws<ArgumentOutOfRangeException>(() => new LanMatchRules((LanMode)9, 4));
+                Throws<ArgumentOutOfRangeException>(() => new LanMatchRules(LanMode.CircuitDuel, 2));
+                var match = new LanMatchRules(LanMode.ArenaDuel, 4);
+                Throws<ArgumentOutOfRangeException>(() => match.Goal(2));
+                Throws<ArgumentOutOfRangeException>(() => match.Tick(float.NaN));
+                Throws<ArgumentOutOfRangeException>(() => match.Tick(-1));
+            });
+            Test("relay endpoints require TLS outside loopback", () => {
+                Check(RelayTransport.ValidateEndpoint("wss://example.com/rooms").Scheme == "wss");
+                Check(RelayTransport.ValidateEndpoint("ws://127.0.0.1:10000").IsLoopback);
+                Throws<ArgumentException>(() => RelayTransport.ValidateEndpoint("ws://example.com"));
+                Throws<ArgumentException>(() => RelayTransport.ValidateEndpoint("https://example.com"));
+                Throws<ArgumentException>(() => RelayTransport.ValidateEndpoint("wss://user:secret@example.com"));
             });
             Console.WriteLine(passed + " tests passed. These cover shared C# logic and archive fixtures, not Unity runtime behavior or a real Windows build.");
             return 0;
