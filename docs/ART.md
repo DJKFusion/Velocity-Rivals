@@ -25,7 +25,7 @@ An optional project location may be supplied after `-- --project-root /path/to/V
 
 Each export is imported back into Blender. The script asserts that mesh and vertex counts match and bounds match to within 0.001 meters. `Tools/Blender/Generated/validation.json` records actual measurements from that run. No external textures are needed. Blender material properties may require conversion to URP materials in Unity, especially emission and bloom. Runtime vehicle paint should be assigned to `Body*` meshes, and cyan emissive materials to `Trim*` meshes.
 
-All eight generated files passed these round-trip checks in Blender 4.3.2. Combined FBX size is 1,041,184 bytes. A contact sheet, rendered from the exported FBX files and visually inspected, is included at `Tools/Blender/Generated/vehicle_preview.png`. This is an offline Blender render, not an in-game screenshot. Regenerate it with:
+All eight generated files passed these round-trip checks in Blender 4.3.2. Combined FBX size is 3,333,120 bytes after the sculpted-car update. A contact sheet, rendered from the exported FBX files and visually inspected, is included at `Tools/Blender/Generated/vehicle_preview.png`. This is an offline Blender render, not an in-game screenshot. Regenerate it with:
 
 ```sh
 blender --background --factory-startup --threads 4 --python-exit-code 1 --python Tools/Blender/render_preview.py
@@ -33,4 +33,6 @@ blender --background --factory-startup --threads 4 --python-exit-code 1 --python
 
 The preview uses CPU Cycles with 32 samples and no denoiser, so it also works with Blender builds that omit OpenImageDenoise.
 
-Remaining art work includes rigged suspension/wheel animation, production UV maps, texture detail, LOD meshes, collision mesh optimization, custom decals, final exhaust/VFX, and Unity visual review. No frame-rate target has been validated from these assets alone.
+The revised cars use subdivided shells, cut wheel arches, rounded tires, spoke wheels, mirrors, vents, glass canopies and rear lamps. Runtime materials distinguish paint, glass, alloy, rubber/carbon and emissive lighting. Wheel meshes are grouped by axle before rotation, and readable body/wheel parts are combined by material. The Editor model importer enables readable meshes for this purpose; CPU mesh memory and draw-call savings need profiling.
+
+Remaining art work includes suspension travel animation, production UV maps, texture detail, LOD meshes, collision mesh optimization, custom decals, final exhaust/VFX, and Unity visual review. No frame-rate target has been validated from these assets alone.

@@ -9,34 +9,34 @@
     {
       "file": "Viper.fbx",
       "source": {
-        "meshes": 26,
-        "vertices": 2016,
-        "polygons": 1796,
+        "meshes": 75,
+        "vertices": 9226,
+        "polygons": 8714,
         "dimensions": [
-          2.1048,
+          2.0898,
           3.8075,
-          1.21
+          1.21583
         ]
       },
       "roundtrip": {
-        "meshes": 26,
-        "vertices": 2016,
-        "polygons": 1796,
+        "meshes": 75,
+        "vertices": 9226,
+        "polygons": 8714,
         "dimensions": [
-          2.1048,
+          2.0898,
           3.8075,
-          1.21
+          1.21583
         ]
       },
-      "bytes": 152364,
+      "bytes": 535212,
       "passed": true
     },
     {
       "file": "Bulwark.fbx",
       "source": {
-        "meshes": 29,
-        "vertices": 2184,
-        "polygons": 1958,
+        "meshes": 78,
+        "vertices": 9307,
+        "polygons": 8804,
         "dimensions": [
           2.409,
           3.98,
@@ -44,116 +44,116 @@
         ]
       },
       "roundtrip": {
-        "meshes": 29,
-        "vertices": 2184,
-        "polygons": 1958,
+        "meshes": 78,
+        "vertices": 9307,
+        "polygons": 8804,
         "dimensions": [
           2.409,
           3.98,
           1.36
         ]
       },
-      "bytes": 165388,
+      "bytes": 544092,
       "passed": true
     },
     {
       "file": "Phantom.fbx",
       "source": {
-        "meshes": 25,
-        "vertices": 1960,
-        "polygons": 1742,
+        "meshes": 74,
+        "vertices": 9227,
+        "polygons": 8700,
         "dimensions": [
           1.884,
           3.563,
-          1.17
+          1.17583
         ]
       },
       "roundtrip": {
-        "meshes": 25,
-        "vertices": 1960,
-        "polygons": 1742,
+        "meshes": 74,
+        "vertices": 9227,
+        "polygons": 8700,
         "dimensions": [
           1.884,
           3.563,
-          1.17
+          1.17583
         ]
       },
-      "bytes": 148284,
+      "bytes": 532588,
       "passed": true
     },
     {
       "file": "Apex.fbx",
       "source": {
-        "meshes": 30,
-        "vertices": 2240,
-        "polygons": 2012,
+        "meshes": 79,
+        "vertices": 9470,
+        "polygons": 8954,
         "dimensions": [
-          2.193,
+          2.181,
           4.1075,
-          1.21
+          1.21583
         ]
       },
       "roundtrip": {
-        "meshes": 30,
-        "vertices": 2240,
-        "polygons": 2012,
+        "meshes": 79,
+        "vertices": 9470,
+        "polygons": 8954,
         "dimensions": [
-          2.193,
+          2.181,
           4.1075,
-          1.21
+          1.21583
         ]
       },
-      "bytes": 170636,
+      "bytes": 554124,
       "passed": true
     },
     {
       "file": "Nomad.fbx",
       "source": {
-        "meshes": 27,
-        "vertices": 2192,
-        "polygons": 1934,
+        "meshes": 76,
+        "vertices": 9321,
+        "polygons": 8784,
         "dimensions": [
-          2.2224,
+          2.2128,
           3.8575,
           1.41
         ]
       },
       "roundtrip": {
-        "meshes": 27,
-        "vertices": 2192,
-        "polygons": 1934,
+        "meshes": 76,
+        "vertices": 9321,
+        "polygons": 8784,
         "dimensions": [
-          2.2224,
+          2.2128,
           3.8575,
           1.41
         ]
       },
-      "bytes": 161308,
+      "bytes": 540364,
       "passed": true
     },
     {
       "file": "Comet.fbx",
       "source": {
-        "meshes": 27,
-        "vertices": 2232,
-        "polygons": 1962,
+        "meshes": 76,
+        "vertices": 9471,
+        "polygons": 8912,
         "dimensions": [
-          1.997,
+          1.982,
           4.1575,
           1.585
         ]
       },
       "roundtrip": {
-        "meshes": 27,
-        "vertices": 2232,
-        "polygons": 1962,
+        "meshes": 76,
+        "vertices": 9471,
+        "polygons": 8912,
         "dimensions": [
-          1.997,
+          1.982,
           4.1575,
           1.585
         ]
       },
-      "bytes": 163740,
+      "bytes": 547276,
       "passed": true
     },
     {

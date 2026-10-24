@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 import bpy
+import bmesh
 from mathutils import Vector
 
 
@@ -86,10 +87,54 @@ def cylinder(name, position, radius, depth, mat, axis="X", vertices=16):
 def wheel(x, y, radius, rubber, alloy, trim):
     side = "L" if x < 0 else "R"
     end = "Front" if y < 0 else "Rear"
-    cylinder("Wheel_" + side + end, (x,y,radius), radius, 0.28, rubber)
+    bpy.ops.mesh.primitive_torus_add(major_segments=40, minor_segments=12,
+        location=(x,y,radius), rotation=(0,math.pi/2,0), major_radius=radius*.76, minor_radius=radius*.24)
+    tire = finish(bpy.context.object, "Wheel_"+side+end, rubber)
+    for polygon in tire.data.polygons: polygon.use_smooth = True
     outer_x = x + (0.155 if x > 0 else -0.155)
-    cylinder("WheelHub_" + side + end, (outer_x,y,radius), radius * 0.60, 0.025, alloy)
-    cylinder("Trim_Hub_" + side + end, (outer_x + (0.02 if x > 0 else -0.02),y,radius), radius * 0.18, 0.03, trim)
+    cylinder("BrakeDisc_"+side+end, (x,y,radius), radius*.60,.06,alloy, vertices=32)
+    bpy.ops.mesh.primitive_torus_add(major_segments=32, minor_segments=8,
+        location=(outer_x,y,radius), rotation=(0,math.pi/2,0), major_radius=radius*.65, minor_radius=.025)
+    rim = finish(bpy.context.object,"WheelRim_"+side+end,alloy)
+    for polygon in rim.data.polygons: polygon.use_smooth=True
+    for i in range(6):
+        angle=i*math.pi/3
+        spoke=box("WheelSpoke_"+side+end,(outer_x,y+math.sin(angle)*radius*.31,radius+math.cos(angle)*radius*.31),(.045,.045,radius*.64),alloy,.012)
+        spoke.rotation_euler.x=-angle
+    cylinder("WheelHub_" + side + end, (outer_x,y,radius), radius * 0.17, 0.055, trim, vertices=24)
+
+
+def loft(name, rings, bottom, mat, smooth=2):
+    """A continuous sculpted shell from longitudinal cross-sections (Y, half-width, height)."""
+    vertices=[]
+    for y,w,z in rings:
+        vertices.extend([(x,y,h) for x,h in [(-w*.78,bottom),(-w,bottom+.10),(-w,z-.10),
+            (-w*.72,z),(w*.72,z),(w,z-.10),(w,bottom+.10),(w*.78,bottom)]])
+    faces=[]
+    for r in range(len(rings)-1):
+        for j in range(8): faces.append((r*8+j,r*8+(j+1)%8,(r+1)*8+(j+1)%8,(r+1)*8+j))
+    faces.extend([tuple(reversed(range(8))),tuple((len(rings)-1)*8+j for j in range(8))])
+    mesh=bpy.data.meshes.new(name+"Mesh");mesh.from_pydata(vertices,[],faces);mesh.update()
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
+    bpy.context.view_layer.objects.active=obj;obj.select_set(True)
+    bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=bm.faces);bm.to_mesh(mesh);bm.free()
+    mesh.materials.append(mat)
+    if smooth:
+        modifier=obj.modifiers.new("Sculpted body surfaces","SUBSURF");modifier.levels=smooth
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+    for polygon in mesh.polygons: polygon.use_smooth=True
+    for polygon in obj.data.polygons: polygon.use_smooth=True
+    return obj
+
+
+def wheel_arch(body,x,y,r):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=40,radius=r+0.045,depth=.60,
+        location=(x,y,r),rotation=(0,math.pi/2,0))
+    cutter=bpy.context.object
+    bpy.context.view_layer.objects.active=body
+    modifier=body.modifiers.new("Wheel clearance","BOOLEAN");modifier.operation='DIFFERENCE';modifier.object=cutter
+    bpy.ops.object.modifier_apply(modifier=modifier.name)
+    bpy.data.objects.remove(cutter,do_unlink=True)
 
 
 def car(name, kind, color):
@@ -103,12 +148,28 @@ def car(name, kind, color):
     lengths = [3.65,3.75,3.35,3.95,3.7,4.0]
     radii = [0.34,0.43,0.30,0.34,0.42,0.33]
     w,l,r = widths[kind],lengths[kind],radii[kind]
-    wedge("Body_"+name, w,l,r*0.7, r+0.18,r+0.39,paint)
+    body=loft("Body_"+name,[(y*l,w*.5*width,r+height) for y,width,height in [
+        (-.50,.74,.12),(-.47,.92,.19),(-.34,1,.38),(-.17,.91,.32),
+        (.04,.87,.31),(.26,1,.41),(.43,.98,.32),(.49,.81,.24)]],r*.55,paint)
+    for x in [-w*.49,w*.49]:
+        for y in [-l*.31,l*.31]: wheel_arch(body,x,y,r)
     box("Body_Undertray",(0,0,r*0.7),(w*0.88,l*0.88,0.14),alloy)
     roof_w = w * (0.45 if kind == 2 else 0.60)
     roof_l = l * (0.24 if kind == 5 else 0.34)
-    wedge("Glass_Cockpit",roof_w,roof_l,r+0.4,r+0.77,r+0.85,glass,center_y=0.05)
-    box("Body_RoofSpine",(0,0.17,r+0.84),(0.12,roof_l*0.7,0.06),paint,0.02)
+    loft("Glass_Cockpit",[(y*l,roof_w*.5*width,r+height) for y,width,height in [
+        (-.24,1,.40),(-.15,.9,.70),(-.05,.8,.83),(.10,.78,.84),(.23,.96,.48)]],r+.28,glass)
+    loft("Body_Roof",[(-.045*l,roof_w*.38,r+.86),(.03*l,roof_w*.39,r+.89),(.10*l,roof_w*.37,r+.86)],r+.78,paint,1)
+    for side in [-1,1]:
+        box("Carbon_SideSkirt",(side*w*.48,0,r*.55),(.10,l*.5,.10),exhaust,.025)
+        mirror=box("Body_Mirror",(side*w*.53,-l*.12,r+.63),(.22,.24,.10),paint,.04)
+        box("Carbon_MirrorMount",(side*w*.46,-l*.12,r+.55),(.24,.07,.12),exhaust,.02)
+        box("Glass_Mirror",(side*w*.54,-l*.09,r+.64),(.18,.025,.07),glass,.01)
+        for vent in range(4):
+            box("Carbon_HoodVent",(side*w*.27,-l*.31+vent*.06,r+.355),(.16,.025,.018),exhaust,.004)
+    box("Carbon_FrontSplitter",(0,-l*.46,r*.52),(w*.89,.25,.07),exhaust,.025)
+    for side in [-1,1]:
+        box("Carbon_FrontIntake",(side*w*.27,-l*.485,r+.02),(.42,.06,.12),exhaust,.04)
+        box("Tail_RearLamp",(side*w*.30,l*.478,r+.18),(.42,.04,.05),material("RearLamp",(1,.015,.03),0,.2,4),.015)
     for x in [-w*0.49,w*0.49]:
         wheel(x,-l*0.31,r,rubber,alloy,trim)
         wheel(x,l*0.31,r,rubber,alloy,trim)

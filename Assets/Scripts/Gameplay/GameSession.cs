@@ -89,6 +89,7 @@ namespace VelocityRivals
             ResultText = "";
             world = new GameObject("Velocity Rivals — " + EnvironmentNames[environment]).transform;
             BuildWorld();
+            WorldScenery.Build(world, track, environment, racing);
             Vector3 start = racing ? track[0] + Vector3.up * 1.2f : new Vector3(0, 1.2f, -18);
             Quaternion facing = racing ? Quaternion.LookRotation(track[1] - track[0]) : Quaternion.identity;
             Player = SpawnCar(selectedVehicle, start, facing, paint, true);
@@ -413,6 +414,12 @@ namespace VelocityRivals
             Material architecture = Material("Architecture", new Color(.12f, .16f, .24f));
             var light = new GameObject("Sun", typeof(Light)); light.transform.SetParent(world); light.transform.rotation = Quaternion.Euler(48, -25, 0);
             light.GetComponent<Light>().type = LightType.Directional; light.GetComponent<Light>().intensity = environment == 2 ? 1.6f : 1.1f;
+            light.GetComponent<Light>().shadows = LightShadows.Soft;
+            light.GetComponent<Light>().color = environment == 2 ? new Color(1, .85f, .68f) : new Color(.75f, .85f, 1);
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(.3f, .4f, .55f);
+            RenderSettings.ambientEquatorColor = new Color(.14f, .18f, .24f);
+            RenderSettings.ambientGroundColor = new Color(.07f, .08f, .11f);
             RenderSettings.ambientLight = new Color(.35f, .4f, .5f);
             RenderSettings.fog = true; RenderSettings.fogColor = new Color(.04f, .06f, .12f); RenderSettings.fogDensity = .0025f;
             track.Clear();
@@ -451,14 +458,6 @@ namespace VelocityRivals
                 }
                 if (environment != 1) Box("Landscape", new Vector3(0, -.9f, 0), new Vector3(260, 1, 220), terrain);
                 else Box("Cloud deck", new Vector3(0, -30, 0), new Vector3(300, 1, 260), terrain);
-                for (int i = 0; i < 28; i++)
-                {
-                    float a = i * Mathf.PI * 2 / 28;
-                    float height = 7 + (i * 7 % 24);
-                    Vector3 p = new Vector3(Mathf.Sin(a) * (radiusX + 30), height / 2 - .3f, Mathf.Cos(a) * (radiusZ + 30));
-                    Box(environment == 2 ? "Desert monolith" : environment == 4 ? "Ice spire" : "City tower", p, new Vector3(8, height, 9), architecture, Quaternion.Euler(0, i * 13, environment == 4 ? 12 : 0));
-                    Box("Beacon", p + Vector3.up * height / 2, new Vector3(8.1f, .25f, 9.1f), rail);
-                }
             }
             else
             {

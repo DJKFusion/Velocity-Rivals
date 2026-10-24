@@ -114,6 +114,30 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator ImportedVehiclesHaveReadableGeometryAndMeterScale()
+        {
+            root = new GameObject("Model import validation");
+            foreach (string name in GameSession.VehicleNames)
+            {
+                var asset = Resources.Load<GameObject>("VehicleModels/" + name);
+                Assert.IsNotNull(asset, name);
+                var model = Object.Instantiate(asset, root.transform);
+                yield return null;
+                var renderers = model.GetComponentsInChildren<Renderer>();
+                Assert.IsNotEmpty(renderers, name);
+                Bounds bounds = renderers[0].bounds;
+                foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
+                Assert.That(bounds.size.x, Is.InRange(1f, 4f), name + " width");
+                Assert.That(bounds.size.z, Is.InRange(2.5f, 6f), name + " length");
+                Assert.That(bounds.size.y, Is.InRange(.5f, 3f), name + " height");
+                foreach (var filter in model.GetComponentsInChildren<MeshFilter>())
+                    Assert.IsTrue(filter.sharedMesh.isReadable, name + " must support batching");
+                Object.Destroy(model);
+                yield return null;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator AiStartsMovingAfterCountdown()
         {
             root = new GameObject("Test AI");

@@ -22,10 +22,19 @@ namespace VelocityRivals
             foreach (var item in model.GetComponentsInChildren<Transform>(true)) item.gameObject.layer = 30;
             paint = MakeMaterial(Color.cyan);
             var trim = MakeMaterial(new Color(.07f, .11f, .16f));
+            var glass = MakeMaterial(new Color(.035f, .10f, .15f));
+            glass.SetFloat("_Metallic", .75f); glass.SetFloat("_Smoothness", .95f);
+            var alloy = MakeMaterial(new Color(.45f, .5f, .6f)); alloy.SetFloat("_Metallic", .9f);
+            var glow = MakeMaterial(Color.cyan); glow.EnableKeyword("_EMISSION"); glow.SetColor("_EmissionColor", Color.cyan * 3);
+            var tail = MakeMaterial(Color.red); tail.EnableKeyword("_EMISSION"); tail.SetColor("_EmissionColor", Color.red * 3);
             foreach (var renderer in model.GetComponentsInChildren<Renderer>())
             {
                 var slots = renderer.sharedMaterials;
-                for (int i = 0; i < slots.Length; i++) slots[i] = renderer.name.StartsWith("Body") ? paint : trim;
+                string part = renderer.name;
+                Material finish = part.StartsWith("Body") ? paint : part.StartsWith("Glass") ? glass :
+                    part.StartsWith("Tail") ? tail : part.StartsWith("Trim") || part.StartsWith("WheelHub") ? glow :
+                    part.StartsWith("WheelRim") || part.StartsWith("WheelSpoke") || part.StartsWith("BrakeDisc") ? alloy : trim;
+                for (int i = 0; i < slots.Length; i++) slots[i] = finish;
                 renderer.sharedMaterials = slots;
             }
             var cameraObject = new GameObject("Garage camera", typeof(Camera));

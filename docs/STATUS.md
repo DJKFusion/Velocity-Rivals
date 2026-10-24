@@ -15,11 +15,11 @@ Status meanings: **verified here** means a named tool ran successfully in the cl
 | Stunt Rush | Implemented / Unity untested | Rotation/airtime/upright landing scores and timer; no precision landing combo system |
 | Time Attack | Implemented / Unity untested | Three-lap time and ghost recording/playback; per-track online leaderboard unfinished |
 | Free Play | Implemented / Unity untested | Training, ramps and restart/menu return |
-| Worlds | Implemented starter geometry / Unity untested | Five themes and circuit variants; production architecture, authored shortcut balance, spectator ambience and smoothly rideable walls unfinished |
+| Worlds | Implemented / Unity untested | Five themes/circuit variants, road markings, lit towers/natural formations, spectator tiers and roof ribs; production architecture, shortcut balance, ambience and smoothly rideable walls unfinished |
 | Garage | Implemented partially / Unity untested | Saved paint/finish, wheel scale, trail colour, stripe/spoiler variants; rotating paint/finish preview; texture decal library and wheel mesh swaps unfinished |
 | Menus | Implemented / Unity untested | Main, mode, garage, records, settings, pause, results, credits and LAN entry; text-only animated title, no loading cinematic; IP typing requires keyboard |
 | Audio | Implemented placeholders / Unity untested | Original engine/music/UI, countdown, goal, jump, drift, boost, impact, pickup and knockout cues; production sound design/crowd ambience unfinished |
-| Rendering | Implemented partially / Unity untested | URP setup, emissive materials, bloom, ACES, boost trail and impact/pickup particles; smoke, skid marks and polished environmental effects unfinished |
+| Rendering | Implemented partially / Unity untested | Sculpted cars, surface materials, grouped wheel animation, mesh batching, URP/bloom/ACES, soft shadows, reflection probe, boost trail and impact/pickup particles; production textures/LODs, smoke and skid marks unfinished |
 | Progression | Implemented / Unity untested | XP, levels, six unlockable vehicles, basic achievements, local records, backup profile; cloud/platform saves unfinished |
 | LAN multiplayer | Protocol framing verified here; session Unity untested | Two-player direct-IP host-authoritative sprint; gameplay latency/recovery, scoring agreement and disconnect tests unrun |
 | Production multiplayer | Unfinished | Authenticated lobbies, matchmaking, dedicated servers, prediction/lag compensation, team selection and online modes |

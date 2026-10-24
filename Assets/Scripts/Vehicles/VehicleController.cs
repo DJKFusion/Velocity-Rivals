@@ -277,6 +277,12 @@ namespace VelocityRivals
         {
             paintMaterial = MakeMaterial(color); trimMaterial = MakeMaterial(new Color(.025f, .035f, .06f));
             var glow = MakeMaterial(new Color(.2f, .85f, 1), true);
+            var glass = MakeMaterial(new Color(.035f, .10f, .15f));
+            glass.SetFloat("_Metallic", .75f); glass.SetFloat("_Smoothness", .95f);
+            var alloy = MakeMaterial(new Color(.45f, .5f, .6f));
+            alloy.SetFloat("_Metallic", .9f); alloy.SetFloat("_Smoothness", .75f);
+            var tail = MakeMaterial(new Color(1, .015f, .025f), true);
+            paintMaterial.SetFloat("_Metallic", .65f); paintMaterial.SetFloat("_Smoothness", .8f);
             string[] modelNames = { "Viper", "Bulwark", "Phantom", "Apex", "Nomad", "Comet" };
             int style = Stats != null ? System.Array.IndexOf(modelNames, Stats.DisplayName) : 0;
             float width = style == 3 ? 1.95f : style == 2 ? 1.55f : 1.8f;
@@ -288,12 +294,28 @@ namespace VelocityRivals
                 visual.transform.localPosition = new Vector3(0, -.22f, 0);
                 foreach (var renderer in visual.GetComponentsInChildren<Renderer>())
                 {
-                    Material material = renderer.name.StartsWith("Body") ? paintMaterial : renderer.name.StartsWith("Trim") ? glow : trimMaterial;
+                    string part = renderer.name;
+                    Material material = part.StartsWith("Body") ? paintMaterial : part.StartsWith("Glass") ? glass :
+                        part.StartsWith("Tail") ? tail : part.StartsWith("Trim") || part.StartsWith("WheelHub") ? glow :
+                        part.StartsWith("WheelRim") || part.StartsWith("WheelSpoke") || part.StartsWith("BrakeDisc") ? alloy : trimMaterial;
                     var materials = renderer.sharedMaterials;
                     for (int i = 0; i < materials.Length; i++) materials[i] = material;
                     renderer.sharedMaterials = materials;
-                    if (renderer.name.StartsWith("Wheel")) wheels.Add(renderer.transform);
                 }
+                // Spin the complete wheel around its axle; individual spokes must not rotate about their own centres.
+                foreach (string corner in new[] { "LFront", "RFront", "LRear", "RRear" })
+                {
+                    var renderers = visual.GetComponentsInChildren<Renderer>();
+                    Transform tire = null;
+                    foreach (var renderer in renderers) if (renderer.name.StartsWith("Wheel_" + corner)) tire = renderer.transform;
+                    if (tire == null) continue;
+                    var pivot = new GameObject("Wheel axle " + corner).transform;
+                    pivot.SetParent(visual.transform, false); pivot.position = tire.position;
+                    foreach (var renderer in renderers)
+                        if (renderer.name.StartsWith("Wheel") && renderer.name.Contains(corner)) renderer.transform.SetParent(pivot, true);
+                    wheels.Add(pivot);
+                }
+                VehicleMeshBatch.Bake(visual.transform, wheels);
             }
             else
             {

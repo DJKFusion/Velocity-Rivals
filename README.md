@@ -40,6 +40,8 @@ If Unity reports a compile/import error, copy the first red Console error with i
 
 Five named environments are generated at runtime from a shared world builder. Circuit shapes, scenery, ramps, palette and traction vary; arenas currently share a common layout. These are starter environments, not five production-quality authored levels.
 
+The latest visual pass adds sculpted car shells, wheel arches and spoke wheels; distinct paint/glass/metal materials; marked roads, lit city scenery, natural formations and arena spectator structures. [Visual update details and required checks](docs/UPDATE-VISUALS.md). The Blender car contact sheet is an offline asset preview, not an in-game screenshot.
+
 The garage saves paint, wheel size, trail colour, stripe/spoiler and finish choices. Event completion grants XP, levels, vehicle unlocks and basic achievements. The first car is available initially; each additional 500 XP unlocks another. Profile JSON and a backup are stored under Unity's `Application.persistentDataPath`. On Windows this is normally `%USERPROFILE%\AppData\LocalLow\DJKFusion\Velocity Rivals`. Time Attack ghosts are separate files in the same directory.
 
 The garage includes a rotating preview of the selected model's paint and finish. Select Rookie, Rival or Elite difficulty before an event; it changes AI acceleration and maximum speed. Settings include steering sensitivity. Countdown, jump, drift, boost, impact, power-up and goal audio are synthesized placeholders; hit and pickup particles are generated at runtime. These new integrations require Unity playtesting.
