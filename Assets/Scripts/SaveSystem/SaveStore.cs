@@ -8,6 +8,8 @@ namespace VelocityRivals
     [Serializable] public sealed class RaceRecord
     {
         public string mode;
+        public int environment = -1;
+        public int vehicle = -1;
         public float bestSeconds;
         public int bestScore;
         public int finishes;
@@ -15,9 +17,11 @@ namespace VelocityRivals
 
     [Serializable] public sealed class PlayerProfile
     {
-        public int schemaVersion = 1;
+        public int schemaVersion = 2;
         public string playerName = "Rival";
-        public string relayUrl = "";
+        public CareerProgress career = new CareerProgress();
+        public bool fullscreen = true;
+        public bool reducedEffects;
         public int xp;
         public int wins;
         public int events;
@@ -61,10 +65,19 @@ namespace VelocityRivals
                 try
                 {
                     PlayerProfile profile = JsonUtility.FromJson<PlayerProfile>(File.ReadAllText(path));
-                    if (profile == null || profile.schemaVersion != 1 || profile.xp < 0)
+                    if (profile == null || (profile.schemaVersion != 1 && profile.schemaVersion != 2) || profile.xp < 0)
                         throw new InvalidDataException("Unsupported or invalid player profile.");
                     profile.records ??= new List<RaceRecord>();
                     profile.achievements ??= new List<string>();
+                    profile.records.RemoveAll(record => record == null || string.IsNullOrEmpty(record.mode));
+                    if (profile.schemaVersion == 1)
+                    {
+                        foreach (var record in profile.records) record.environment = record.vehicle = -1;
+                        profile.fullscreen = true;
+                        profile.schemaVersion = 2;
+                    }
+                    profile.career ??= new CareerProgress();
+                    profile.career.Normalize();
                     profile.selectedVehicle = Mathf.Clamp(profile.selectedVehicle, 0, profile.UnlockedVehicles - 1);
                     profile.paint = Mathf.Clamp(profile.paint, 0, 7);
                     profile.wheels = Mathf.Clamp(profile.wheels, 0, 2);
@@ -75,9 +88,9 @@ namespace VelocityRivals
                     profile.quality = Mathf.Clamp(profile.quality, 0, 2);
                     profile.difficulty = Mathf.Clamp(profile.difficulty, 0, 2);
                     if (profile.steeringSensitivity < .5f || profile.steeringSensitivity > 1.5f || float.IsNaN(profile.steeringSensitivity)) profile.steeringSensitivity = 1;
-                    profile.masterVolume = Mathf.Clamp01(profile.masterVolume);
-                    profile.musicVolume = Mathf.Clamp01(profile.musicVolume);
-                    profile.effectsVolume = Mathf.Clamp01(profile.effectsVolume);
+                    profile.masterVolume = SafeVolume(profile.masterVolume, .8f);
+                    profile.musicVolume = SafeVolume(profile.musicVolume, .3f);
+                    profile.effectsVolume = SafeVolume(profile.effectsVolume, .75f);
                     if (path.EndsWith(".bak", StringComparison.Ordinal)) LastError = "Recovered the backup profile.";
                     return profile;
                 }
@@ -111,19 +124,21 @@ namespace VelocityRivals
             }
         }
 
-        public static void RecordResult(string mode, bool won, float seconds, int score)
+        private static float SafeVolume(float value, float fallback) => float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Clamp01(value);
+
+        public static void RecordResult(string mode, bool won, float seconds, int score, int environment = -1, int vehicle = -1, bool completed = true)
         {
             PlayerProfile profile = Current;
             profile.events++;
-            if (won) profile.wins++;
-            profile.xp += 150 + (won ? 150 : 0) + Mathf.Clamp(score / 20, 0, 200);
-            RaceRecord record = profile.records.Find(r => r.mode == mode);
-            if (record == null) { record = new RaceRecord { mode = mode }; profile.records.Add(record); }
-            record.finishes++;
+            if (won && completed) profile.wins++;
+            profile.xp += completed ? 150 + (won ? 150 : 0) + Mathf.Clamp(score / 20, 0, 200) : 50;
+            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle);
+            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle }; profile.records.Add(record); }
+            if (completed) record.finishes++;
             record.bestScore = Mathf.Max(record.bestScore, score);
-            if (seconds > 0 && !float.IsInfinity(seconds) && !float.IsNaN(seconds) && (record.bestSeconds <= 0 || seconds < record.bestSeconds))
+            if (completed && seconds > 0 && !float.IsInfinity(seconds) && !float.IsNaN(seconds) && (record.bestSeconds <= 0 || seconds < record.bestSeconds))
                 record.bestSeconds = seconds;
-            Award("First finish", profile.events >= 1);
+            Award("First finish", completed);
             Award("First victory", profile.wins >= 1);
             Award("Ten victories", profile.wins >= 10);
             Award("Full garage", profile.UnlockedVehicles == 6);

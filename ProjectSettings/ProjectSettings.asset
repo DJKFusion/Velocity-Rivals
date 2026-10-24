@@ -7,6 +7,7 @@ PlayerSettings:
   productGUID: 2ac95863bf58432f98c714225fab66dd
   companyName: DJKFusion
   productName: Velocity Rivals
+  bundleVersion: 0.4.0
   defaultScreenWidth: 1920
   defaultScreenHeight: 1080
   defaultIsNativeResolution: 1

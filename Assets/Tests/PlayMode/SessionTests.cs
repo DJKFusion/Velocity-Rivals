@@ -1,4 +1,5 @@
 using System.Collections;
+using System.IO;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -8,6 +9,15 @@ namespace VelocityRivals.Tests
     public sealed class SessionTests
     {
         GameObject root;
+        string directory, previousDirectory;
+        [SetUp]
+        public void IsolateSave()
+        {
+            previousDirectory = SaveStore.StorageDirectoryOverride;
+            directory = Path.Combine(Path.GetTempPath(), "VelocityPlayTests-" + System.Guid.NewGuid().ToString("N"));
+            SaveStore.StorageDirectoryOverride = directory;
+            SaveStore.Reload();
+        }
         [UnityTearDown]
         public IEnumerator Cleanup()
         {
@@ -16,6 +26,33 @@ namespace VelocityRivals.Tests
             if (camera) Object.Destroy(camera.gameObject);
             Time.timeScale = 1;
             yield return null;
+            yield return null;
+            SaveStore.StorageDirectoryOverride = previousDirectory;
+            SaveStore.Reload();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+
+        [UnityTest]
+        public IEnumerator SinglePlayerMenuHasCareerAndNoNetworkComponentOrButton()
+        {
+            root = new GameObject("Single player menu test"); root.AddComponent<GameBootstrap>();
+            yield return null; yield return null;
+            UnityEngine.UI.Button career = null;
+            foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+            {
+                Assert.AreNotEqual("MULTIPLAYER", button.name);
+                if (button.name == "CAREER TOUR") career = button;
+            }
+            foreach (var component in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+                Assert.AreNotEqual("LanRaceSession", component.GetType().Name);
+            Assert.IsNotNull(career); career.onClick.Invoke(); yield return null;
+            UnityEngine.UI.Button start = null;
+            foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                if (button.name == "START CAREER EVENT") start = button;
+            Assert.IsNotNull(start); start.onClick.Invoke(); yield return null;
+            Assert.AreEqual(0, GameSession.Instance.CareerEventIndex);
+            Assert.AreEqual(GameMode.TimeAttack, GameSession.Instance.CurrentMode);
+            Assert.IsFalse(GameSession.Instance.NetworkControlled);
         }
 
         [UnityTest]

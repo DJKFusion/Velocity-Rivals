@@ -192,7 +192,47 @@ static class Program
                 Throws<ArgumentException>(() => RelayTransport.ValidateEndpoint("https://example.com"));
                 Throws<ArgumentException>(() => RelayTransport.ValidateEndpoint("wss://user:secret@example.com"));
             });
-            Console.WriteLine(passed + " tests passed. These cover shared C# logic and archive fixtures, not Unity runtime behavior or a real Windows build.");
+            Test("career unlocks each event in order and reaches an explicit ending", () => {
+                var career = new CareerProgress(); Check(career.NextEvent == 0 && !career.Complete);
+                Check(!career.Record(1, 3) && !career.IsUnlocked(-1) && !career.IsUnlocked(CareerTour.Count));
+                for (int i = 0; i < CareerTour.Count; i++) { Check(career.IsUnlocked(i)); Check(career.Record(i, 1)); }
+                Check(career.Complete && career.TotalMedals == CareerTour.Count && career.NextEvent == CareerTour.Count - 1);
+            });
+            Test("career replays improve medals without reducing progress", () => {
+                var career = new CareerProgress(); career.Record(0, 3); career.Record(1, 2);
+                Check(career.Record(0, 1) && career.medals[0] == 3 && career.NextEvent == 2);
+                Check(!career.Record(2, 0) && !career.Record(2, 4) && !career.Complete);
+            });
+            Test("career normalization repairs missing and invalid save arrays", () => {
+                var career = new CareerProgress { medals = null }; career.Normalize(); Check(career.medals.Length == CareerTour.Count);
+                career.medals = new[] { 99, -1, 2 }; career.Normalize();
+                Check(career.medals[0] == 3 && career.medals[1] == 0 && career.medals[2] == 2 && career.NextEvent == 1);
+            });
+            Test("career medals require completion and finite times", () => {
+                var entry = CareerTour.Get(0);
+                Check(entry.Medal(false, true, 50, 5000) == 0 && entry.Medal(true, true, float.NaN, 5000) == 0);
+                Check(entry.Medal(true, true, entry.GoldSeconds, 1) == 3);
+                Check(entry.Medal(true, true, entry.GoldSeconds * 1.2f, 1) == 2);
+                Check(entry.Medal(true, true, entry.GoldSeconds * 2, 1) == 1);
+            });
+            Test("career championship and stunt medals enforce their distinct goals", () => {
+                Check(CareerTour.Get(2).Medal(true, true, 400, 26) == 3);
+                Check(CareerTour.Get(2).Medal(true, true, 400, 24) == 2);
+                Check(CareerTour.Get(2).Medal(true, false, 400, 20) == 1);
+                Check(CareerTour.Get(4).Medal(true, true, 120, 2000) == 3);
+                Check(CareerTour.Get(4).Medal(true, true, 120, 1000) == 2);
+            });
+            Test("career catalog covers five themes with valid modes and a grand final", () => {
+                var themes = new HashSet<int>();
+                for (int i = 0; i < CareerTour.Count; i++) {
+                    var entry = CareerTour.Get(i); themes.Add(entry.Environment);
+                    Check(entry.Environment >= 0 && entry.Environment < 5 && entry.Difficulty >= 0 && entry.Difficulty <= 2);
+                    Check(entry.Mode != GameMode.FreePlay && !string.IsNullOrEmpty(entry.Goal));
+                }
+                Check(themes.Count == 5 && CareerTour.Get(CareerTour.Count - 1).Mode == GameMode.Championship);
+                Throws<ArgumentOutOfRangeException>(() => CareerTour.Get(CareerTour.Count));
+            });
+            Console.WriteLine(passed + " tests passed. These cover shared C# logic and archive fixtures, not Unity runtime behavior or a real Windows build. Networking regression sources are tested separately from their excluded player assembly.");
             return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e); return 1; }

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace VelocityRivals.Editor
     [InitializeOnLoad]
     public static class ProjectBuilder
     {
+        [Serializable] private sealed class BuildArtifact { public string package, executable, version; }
         public const string EntryScene = "Assets/Scenes/VelocityRivals.unity";
         private const string PipelinePath = "Assets/Settings/VelocityURP.asset";
         static ProjectBuilder()
@@ -136,9 +138,14 @@ namespace VelocityRivals.Editor
         {
             string output = BuildWindowsPlayer();
             if (output == null) return;
-            string name = "VelocityRivals-Windows-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + ".zip";
+            string name = "VelocityRivals-SinglePlayer-" + SinglePlayerBuildGuard.Version + "-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + ".zip";
             string archive = Path.GetFullPath(Path.Combine("Builds/Packages", name));
             WindowsArchive.Create(output, archive);
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            using (var stream = File.OpenRead(archive))
+                File.WriteAllText(archive + ".sha256", BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "").ToLowerInvariant() + "  " + Path.GetFileName(archive) + "\n");
+            Directory.CreateDirectory("Artifacts");
+            File.WriteAllText("Artifacts/latest-singleplayer-package.json", JsonUtility.ToJson(new BuildArtifact { package = archive, executable = output, version = SinglePlayerBuildGuard.Version }, true));
             Debug.Log("Windows game package ready: " + archive);
             if (!Application.isBatchMode) EditorUtility.RevealInFinder(archive);
         }
@@ -153,7 +160,8 @@ namespace VelocityRivals.Editor
             if (!File.Exists(EntryScene)) throw new FileNotFoundException("The game entry scene is missing.", EntryScene);
             ConfigureRendering();
             string output = Environment.GetEnvironmentVariable("VELOCITY_BUILD_PATH");
-            if (string.IsNullOrEmpty(output)) output = "Builds/Windows/VelocityRivals.exe";
+            SinglePlayerBuildGuard.Validate();
+            if (string.IsNullOrEmpty(output)) output = "Builds/SinglePlayer/Windows/VelocityRivals.exe";
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
@@ -166,13 +174,20 @@ namespace VelocityRivals.Editor
                 throw new Exception("Windows build failed: " + report.summary.result);
             string fullPath = Path.GetFullPath(output);
             if (!File.Exists(fullPath)) throw new FileNotFoundException("Unity reported success but the executable is missing.", fullPath);
-            string instructions = "Velocity Rivals\r\n\r\nExtract this entire ZIP before playing. Keep the EXE, Data folder and UnityPlayer.dll together.\r\n" +
+            if (Directory.GetFiles(Path.GetDirectoryName(fullPath), "VelocityRivals.Multiplayer.dll", SearchOption.AllDirectories).Length > 0)
+                throw new BuildFailedException("An old multiplayer DLL is present in the output. Choose a clean single-player output directory.");
+            string instructions = "Velocity Rivals — Single Player " + SinglePlayerBuildGuard.Version + "\r\n\r\nExtract this entire ZIP before playing. Keep the EXE, Data folder and UnityPlayer.dll together.\r\n" +
                 "Launch " + Path.GetFileName(fullPath) + ".\r\n\r\n" +
+                "Start CAREER TOUR for 12 events across four cups. Bronze medals unlock the next event; replay for gold.\r\n" +
+                "PLAY opens six quick-play modes. This edition plays offline and needs no account or relay server.\r\n\r\n" +
                 "WASD: drive | Shift: boost | Space: jump | Ctrl: drift | Q/E: air roll | R: recover | Esc: pause\r\n" +
                 "Controller: triggers and left stick drive, B boost, A jump, X drift, Y recover, Start pause.\r\n" +
                 "Use HOW TO PLAY for event rules and SETTINGS for music and graphics.\r\n" +
                 "Saves: %USERPROFILE%\\AppData\\LocalLow\\DJKFusion\\Velocity Rivals\r\n";
             File.WriteAllText(Path.Combine(Path.GetDirectoryName(fullPath), "START HERE.txt"), instructions);
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(fullPath), "BUILD INFO.txt"),
+                "Velocity Rivals Single Player " + SinglePlayerBuildGuard.Version + "\nUnity " + Application.unityVersion + "\nBuilt UTC: " + DateTime.UtcNow.ToString("O") +
+                "\nBuildPipeline result: " + report.summary.result + "\nBuild success does not certify gameplay QA. Test reports are retained separately in the source project's Artifacts directory.\n");
             return fullPath;
         }
     }

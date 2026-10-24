@@ -8,6 +8,7 @@ namespace VelocityRivals
         Material material;
         public static void Burst(Vector3 position, Color colour)
         {
+            if (SaveStore.Current.reducedEffects) return;
             var root = new GameObject("Impact particles");
             var session = GameSession.Instance;
             if (session != null && session.Player != null) root.transform.SetParent(session.Player.transform.parent);

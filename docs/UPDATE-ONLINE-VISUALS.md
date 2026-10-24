@@ -1,3 +1,5 @@
+> Historical development guide for the earlier multiplayer edition (commit db4284e). Version 0.4.0 is single player: networking is excluded and these menu/deployment steps do not apply. Use [the single-player release guide](SINGLE-PLAYER-RELEASE.md).
+
 # Private rooms, atmosphere and expanded soundtrack
 
 Implemented in the existing Unity 6000.6.7f1 project; this is development source, not a certified or verified finished release.

@@ -1,3 +1,5 @@
+> Historical development guide for the earlier multiplayer edition (commit db4284e). Version 0.4.0 is single player: networking is excluded and these menu/deployment steps do not apply. Use [the single-player release guide](SINGLE-PLAYER-RELEASE.md).
+
 # Multiplayer status
 
 The game implements two-player Gate Sprint, Circuit Duel and Arena Duel over direct LAN or private online rooms. Both use the same host-authoritative rules and protocol version 3. The online transport and server have passed local tests; **Unity multiplayer gameplay and Internet deployment are unverified**.

@@ -21,6 +21,7 @@ namespace VelocityRivals
         public int StuntScore { get; private set; }
         public bool IsBoosting => NetworkProxy ? networkBoost : ControlsEnabled && input.Boost && BoostAmount > .01f;
         public bool IsDrifting => Grounded && SpeedKmh > 35 && (input.Brake || Mathf.Abs(Vector3.Dot(Velocity, transform.right)) > 5);
+        public bool NeedsRecovery => invertedTime > 3 || transform.position.y < -25;
 
         public void SetNetworkPresentation(Vector3 velocity, float boostFuel, bool boosting, bool grounded)
         {

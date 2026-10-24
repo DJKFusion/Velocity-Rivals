@@ -37,6 +37,14 @@ for name in ('Viper', 'Bulwark', 'Phantom', 'Apex', 'Nomad', 'Comet'):
         if not (root / path).is_file(): errors.append(f'Missing delivery asset: {path}')
 
 parsed = 0
+network_assembly = json.loads((root / 'Assets/Scripts/Multiplayer/VelocityRivals.Multiplayer.asmdef').read_text())
+if network_assembly.get('defineConstraints') != ['VELOCITY_MULTIPLAYER'] or network_assembly.get('autoReferenced') is not False:
+    errors.append('Multiplayer must be opt-in and excluded from the default player assembly.')
+for path in (root / 'Assets/Scripts').rglob('*.cs'):
+    if 'Multiplayer' not in path.parts and re.search(r'\b(LanRaceSession|RelayTransport|LanMatchRules)\b', path.read_text()):
+        errors.append(f'Single-player code still directly references multiplayer: {path}')
+if re.search(r'scriptingDefineSymbols:.*VELOCITY_MULTIPLAYER', (root / 'ProjectSettings/ProjectSettings.asset').read_text()):
+    errors.append('Multiplayer scripting symbol is enabled in Player Settings.')
 try:
     from tree_sitter import Language, Parser
     import tree_sitter_c_sharp
@@ -70,4 +78,5 @@ if errors:
 print(f'PASS JSON manifests, {len(guids)} unique asset GUIDs, all asset references, six vehicle prefab/stat/model sets.')
 print(f'PASS C# syntax parsing: {parsed} files.' if parsed else 'C# syntax was not checked.')
 print('PASS nine supplied OGG files match the audio validation report.')
+print('PASS default single-player source boundaries; Unity build guard verifies the actual player assemblies.')
 print('Unity import, API compilation, tests, gameplay, multiplayer, builds and performance remain separate checks.')

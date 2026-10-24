@@ -26,7 +26,8 @@ namespace VelocityRivals
                 desired = hit.point + hit.normal * .4f;
             transform.position = Vector3.SmoothDamp(transform.position, desired, ref velocity, .13f, float.PositiveInfinity, Time.deltaTime);
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(focus + forward * 3f - transform.position), Time.deltaTime * 10f);
-            view.fieldOfView = Mathf.Lerp(view.fieldOfView, 65f + speed * 15f + (Target.IsBoosting ? 5f : 0f), Time.deltaTime * 5f);
+            float targetFov = SaveStore.Current.reducedEffects ? 65 : 65f + speed * 15f + (Target.IsBoosting ? 5f : 0f);
+            view.fieldOfView = Mathf.Lerp(view.fieldOfView, targetFov, Time.deltaTime * 5f);
         }
     }
 }

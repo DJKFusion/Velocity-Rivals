@@ -1,3 +1,5 @@
+> Historical development guide for the earlier multiplayer edition (commit db4284e). Version 0.4.0 is single player: networking is excluded and these menu/deployment steps do not apply. Use [the single-player release guide](SINGLE-PLAYER-RELEASE.md).
+
 # Play with a friend in another home
 
 This update contains an online private-room client and a deployable relay. **No public relay has been deployed for you.** The actual C# transport has passed a local connection test with the Python server; Unity gameplay over it remains untested. Both players need this same update (protocol 3).

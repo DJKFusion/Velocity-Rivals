@@ -11,7 +11,6 @@ namespace VelocityRivals
         private AudioClip[] menuTracks, raceTracks;
         private ShufflePlaylist menuOrder, raceOrder;
         private AudioClip fallback;
-        private LanRaceSession lan;
         private int active;
         private bool raceMusic;
         private float fade = 1, fadeDuration = 1.5f, outgoingGain, startedAt, duck = 1;
@@ -44,7 +43,6 @@ namespace VelocityRivals
             raceTracks = LoadTracks("Music/Race");
             menuOrder = new ShufflePlaylist(menuTracks.Length, System.Environment.TickCount);
             raceOrder = new ShufflePlaylist(raceTracks.Length, System.Environment.TickCount ^ 7919);
-            lan = FindFirstObjectByType<LanRaceSession>();
             click = Tone("Menu pulse", 660, 0.08f);
             victory = Tone("Finish signal", 880, 0.7f);
             cues.Add(GameCue.Countdown, Tone("Countdown", 440, .12f));
@@ -72,7 +70,7 @@ namespace VelocityRivals
         private void Update()
         {
             var session = GameSession.Instance;
-            bool racing = (session != null && !session.NetworkControlled && session.Running && !session.Finished) || (lan != null && lan.RoundActive);
+            bool racing = session != null && session.Running && !session.Finished;
             if (racing != raceMusic) { raceMusic = racing; AdvanceTrack(); }
             duck = Mathf.MoveTowards(duck, session != null && session.Paused ? .4f : 1, Time.unscaledDeltaTime * 2);
             fade = Mathf.Clamp01(fade + Time.unscaledDeltaTime / fadeDuration);

@@ -56,7 +56,7 @@ namespace VelocityRivals
                 skid[i].emitting = drifting && contact && !teleport;
                 if (contact) { skid[i].transform.position = hit.point + hit.normal * .02f; skid[i].transform.rotation = Quaternion.LookRotation(hit.normal, transform.forward); }
             }
-            var emission = smoke.emission; emission.rateOverTime = drifting && SaveStore.Current.quality > 0 ? 30 : 0;
+            var emission = smoke.emission; emission.rateOverTime = drifting && SaveStore.Current.quality > 0 && !SaveStore.Current.reducedEffects ? 30 : 0;
             headlight.enabled = car.enabled && SaveStore.Current.quality > 0;
         }
         void OnDestroy() { if (skidMaterial) Destroy(skidMaterial); if (smokeMaterial) Destroy(smokeMaterial); }

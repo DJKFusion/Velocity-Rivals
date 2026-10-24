@@ -12,7 +12,7 @@ if ($RunTests) {
     foreach ($Platform in @('EditMode', 'PlayMode')) {
         $ResultPath = Join-Path $Artifacts "$Platform.xml"
         if (Test-Path $ResultPath) { Remove-Item $ResultPath }
-        & $Unity -batchmode -nographics -projectPath $Project -runTests -testPlatform $Platform -testResults $ResultPath -logFile (Join-Path $Artifacts "$Platform.log")
+        & $Unity -batchmode -projectPath $Project -runTests -testPlatform $Platform -testResults $ResultPath -logFile (Join-Path $Artifacts "$Platform.log")
         if ($LASTEXITCODE -ne 0) { throw "$Platform tests failed. See Artifacts logs." }
         if (!(Test-Path $ResultPath)) { throw "$Platform runner produced no result file." }
         [xml]$Results = Get-Content $ResultPath
@@ -22,11 +22,17 @@ if ($RunTests) {
     }
 }
 $Method = if ($Package) { 'VelocityRivals.Editor.ProjectBuilder.BuildWindowsPackage' } else { 'VelocityRivals.Editor.ProjectBuilder.BuildWindows' }
+$PackageReport = Join-Path $Artifacts 'latest-singleplayer-package.json'
+if ($Package -and (Test-Path $PackageReport)) { Remove-Item $PackageReport }
 & $Unity -batchmode -nographics -quit -projectPath $Project -buildTarget Win64 -executeMethod $Method -logFile (Join-Path $Artifacts 'build.log')
 if ($LASTEXITCODE -ne 0) { throw 'Unity build failed. See Artifacts/build.log.' }
 $Executable = if ($env:VELOCITY_BUILD_PATH) {
     if ([IO.Path]::IsPathRooted($env:VELOCITY_BUILD_PATH)) { $env:VELOCITY_BUILD_PATH } else { Join-Path $Project $env:VELOCITY_BUILD_PATH }
-} else { Join-Path $Project 'Builds/Windows/VelocityRivals.exe' }
+} else { Join-Path $Project 'Builds/SinglePlayer/Windows/VelocityRivals.exe' }
 if (!(Test-Path $Executable)) { throw 'No executable was produced.' }
 Write-Host "Build ready at $Executable. Ship the entire folder, including the Data directory and UnityPlayer.dll."
-if ($Package) { Write-Host "Game ZIP is in $Project\Builds\Packages. Extract it fully before launching the game." }
+if ($Package) {
+    $Built = Get-Content -LiteralPath $PackageReport -Raw | ConvertFrom-Json
+    if (!(Test-Path -LiteralPath $Built.package) -or !(Test-Path -LiteralPath ($Built.package + '.sha256'))) { throw 'The package or checksum is missing.' }
+    Write-Host "Game ZIP: $($Built.package). Extract it fully before launching the game."
+}

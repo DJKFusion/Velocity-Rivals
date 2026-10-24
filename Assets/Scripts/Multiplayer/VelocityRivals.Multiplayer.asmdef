@@ -1,0 +1,7 @@
+{
+  "name": "VelocityRivals.Multiplayer",
+  "rootNamespace": "VelocityRivals",
+  "references": ["VelocityRivals.Runtime", "Unity.InputSystem"],
+  "defineConstraints": ["VELOCITY_MULTIPLAYER"],
+  "autoReferenced": false
+}

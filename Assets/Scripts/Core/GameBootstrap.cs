@@ -23,7 +23,6 @@ namespace VelocityRivals
             }
             gameObject.AddComponent<GameSession>();
             gameObject.AddComponent<VelocityUI>();
-            gameObject.AddComponent<LanRaceSession>();
             var volume = new GameObject("Global post processing").AddComponent<Volume>();
             volume.transform.SetParent(transform);
             volume.isGlobal = true;
@@ -41,5 +40,12 @@ namespace VelocityRivals
             vignette.intensity.Override(.18f); vignette.smoothness.Override(.4f);
         }
         private void OnDestroy() { if (ownedProfile) Destroy(ownedProfile); }
+        private void Update()
+        {
+            if (!ownedProfile) return;
+            bool enabled = !SaveStore.Current.reducedEffects;
+            if (ownedProfile.TryGet<Bloom>(out var bloom)) bloom.active = enabled;
+            if (ownedProfile.TryGet<Vignette>(out var vignette)) vignette.active = enabled;
+        }
     }
 }

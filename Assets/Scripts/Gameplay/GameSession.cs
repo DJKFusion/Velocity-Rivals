@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace VelocityRivals
 {
-    public enum GameMode { Championship, ArenaClash, BoostBattle, StuntRush, TimeAttack, FreePlay }
-
     /// <summary>One authoritative local match state. Online sessions must not reuse this as authority.</summary>
     public sealed class GameSession : MonoBehaviour
     {
@@ -24,6 +23,10 @@ namespace VelocityRivals
         public event Action MatchEnded;
         public GameMode CurrentMode => mode;
         public float Elapsed => elapsed;
+        public float CountdownRemaining => Mathf.Max(0, countdown);
+        public int CareerEventIndex { get; private set; } = -1;
+        public int LastCareerMedal { get; private set; }
+        public bool ResultWon { get; private set; }
         public int PlayerScore => playerScore;
         public int RivalScore => rivalScore;
         public bool ActionEnabled => Running && !Paused && !Finished && countdown <= 0;
@@ -74,8 +77,11 @@ namespace VelocityRivals
         private void Awake() { Instance = this; }
         private void OnDestroy() { Time.timeScale = 1; if (Instance == this) Instance = null; Cleanup(); }
 
-        public void StartMatch(GameMode newMode, int newEnvironment, int vehicle, Color color, bool networkControlled = false)
+        public void StartMatch(GameMode newMode, int newEnvironment, int vehicle, Color color, bool networkControlled = false, int careerEvent = -1)
         {
+            if (careerEvent >= 0 && !SaveStore.Current.career.IsUnlocked(careerEvent)) throw new InvalidOperationException("Complete the earlier career events first.");
+            CareerEventIndex = careerEvent;
+            LastCareerMedal = 0;
             NetworkControlled = networkControlled;
             mode = newMode;
             initialEnvironment = environment = Mathf.Clamp(newEnvironment, 0, 4);
@@ -87,11 +93,17 @@ namespace VelocityRivals
             BeginRound();
         }
 
+        public void StartCareerEvent(int index, int vehicle, Color color)
+        {
+            var entry = CareerTour.Get(index);
+            StartMatch(entry.Mode, entry.Environment, vehicle, color, false, index);
+        }
+
         private void BeginRound()
         {
             Cleanup();
             Time.timeScale = 1;
-            Paused = Finished = false;
+            Paused = Finished = ResultWon = false;
             Running = true;
             elapsed = collisionCooldown = goalCooldown = 0;
             wrongWaySeconds = 0;
@@ -108,6 +120,7 @@ namespace VelocityRivals
             Vector3 start = racing ? track[0] + Vector3.up * 1.2f : new Vector3(0, 1.2f, -18);
             Quaternion facing = racing ? Quaternion.LookRotation(track[1] - track[0]) : Quaternion.identity;
             Player = SpawnCar(selectedVehicle, start, facing, paint, true);
+            Player.AllowLocalRecovery = !racing;
             previousPlayer = Player.transform.position;
             playerProgress = racing ? new RaceProgress(track.Count, TotalLaps) : null;
             if (!NetworkControlled && (mode == GameMode.Championship || mode == GameMode.ArenaClash || mode == GameMode.BoostBattle))
@@ -142,7 +155,7 @@ namespace VelocityRivals
             }
         }
 
-        public void RestartMatch() => StartMatch(mode, initialEnvironment, selectedVehicle, paint);
+        public void RestartMatch() => StartMatch(mode, initialEnvironment, selectedVehicle, paint, false, CareerEventIndex);
         public void AdvanceChampionship()
         {
             if (!CanAdvanceChampionship) return;
@@ -152,6 +165,7 @@ namespace VelocityRivals
         }
         public void ReturnToMenu()
         {
+            CareerEventIndex = -1;
             NetworkControlled = false;
             Running = Finished = Paused = false;
             Time.timeScale = 1;
@@ -187,13 +201,15 @@ namespace VelocityRivals
             if (environment == 4) stats.Grip *= .45f;
             if (!player)
             {
-                float difficulty = new[] { .8f, 1f, 1.12f }[Mathf.Clamp(SaveStore.Current.difficulty, 0, 2)];
+                int level = CareerEventIndex >= 0 ? CareerTour.Get(CareerEventIndex).Difficulty : SaveStore.Current.difficulty;
+                float difficulty = new[] { .8f, 1f, 1.12f }[Mathf.Clamp(level, 0, 2)];
                 stats.MaxSpeed *= difficulty; stats.Acceleration *= difficulty;
             }
             temporaryStats.Add(stats);
             var car = VehicleController.Spawn(stats.DisplayName, position, rotation, stats, color, player);
             car.transform.SetParent(world, true);
             car.ControlsEnabled = false;
+            if (racing) car.AllowLocalRecovery = false;
             cars.Add(car);
             var hit = car.gameObject.AddComponent<BattleContact>();
             hit.Session = this;
@@ -214,12 +230,15 @@ namespace VelocityRivals
                 return;
             }
             elapsed += Time.deltaTime;
+            if (racing && ((Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame) || (Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame)))
+                Recover(Player, playerProgress.NextCheckpoint);
             collisionCooldown = Mathf.Max(0, collisionCooldown - Time.deltaTime);
             goalCooldown = Mathf.Max(0, goalCooldown - Time.deltaTime);
-            if (Player.transform.position.y < -12 || Player.transform.position.sqrMagnitude > 300 * 300)
+            if (Player.NeedsRecovery || Player.transform.position.y < -12 || Player.transform.position.sqrMagnitude > 300 * 300)
                 Recover(Player, racing ? playerProgress.NextCheckpoint : 0);
             if (racing) UpdateRace();
             else UpdateArena();
+            if (Finished) return;
             UpdateAI();
             if (ghost != null) ghost.Tick(elapsed);
         }
@@ -262,7 +281,7 @@ namespace VelocityRivals
                     {
                         Finished = true;
                         ResultText = "ROUND " + (round + 1) + " COMPLETE\n" + Standings() + "\nSelect NEXT ROUND to continue the championship.";
-                        foreach (var car in cars) car.ControlsEnabled = false;
+                        StopCarsForResults();
                         MatchEnded?.Invoke();
                     }
                     else
@@ -347,11 +366,40 @@ namespace VelocityRivals
         }
         private void EndMatch(string heading, string details, bool won, int score)
         {
+            if (Finished) return;
             Finished = true;
+            ResultWon = won;
             ResultText = heading + "\n" + details;
-            foreach (var car in cars) if (car != null) car.ControlsEnabled = false;
-            SaveStore.RecordResult(mode.ToString(), won, mode == GameMode.Championship ? championshipElapsed : elapsed, score);
+            StopCarsForResults();
+            bool completed = !racing || playerProgress.Complete;
+            float seconds = mode == GameMode.Championship ? championshipElapsed : elapsed;
+            SaveStore.RecordResult(mode.ToString(), won, seconds, score, initialEnvironment, selectedVehicle, completed);
+            if (CareerEventIndex >= 0)
+            {
+                LastCareerMedal = CareerTour.Get(CareerEventIndex).Medal(completed, won, seconds, score);
+                SaveStore.Current.career.Record(CareerEventIndex, LastCareerMedal);
+                ResultText += "\nCAREER: " + CareerTour.MedalName(LastCareerMedal);
+                if (SaveStore.Current.career.Complete)
+                {
+                    ResultText += "\nVELOCITY TOUR COMPLETE — replay events to collect every gold medal.";
+                    if (!SaveStore.Current.achievements.Contains("Velocity Tour complete")) SaveStore.Current.achievements.Add("Velocity Tour complete");
+                }
+                SaveStore.Save();
+            }
             MatchEnded?.Invoke();
+        }
+
+        private void StopCarsForResults()
+        {
+            foreach (var car in cars)
+            {
+                if (!car) continue;
+                car.ControlsEnabled = false;
+                var body = car.GetComponent<Rigidbody>();
+                body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero;
+                body.isKinematic = true;
+                car.enabled = false;
+            }
         }
 
         private void UpdateAI()
@@ -360,7 +408,12 @@ namespace VelocityRivals
             {
                 if (racing && racer.Progress.Complete) continue;
                 Vector3 target;
-                if (racing) target = track[racer.Progress.NextCheckpoint] + Vector3.Cross(Vector3.up, (track[(racer.Progress.NextCheckpoint + 1) % track.Count] - track[racer.Progress.NextCheckpoint]).normalized) * Mathf.Sin(racer.Id * 2.1f) * 1.5f;
+                if (racing)
+                {
+                    int next = racer.Progress.NextCheckpoint;
+                    Vector3 forward = (track[(next + 1) % track.Count] - track[(next + track.Count - 1) % track.Count]).normalized;
+                    target = track[next] + forward * 4 + Vector3.Cross(Vector3.up, forward) * Mathf.Sin(racer.Id * 2.1f) * 1.5f;
+                }
                 else if (mode == GameMode.ArenaClash && core != null)
                 {
                     // One blue teammate; two orange opponents approach from behind the core.
@@ -390,7 +443,9 @@ namespace VelocityRivals
             if (racing)
             {
                 int previous = (checkpoint + track.Count - 1) % track.Count;
-                car.Respawn(track[previous] + Vector3.up * 1.3f, Quaternion.LookRotation(track[checkpoint] - track[previous]));
+                Vector3 position = track[previous] + Vector3.up * 1.3f;
+                car.Respawn(position, Quaternion.LookRotation(track[checkpoint] - track[previous]));
+                if (car == Player) previousPlayer = position;
             }
             else car.Respawn(new Vector3(UnityEngine.Random.Range(-15, 15), 1.4f, UnityEngine.Random.Range(-15, 15)), Quaternion.identity);
         }

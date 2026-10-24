@@ -10,6 +10,12 @@ The GitHub download is a Unity source project. This cloud workspace has no licen
 4. Open with **6000.6.7f1** and wait for importing to finish.
 5. Choose **Velocity Rivals → Play Game**. Check the menu, Free Play, the cars and music. Stop Play Mode before building.
 
+## Recommended: double-click build with tests
+
+Close the project in Unity after importing it. Double-click **Build-SinglePlayer.cmd** in the extracted project folder. It runs EditMode and PlayMode tests, checks single-player assets/configuration, then builds and packages Windows. Any failed test or build stops the script. On success it opens **Builds/Packages**, containing a versioned single-player game ZIP and SHA-256 checksum. The batch script itself has not been executed in this Linux workspace.
+
+If Unity is installed in a custom location, use the PowerShell command below, or set UNITY_EDITOR_PATH to the full Unity.exe path before running the batch file.
+
 ## Build through the menu
 
 1. Open **Window → General → Test Runner** and run the EditMode and PlayMode suites. Resolve any failing tests and red Console errors.
@@ -37,10 +43,10 @@ If your Editor is installed elsewhere:
 .\Tools\Build-Windows.ps1 -Unity 'D:\Unity\6000.6.7f1\Editor\Unity.exe' -RunTests -Package
 ```
 
-Reports/logs are in `Artifacts`. Test failure, missing reports and zero executed tests prevent the build. Omitting `-Package` leaves the unpacked game in `Builds/Windows`. `VELOCITY_BUILD_PATH` can override the executable path; the package still goes in `Builds/Packages`.
+Reports/logs are in `Artifacts`. Test failure, missing reports and zero executed tests prevent the build. Omitting `-Package` leaves the unpacked game in `Builds/SinglePlayer/Windows`. `VELOCITY_BUILD_PATH` can override the executable path; the package still goes in `Builds/Packages`.
 
 ## Check the actual player before sharing
 
-Launch the extracted EXE, hear menu/race music, complete all modes and a three-round championship, test controller input, pause/resume and alt-tab, quit/reopen to verify progress saves, and run on a second Windows PC. Check frame rate and memory during repeated events. Test LAN with two instances and private online play after [deploying the relay](ONLINE.md). Full acceptance checks are in [TESTING.md](TESTING.md).
+Launch the extracted EXE, hear menu/race music, complete all modes and a three-round championship, test controller input, pause/resume and alt-tab, quit/reopen to verify progress saves, and run on a second Windows PC. Check frame rate and memory during repeated events. Complete the entire 12-event career and verify the game works with the network disconnected. This edition has no multiplayer or server requirement. Full acceptance checks are in [TESTING.md](TESTING.md).
 
-Building does not finish the outstanding game design, graphics tuning, online services or platform release work. See [STATUS.md](STATUS.md) for the current scope and remaining work.
+Building does not finish the outstanding game design, graphics tuning or platform release work. Follow [the single-player checklist](SINGLE-PLAYER-RELEASE.md). See [STATUS.md](STATUS.md) for the current scope and remaining work.

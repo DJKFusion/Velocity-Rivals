@@ -21,14 +21,14 @@ namespace VelocityRivals
         private Text hint;
         private Text title;
         private Text nowPlaying;
+        private Text countdownLabel;
+        private int careerSelection;
+        private int recordsPage;
         private GameObject mapPanel;
         private SoundDirector sound;
         private GameMode selectedMode;
         private int selectedEnvironment;
         private bool showingResults;
-        private LanRaceSession lan;
-        private bool networkWasActive;
-        private int selectedNetworkMode = 1;
         private readonly Color cyan = new Color(0.12f, 0.9f, 0.95f);
         public static readonly Color[] Paints = {
             new Color(0.05f, 0.85f, 1), new Color(1, 0.18f, 0.32f), new Color(0.55f, 0.25f, 1),
@@ -42,7 +42,6 @@ namespace VelocityRivals
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             session = FindFirstObjectByType<GameSession>();
             if (!session) session = gameObject.AddComponent<GameSession>();
-            lan = FindFirstObjectByType<LanRaceSession>();
             sound = FindFirstObjectByType<SoundDirector>();
             if (!sound) sound = gameObject.AddComponent<SoundDirector>();
             if (!FindFirstObjectByType<EventSystem>())
@@ -86,26 +85,24 @@ namespace VelocityRivals
             mapCaption.rectTransform.pivot = new Vector2(.5f, 1);
             mapCaption.rectTransform.sizeDelta = new Vector2(0, 30);
             mapPanel.SetActive(false);
+            countdownLabel = Label(canvas.transform, "", 96, 150);
+            countdownLabel.rectTransform.anchorMin = countdownLabel.rectTransform.anchorMax = new Vector2(.5f,.5f);
+            countdownLabel.rectTransform.sizeDelta = new Vector2(600,180);
+            countdownLabel.rectTransform.anchoredPosition = new Vector2(0,100);
+            countdownLabel.color = cyan;
             session.MatchEnded += OnMatchEnded;
             ApplyQuality(SaveStore.Current.quality);
+            ApplyDisplay();
             MainMenu();
         }
 
         private void Update()
         {
             if (!session) return;
-            mapPanel.SetActive(session.Running && !session.Finished && !session.Paused && !(lan != null && lan.Active));
+            countdownLabel.text = session.Running && !session.Paused && !session.Finished && session.CountdownRemaining > 0 ? Mathf.CeilToInt(session.CountdownRemaining).ToString() : "";
+            mapPanel.SetActive(session.Running && !session.Finished && !session.Paused);
             if (nowPlaying) nowPlaying.text = sound.PlaylistName.ToUpperInvariant() + " PLAYLIST\n" + sound.NowPlaying;
-            if (lan != null && lan.Active)
-            {
-                if (!networkWasActive) { ClearPanel(); networkWasActive = true; }
-                hud.text = "MULTIPLAYER\n" + lan.MatchStatus;
-                if (session.Player) hud.text += $"\n{session.Player.SpeedKmh:0} km/h    BOOST {session.Player.BoostAmount * 100:0}%";
-                hint.text = "WASD / triggers + stick: drive · Shift / B: boost · Space / A: jump · R / Y: recover\nF8: room controls / leave · Matches continue when you switch windows.";
-                return;
-            }
-            if (networkWasActive) { networkWasActive = false; MainMenu(); }
-            if (title) title.color = Color.Lerp(Color.white, cyan, 0.25f + Mathf.Sin(Time.unscaledTime * 1.5f) * 0.15f);
+            if (title) title.color = SaveStore.Current.reducedEffects ? cyan : Color.Lerp(Color.white, cyan, 0.25f + Mathf.Sin(Time.unscaledTime * 1.5f) * 0.15f);
             bool pausePressed = (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
             if (pausePressed && session.Running && !session.Finished)
@@ -158,7 +155,9 @@ namespace VelocityRivals
             layout.childForceExpandWidth = true;
             title = Label(panel, heading.ToUpperInvariant(), 48, 68);
             title.color = cyan;
-            Label(panel, subtitle, 23, Mathf.Clamp(30 * subtitle.Split('\n').Length, 58, 250));
+            int subtitleLines = 0;
+            foreach (string line in subtitle.Split('\n')) subtitleLines += Mathf.Max(1, Mathf.CeilToInt(line.Length / 70f));
+            Label(panel, subtitle, 23, Mathf.Clamp(30 * subtitleLines, 58, 270));
         }
 
         private Text Label(Transform parent, string text, int size, float height)
@@ -214,17 +213,72 @@ namespace VelocityRivals
         {
             showingResults = false;
             if (session.Running || session.Finished) session.ReturnToMenu();
-            Page("Velocity Rivals", $"LEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP • {SaveStore.Current.wins} WINS\nAn original arcade racing and vehicle sports game");
-            Focus(Button("PLAY", ModeMenu));
+            Page("Velocity Rivals", $"SINGLE PLAYER • LEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP\n{SaveStore.Current.career.TotalMedals}/{CareerTour.Count * 3} career medal points");
+            panel.GetComponent<VerticalLayoutGroup>().spacing = 8;
+            Preview(string.IsNullOrEmpty(SaveStore.LastError) ? 140 : 80);
+            Focus(Button("CAREER TOUR", () => { careerSelection = SaveStore.Current.career.NextEvent; CareerMenu(); }));
+            Button("PLAY", ModeMenu);
             Button("GARAGE", Garage);
             Button("RECORDS & ACHIEVEMENTS", Records);
             Button("SETTINGS", () => Settings(false));
             Button("HOW TO PLAY", () => HowToPlay(false));
-            Button("MULTIPLAYER", Multiplayer);
             Button("CREDITS", Credits);
-            Button("QUIT", () => Application.Quit());
-            Label(panel, "Complete events to earn XP. Each 500 XP unlocks another vehicle.", 22, 58);
+            Button("QUIT", QuitGame);
             if (!string.IsNullOrEmpty(SaveStore.LastError)) Label(panel, SaveStore.LastError, 18, 50);
+        }
+
+        private void QuitGame()
+        {
+            SaveStore.Save();
+            #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+            #else
+            Application.Quit();
+            #endif
+        }
+
+        private void Preview(float height)
+        {
+            var preview = new GameObject("Vehicle showroom", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement), typeof(GaragePreview));
+            preview.transform.SetParent(panel, false);
+            preview.GetComponent<RawImage>().raycastTarget = false;
+            preview.GetComponent<LayoutElement>().preferredHeight = height;
+        }
+
+        private void CareerMenu()
+        {
+            if (session.Running || session.Finished) session.ReturnToMenu();
+            var progress = SaveStore.Current.career;
+            careerSelection = Mathf.Clamp(careerSelection, 0, progress.NextEvent);
+            var entry = CareerTour.Get(careerSelection);
+            Page(progress.Complete ? "Velocity Tour complete" : "Career Tour", $"{progress.TotalMedals}/{CareerTour.Count * 3} MEDAL POINTS • {entry.Cup.ToUpperInvariant()}\nBronze unlocks the next event. Replay any unlocked event for gold.");
+            Preview(160);
+            Label(panel, $"EVENT {careerSelection + 1}/{CareerTour.Count} — {entry.Name}\n{GameSession.EnvironmentNames[entry.Environment]} • {CareerTour.MedalName(progress.medals[careerSelection])}\n{entry.Goal}", 26, 150);
+            Focus(Button("START CAREER EVENT", StartCareer));
+            if (careerSelection > 0) Button("PREVIOUS EVENT", () => { careerSelection--; CareerMenu(); });
+            if (careerSelection < progress.NextEvent) Button("NEXT EVENT", () => { careerSelection++; CareerMenu(); });
+            Button("GARAGE", Garage);
+            Button("MAIN MENU", MainMenu);
+        }
+
+        private void StartCareer()
+        {
+            ClearPanel(); showingResults = false;
+            var p = SaveStore.Current;
+            session.StartCareerEvent(careerSelection, p.selectedVehicle, Paints[p.paint]);
+            ApplyCarCosmetics();
+        }
+
+        private void ApplyCarCosmetics()
+        {
+            var p = SaveStore.Current;
+            if (session.Player) session.Player.SetCosmetics(p.wheels, p.trail, p.decal, p.spoiler, p.finish);
+            if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
+        }
+
+        private void RestartCurrent()
+        {
+            ClearPanel(); showingResults = false; session.RestartMatch(); ApplyCarCosmetics();
         }
 
         private void ModeMenu()
@@ -254,12 +308,13 @@ namespace VelocityRivals
         private void Garage()
         {
             var p = SaveStore.Current;
-            Page("Garage", $"{p.UnlockedVehicles}/6 vehicles unlocked • Next unlock at {p.UnlockedVehicles * 500} XP\nSelections apply to your vehicle on the next event.");
-            var preview = new GameObject("Paint and finish preview", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement), typeof(GaragePreview));
-            preview.transform.SetParent(panel, false);
-            preview.GetComponent<RawImage>().raycastTarget = false;
-            preview.GetComponent<LayoutElement>().preferredHeight = 140;
-            Focus(Cycle("Paint", PaintNames, () => p.paint, value => { p.paint = value; SaveStore.Save(); }));
+            Page("Garage", p.UnlockedVehicles == 6 ? "ALL SIX VEHICLES UNLOCKED\nCustomise your car for your next event." : $"{p.UnlockedVehicles}/6 vehicles unlocked • Next unlock at {p.UnlockedVehicles * 500} XP\nSelections apply to your vehicle on the next event.");
+            panel.GetComponent<VerticalLayoutGroup>().spacing = 6;
+            Preview(160);
+            var vehicles = new List<string>();
+            for (int i = 0; i < p.UnlockedVehicles; i++) vehicles.Add(GameSession.VehicleNames[i]);
+            Focus(Cycle("Vehicle", vehicles, () => p.selectedVehicle, value => { p.selectedVehicle = value; SaveStore.Save(); }));
+            Cycle("Paint", PaintNames, () => p.paint, value => { p.paint = value; SaveStore.Save(); });
             Cycle("Wheels", new[] { "Street", "Sport", "Aero" }, () => p.wheels, value => { p.wheels = value; SaveStore.Save(); });
             Cycle("Boost trail", new[] { "Ion", "Plasma", "Solar" }, () => p.trail, value => { p.trail = value; SaveStore.Save(); });
             Cycle("Decal", new[] { "Clean", "Twin stripes", "Race panel" }, () => p.decal, value => { p.decal = value; SaveStore.Save(); });
@@ -277,10 +332,26 @@ namespace VelocityRivals
             Cycle("Music volume", volumes, () => Mathf.RoundToInt(p.musicVolume * 10), value => { p.musicVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save(); });
             Button("SOUNDTRACK", () => Soundtrack(paused));
             Cycle("Effects volume", volumes, () => Mathf.RoundToInt(p.effectsVolume * 10), value => { p.effectsVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save(); });
-            Cycle("Graphics", new[] { "Performance", "Balanced", "Quality" }, () => p.quality, value => { p.quality = value; ApplyQuality(value); SaveStore.Save(); });
+            Button("DISPLAY & EFFECTS", () => DisplaySettings(paused));
             Cycle("Steering sensitivity", new[] { "50%", "75%", "100%", "125%", "150%" }, () => Mathf.RoundToInt((p.steeringSensitivity - .5f) * 4), value => { p.steeringSensitivity = .5f + value * .25f; SaveStore.Save(); });
-            Label(panel, "Keyboard: WASD drive, Shift boost, Space jump, Ctrl drift, Q/E roll, R recover.\nGamepad: RT/LT throttle/reverse, stick steer, A jump, B boost, X drift, Y recover.\nEsc / Start pauses. Button remapping is not implemented yet.", 22, 140);
+            Label(panel, "Keyboard: WASD drive, Shift boost, Space jump, Ctrl drift, Q/E roll, R recover.\nGamepad: RT/LT drive, stick steer, A jump, B boost, X drift, Y recover.\nEsc / Start pauses. Full controls are under HOW TO PLAY.", 22, 140);
             Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); });
+        }
+
+        private void DisplaySettings(bool paused)
+        {
+            var p = SaveStore.Current;
+            Page("Display & effects", "Choose the detail and effects that feel comfortable on your computer.");
+            Focus(Cycle("Graphics", new[] { "Performance", "Balanced", "Quality" }, () => p.quality, value => { p.quality = value; ApplyQuality(value); SaveStore.Save(); }));
+            Cycle("Display", new[] { "Windowed", "Borderless fullscreen" }, () => p.fullscreen ? 1 : 0, value => { p.fullscreen = value == 1; ApplyDisplay(); SaveStore.Save(); });
+            Cycle("Visual effects", new[] { "Full", "Reduced" }, () => p.reducedEffects ? 1 : 0, value => { p.reducedEffects = value == 1; SaveStore.Save(); });
+            Label(panel, "Reduced effects turns off bloom, vignette, impact bursts, drift smoke, showroom rotation and boost camera widening.\nPerformance reduces render resolution, shadows and anti-aliasing, and turns off headlights.", 24, 140);
+            Button("BACK", () => Settings(paused));
+        }
+
+        private static void ApplyDisplay()
+        {
+            if (!Application.isEditor) Screen.fullScreenMode = SaveStore.Current.fullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
         }
 
         private void Soundtrack(bool paused)
@@ -325,7 +396,7 @@ namespace VelocityRivals
             session.SetPaused(true);
             Page("Paused", "Take a breather. Your event is paused.");
             Focus(Button("RESUME", Resume));
-            Button("RESTART EVENT", StartMatch);
+            Button("RESTART EVENT", RestartCurrent);
             Button("SETTINGS", () => Settings(true));
             Button("HOW TO PLAY", () => HowToPlay(true));
             Button("MAIN MENU", MainMenu);
@@ -347,79 +418,36 @@ namespace VelocityRivals
                     if (session.Player) session.Player.SetCosmetics(p.wheels, p.trail, p.decal, p.spoiler, p.finish);
                     if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
                 }));
-                Button("RESTART CHAMPIONSHIP", StartMatch);
+                Button("RESTART CHAMPIONSHIP", RestartCurrent);
             }
-            else Focus(Button("RACE AGAIN", StartMatch));
+            else if (session.CareerEventIndex >= 0)
+            {
+                Focus(Button("CONTINUE TOUR", () => { careerSelection = SaveStore.Current.career.NextEvent; CareerMenu(); }));
+                Button("REPLAY EVENT", RestartCurrent);
+            }
+            else Focus(Button("RACE AGAIN", RestartCurrent));
             Button("MAIN MENU", MainMenu);
         }
 
         private void Records()
         {
-            Page("Personal records", "Local records only. Online leaderboards are not connected.");
+            var records = SaveStore.Current.records;
+            int pages = Mathf.Max(1, (records.Count + 3) / 4);
+            recordsPage = Mathf.Clamp(recordsPage, 0, pages - 1);
+            Page("Personal records", $"Saved on this computer • Page {recordsPage + 1}/{pages}\nTimes are separated by event, environment and vehicle.");
             string text = "";
-            foreach (var r in SaveStore.Current.records)
-                text += $"{r.mode}  •  {r.finishes} events  •  Best {r.bestSeconds:0.00}s  •  Score {r.bestScore}\n";
-            Label(panel, string.IsNullOrEmpty(text) ? "Finish your first event to set a record." : text, 23, 280);
-            Label(panel, "ACHIEVEMENTS\n" + (SaveStore.Current.achievements.Count > 0 ? string.Join(" • ", SaveStore.Current.achievements) : "First finish • First victory • Ten victories • Full garage • Stunt specialist"), 23, 130);
+            for (int i = recordsPage * 4; i < Mathf.Min(records.Count, recordsPage * 4 + 4); i++)
+            {
+                var r = records[i];
+                string environment = r.environment >= 0 && r.environment < 5 ? GameSession.EnvironmentNames[r.environment] : "Earlier version";
+                string vehicle = r.vehicle >= 0 && r.vehicle < 6 ? GameSession.VehicleNames[r.vehicle] : "All vehicles";
+                text += $"{r.mode} • {environment} • {vehicle}\n{r.finishes} finishes • Best {LapDisplay(r.bestSeconds)} • Score {r.bestScore}\n\n";
+            }
+            Label(panel, string.IsNullOrEmpty(text) ? "Finish your first event to set a record." : text, 22, 340);
+            Label(panel, "ACHIEVEMENTS\n" + (SaveStore.Current.achievements.Count > 0 ? string.Join(" • ", SaveStore.Current.achievements) : "First finish • First victory • Ten victories • Full garage • Stunt specialist"), 22, 100);
             Focus(Button("BACK", MainMenu));
-        }
-        private void Multiplayer()
-        {
-            Page("Multiplayer", "Two players • private online rooms or direct LAN • host starts each match");
-            Focus(Cycle("Event", LanRaceSession.ModeNames, () => selectedNetworkMode, value => selectedNetworkMode = value));
-            Cycle("Environment", GameSession.EnvironmentNames, () => selectedEnvironment, value => selectedEnvironment = value);
-            Label(panel, "Circuit Duel: first to complete three laps wins.\nArena Duel: push the core into your rival's goal. First to five wins.\nGate Sprint: collect the most gates in two minutes.\nYour selected garage vehicle is used in multiplayer.", 24, 190);
-            Button("ONLINE ROOM", OnlineMenu);
-            Button("LOCAL NETWORK / LAN", LanMenu);
-            Button("BACK", MainMenu);
-        }
-
-        private void ConfigureNetwork()
-        {
-            lan.SelectedMode = (LanMode)selectedNetworkMode;
-            lan.SelectedEnvironment = selectedEnvironment;
-        }
-
-        private InputField NetworkField(string name, string value, int limit)
-        {
-            var fieldObject = new GameObject("Host IP", typeof(RectTransform), typeof(Image), typeof(InputField), typeof(LayoutElement));
-            fieldObject.name = name;
-            fieldObject.transform.SetParent(panel, false);
-            fieldObject.GetComponent<Image>().color = new Color(.08f, .12f, .18f);
-            fieldObject.GetComponent<LayoutElement>().preferredHeight = 55;
-            var address = fieldObject.GetComponent<InputField>();
-            var label = Label(fieldObject.transform, "", 25, 0);
-            Stretch(label.rectTransform, 10);
-            address.textComponent = label;
-            address.characterLimit = limit;
-            address.text = value ?? "";
-            return address;
-        }
-
-        private void OnlineMenu()
-        {
-            Page("Private online room", "Play with a friend in another home. Both players use the same relay address.");
-            Label(panel, "RELAY ADDRESS (wss://…)", 22, 30);
-            var endpoint = NetworkField("Relay address", SaveStore.Current.relayUrl, 256);
-            Label(panel, "ROOM CODE (only needed when joining)", 22, 30);
-            var code = NetworkField("Room code", "", 8);
-            Action saveAddress = () => { SaveStore.Current.relayUrl = endpoint.text.Trim(); SaveStore.Save(); ConfigureNetwork(); };
-            Focus(Button("CREATE ROOM", () => { saveAddress(); lan.CreateOnlineRoom(endpoint.text); }));
-            Button("JOIN ROOM", () => { saveAddress(); lan.JoinOnlineRoom(endpoint.text, code.text); });
-            Label(panel, "The host shares the eight-character room code, then presses START MATCH.\nNo relay address yet? The host needs to complete the one-time setup below.", 22, 100);
-            Button("RELAY SETUP GUIDE", () => Application.OpenURL("https://github.com/DJKFusion/Velocity-Rivals/blob/main/docs/ONLINE.md"));
-            Button("BACK", Multiplayer);
-        }
-
-        private void LanMenu()
-        {
-            Page("Local network", "Connect two computers on the same home network, or test with 127.0.0.1 on one PC.");
-            Label(panel, "HOST IP ADDRESS", 22, 40);
-            var address = NetworkField("Host IP", "127.0.0.1", 45);
-            Focus(Button("HOST LAN SESSION", () => { if (lan != null) { ConfigureNetwork(); lan.StartHost(); } }));
-            Button("JOIN ENTERED IP", () => { if (lan != null) lan.Join(address.text.Trim()); });
-            Label(panel, lan != null ? lan.ConnectionStatus : "LAN component is missing from the entry scene.", 20, 60);
-            Button("BACK", Multiplayer);
+            if (recordsPage > 0) Button("PREVIOUS PAGE", () => { recordsPage--; Records(); });
+            if (recordsPage + 1 < pages) Button("NEXT PAGE", () => { recordsPage++; Records(); });
         }
         private void Credits()
         {

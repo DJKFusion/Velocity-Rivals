@@ -4,7 +4,7 @@ The current deliverable is development source. The Windows pipeline script exist
 
 ## Windows
 
-Install the exact Editor and Windows build support in Unity Hub. Run Test Runner, then use **Velocity Rivals → Build Windows ZIP**, or run `Tools/Build-Windows.ps1 -RunTests -Package`. The ZIP includes the full player directory and controls instructions. See [BUILD-WINDOWS.md](BUILD-WINDOWS.md). Exercise installation, save permissions, display modes, controller hot-plug and clean shutdown on separate PCs. Retain symbol files and build logs for crash diagnosis. Add signed installers, versioning, crash reporting and patch infrastructure before public distribution.
+Install the exact Editor and Windows build support in Unity Hub. The easiest path is to close the imported project and double-click Build-SinglePlayer.cmd, which runs both test suites before packaging. Alternatively, run Test Runner, then use **Velocity Rivals → Build Windows ZIP**, or run `Tools/Build-Windows.ps1 -RunTests -Package`. The ZIP includes the full player directory and controls instructions. See [BUILD-WINDOWS.md](BUILD-WINDOWS.md). Exercise installation, save permissions, display modes, controller hot-plug and clean shutdown on separate PCs. Retain symbol files and build logs for crash diagnosis. Decide on distribution, signing, support and update delivery for the chosen storefront; the game ZIP already includes version/build information and a checksum.
 
 ## Steam and Epic Games Store
 
@@ -16,9 +16,9 @@ Apply through [PlayStation Partners](https://partners.playstation.net/) and [ID@
 
 Once authorized: implement platform storage/user selection, privilege and parental checks, controller conventions, suspend/resume, disconnect handling, account switching, invitations, achievements/trophies, accessibility and required error presentation. Profile CPU/GPU/memory on actual development hardware. Run each platform's current certification requirements and submit only tested builds. Documentation here is preparation, not certification evidence.
 
-## Networking and cross-play
+## Single-player release scope
 
-The three two-player modes and private-room WebSocket relay are development implementations; the relay is not deployed and Unity sessions remain untested. Follow [ONLINE.md](ONLINE.md) to deploy a private test service. For production, evaluate supported networking stacks and move competitive physics/results to trusted dedicated servers. Measure bandwidth, CPU per match and expected concurrency before choosing hosting commitments. Add account identity, authenticated sessions, matchmaking, reconnect behavior, telemetry and operational abuse controls. Cross-play additionally requires platform permissions, service agreements and testing on every participating platform. No cross-play functionality is claimed.
+Version 0.4.0 excludes multiplayer. No relay deployment, account service or cross-play integration is needed. Archived networking tools are preserved for possible future work and are not part of this release. Complete [SINGLE-PLAYER-RELEASE.md](SINGLE-PLAYER-RELEASE.md) before publishing a Windows package. Console and store integrations above are future options, not implemented features.
 
 ## Asset and project rights
 
