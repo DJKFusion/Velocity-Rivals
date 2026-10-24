@@ -26,6 +26,10 @@ namespace VelocityRivals
         public float Elapsed => elapsed;
         public int PlayerScore => playerScore;
         public int RivalScore => rivalScore;
+        public bool ActionEnabled => Running && !Paused && !Finished && countdown <= 0;
+        public string CombatStatus => battle != null ? battle.PlayerStatus : "";
+        private ArenaBattle battle;
+        private int countdownBeat;
         public bool CanAdvanceChampionship => mode == GameMode.Championship && Finished && round < 2 && playerProgress != null && playerProgress.Complete;
 
         private Transform world;
@@ -79,6 +83,7 @@ namespace VelocityRivals
             Running = true;
             elapsed = collisionCooldown = goalCooldown = 0;
             countdown = 3;
+            countdownBeat = 4;
             playerScore = rivalScore = finishedRivals = 0;
             duration = mode == GameMode.StuntRush ? 120 : mode == GameMode.ArenaClash ? 180 : mode == GameMode.BoostBattle ? 150 : 600;
             ResultText = "";
@@ -98,6 +103,11 @@ namespace VelocityRivals
                     var car = SpawnCar((selectedVehicle + i + 1) % 6, p, racing ? facing : Quaternion.Euler(0, 180, 0), rivalPaint, false);
                     racers.Add(new Racer { Car = car, Previous = p, Progress = new RaceProgress(Mathf.Max(3, track.Count), TotalLaps), Id = i + 1 });
                 }
+            }
+            if (mode == GameMode.BoostBattle)
+            {
+                battle = world.gameObject.AddComponent<ArenaBattle>();
+                battle.Initialize(this, cars);
             }
             Camera camera = Camera.main;
             if (camera == null)
@@ -136,7 +146,7 @@ namespace VelocityRivals
             if (!Running || Finished) return;
             Paused = value;
             Time.timeScale = value ? 0 : 1;
-            foreach (var car in cars) if (car != null) car.ControlsEnabled = !value && countdown <= 0;
+            foreach (var car in cars) if (car != null) car.ControlsEnabled = !value && countdown <= 0 && car.enabled;
         }
 
         private VehicleController SpawnCar(int index, Vector3 position, Quaternion rotation, Color color, bool player)
@@ -153,6 +163,11 @@ namespace VelocityRivals
                 stats.BoostForce = index == 5 ? 34 : 24;
             }
             if (environment == 4) stats.Grip *= .45f;
+            if (!player)
+            {
+                float difficulty = new[] { .8f, 1f, 1.12f }[Mathf.Clamp(SaveStore.Current.difficulty, 0, 2)];
+                stats.MaxSpeed *= difficulty; stats.Acceleration *= difficulty;
+            }
             temporaryStats.Add(stats);
             var car = VehicleController.Spawn(stats.DisplayName, position, rotation, stats, color, player);
             car.transform.SetParent(world, true);
@@ -170,6 +185,8 @@ namespace VelocityRivals
             if (countdown > 0)
             {
                 countdown -= Time.deltaTime;
+                int beat = Mathf.CeilToInt(Mathf.Max(0, countdown));
+                if (beat != countdownBeat) { countdownBeat = beat; SoundDirector.Instance?.Cue(beat == 0 ? GameCue.Go : GameCue.Countdown); }
                 StatusText = "READY — " + Mathf.CeilToInt(Mathf.Max(.01f, countdown));
                 if (countdown <= 0) foreach (var car in cars) car.ControlsEnabled = true;
                 return;
@@ -271,6 +288,8 @@ namespace VelocityRivals
                 if (core != null && goalCooldown <= 0 && core.position.y < 6 && Mathf.Abs(core.position.x) < 10 && Mathf.Abs(core.position.z) > 41)
                 {
                     if (core.position.z > 0) playerScore++; else rivalScore++;
+                    SoundDirector.Instance?.Cue(GameCue.Goal);
+                    MatchEffects.Burst(core.position, core.position.z > 0 ? Color.cyan : new Color(1, .4f, 0));
                     core.position = new Vector3(0, 3, 0); core.linearVelocity = Vector3.zero; core.angularVelocity = Vector3.zero;
                     goalCooldown = 2;
                     Player.Respawn(new Vector3(0, 1.5f, -18), Quaternion.identity);
@@ -282,8 +301,8 @@ namespace VelocityRivals
             }
             else if (mode == GameMode.BoostBattle)
             {
-                StatusText = "BOOST BATTLE · YOU " + playerScore + " — " + rivalScore + " RIVALS\nHit rivals at speed · First to 8";
-                if (playerScore >= 8 || rivalScore >= 8 || elapsed >= duration) EndScoreMode("BOOST BATTLE");
+                StatusText = "BOOST BATTLE · YOU " + playerScore + " — " + rivalScore + " RIVALS\n" + CombatStatus + "\nCyan: shield · Orange: double damage · Purple: pulse burst · First to 15";
+                if (playerScore >= 15 || rivalScore >= 15 || elapsed >= duration) EndScoreMode("BOOST BATTLE");
             }
             else if (mode == GameMode.StuntRush)
             {
@@ -323,6 +342,7 @@ namespace VelocityRivals
                     target = Vector3.Distance(racer.Car.transform.position, core.position + approach * 5) > 7 ? core.position + approach * 5 : core.position;
                 }
                 else target = Player.transform.position + Player.transform.forward * 2;
+                if (battle != null && battle.TryPickupTarget(racer.Car, out Vector3 pickupTarget)) target = pickupTarget;
                 Vector3 local = racer.Car.transform.InverseTransformPoint(target);
                 float steer = Mathf.Clamp(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg / 35, -1, 1);
                 bool sharp = Mathf.Abs(steer) > .65f;
@@ -349,6 +369,7 @@ namespace VelocityRivals
 
         public void RegisterImpact(VehicleController attacker, VehicleController victim, float impact)
         {
+            if (battle != null) { battle.Hit(attacker, victim, impact); return; }
             if (!Running || Finished || Paused || countdown > 0 || mode != GameMode.BoostBattle || collisionCooldown > 0 || impact < 9) return;
             if (attacker != Player && victim != Player) return;
             // Both collision callbacks can fire: choose the vehicle moving into the contact faster.
@@ -357,6 +378,13 @@ namespace VelocityRivals
             collisionCooldown = 1.5f;
             var body = victim.GetComponent<Rigidbody>();
             if (body != null) body.AddForce((victim.transform.position - attacker.transform.position).normalized * 12 + Vector3.up * 4, ForceMode.VelocityChange);
+        }
+
+        public void AwardCombatPoints(VehicleController attacker, VehicleController victim, int points)
+        {
+            if (!ActionEnabled || mode != GameMode.BoostBattle) return;
+            if (attacker == Player) playerScore += points;
+            else if (victim == Player) rivalScore += points;
         }
 
         private Material Material(string name, Color color, bool glow = false)
@@ -471,7 +499,7 @@ namespace VelocityRivals
             foreach (var m in materials) if (m != null) Destroy(m);
             if (corePhysics != null) Destroy(corePhysics);
             temporaryStats.Clear(); materials.Clear(); racers.Clear(); cars.Clear(); track.Clear();
-            Player = null; core = null; ghost = null; world = null;
+            Player = null; core = null; ghost = null; world = null; battle = null;
         }
     }
 

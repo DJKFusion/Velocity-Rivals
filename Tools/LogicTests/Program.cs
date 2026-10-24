@@ -60,6 +60,31 @@ static class Program
             Test("network receive buffer bounded", () => {
                 var reader = new LanFrameBuffer(); Throws<InvalidOperationException>(() => reader.Feed(new byte[65537], 65537));
             });
+            Test("shield blocks damage and expires on match time", () => {
+                var v = new CombatVitals(); v.Shield(10);
+                Check(v.Damage(50, 15) == 0 && v.Health == 100);
+                Check(v.Damage(50, 16) == 50 && v.Health == 50);
+            });
+            Test("knockout clamps damage and cannot be scored twice", () => {
+                var v = new CombatVitals(); Check(v.Damage(150, 4) == 100);
+                Check(v.KnockedOut && v.Damage(10, 5) == 0 && v.RespawnAt == 7);
+            });
+            Test("respawn waits and protects against spawn camping", () => {
+                var v = new CombatVitals(); v.Damage(100, 4);
+                Check(!v.TryRespawn(6.99f)); Check(v.TryRespawn(7));
+                Check(v.Health == 100 && !v.KnockedOut && v.Damage(100, 8.9f) == 0);
+                Check(v.Damage(10, 9) == 10 && !v.TryRespawn(10));
+            });
+            Test("overdrive expires and clears on knockout", () => {
+                var v = new CombatVitals(); v.Overdrive(5);
+                Check(v.DamageMultiplier(12.9f) == 2 && v.DamageMultiplier(13) == 1);
+                v.Overdrive(20); v.Damage(100, 21); Check(v.DamageMultiplier(22) == 1);
+            });
+            Test("knocked out cars cannot collect buffs; negative damage cannot heal", () => {
+                var v = new CombatVitals(); Check(v.Damage(-10, 0) == 0 && v.Health == 100);
+                v.Damage(100, 1); v.Shield(2); v.Overdrive(2);
+                Check(!v.Shielded(2) && v.DamageMultiplier(2) == 1);
+            });
             Console.WriteLine(passed + " tests passed. These cover shared C# logic, not Unity runtime behavior.");
             return 0;
         }

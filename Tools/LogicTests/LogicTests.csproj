@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../Assets/Scripts/Gameplay/RaceProgress.cs" Link="RaceProgress.cs" />
+    <Compile Include="../../Assets/Scripts/Gameplay/CombatVitals.cs" Link="CombatVitals.cs" />
     <Compile Include="../../Assets/Scripts/Multiplayer/LanFrameBuffer.cs" Link="LanFrameBuffer.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>

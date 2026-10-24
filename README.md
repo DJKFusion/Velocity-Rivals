@@ -9,7 +9,7 @@ This delivery contains integrated development source, a bootstrap scene, six veh
 1. Finish installing **Unity 6000.6.7f1**, the version selected in your Unity Hub screenshot.
 2. Extract the source ZIP to a local folder. In Unity Hub choose **Projects → Add → Add project from disk** and select the folder containing `Assets`, `Packages`, and `ProjectSettings`. This is an existing project; do not create another project over it.
 3. Open it using 6000.6.7f1. Allow Unity Package Manager to download the packages declared in `Packages/manifest.json`. The manifest pins Input System 1.20.1, URP 17.0.4, uGUI 2.0.0 and Test Framework 1.4.5; the installed Editor must verify compatibility. No unverified package lockfile is supplied. Commit the lockfile Unity generates after successful resolution.
-4. The Editor setup automatically creates and assigns a URP pipeline. Open **Velocity Rivals → Open Game**, or double-click `Assets/Scenes/VelocityRivals.unity`.
+4. The Editor setup automatically creates and assigns a URP pipeline and opens the game when the current scene is an untouched default scene. Use **Velocity Rivals → Play Game** to open the correct scene and start playing, or double-click `Assets/Scenes/VelocityRivals.unity`.
 5. Press **Play**, select **PLAY**, choose an event/environment, and select **START EVENT**. Begin with Free Play in Cyber Dome to check the controls before racing.
 
 If Unity reports a compile/import error, copy the first red Console error with its file and line. Do not ignore errors or switch Editor versions blindly. This project could not be imported in the cloud because that machine has no Unity Editor or license.
@@ -33,7 +33,7 @@ If Unity reports a compile/import error, copy the first red Console error with i
 
 - **Velocity Championship:** three sequential rounds, three laps each, ordered checkpoints, three AI rivals, standings, points and an overall result.
 - **Arena Clash:** player plus an AI teammate against two rivals; a physics energy core and two scoring zones; first to five or a timed result.
-- **Boost Battle:** high-speed vehicle impacts and knockback scoring, first to eight or a timed result. Power-up pickups are not implemented.
+- **Boost Battle:** high-speed impacts, armor, knockout/respawn and knockback scoring; first to fifteen or a timed result. Cyan pickups grant six seconds of shielding, orange grants eight seconds of double damage, and purple immediately pulses damage to rivals within 18 meters. Pickups recharge in twelve seconds. Knockouts award three points and rebuild the car after three seconds with two seconds of spawn protection.
 - **Stunt Rush:** timed jumps/air rotations with upright-landing points and a target score.
 - **Time Attack:** three-lap personal records and a local fastest-run ghost. Online leaderboards are not connected.
 - **Free Play:** practice with no mandatory win condition; pause to restart or leave.
@@ -41,6 +41,8 @@ If Unity reports a compile/import error, copy the first red Console error with i
 Five named environments are generated at runtime from a shared world builder. Circuit shapes, scenery, ramps, palette and traction vary; arenas currently share a common layout. These are starter environments, not five production-quality authored levels.
 
 The garage saves paint, wheel size, trail colour, stripe/spoiler and finish choices. Event completion grants XP, levels, vehicle unlocks and basic achievements. The first car is available initially; each additional 500 XP unlocks another. Profile JSON and a backup are stored under Unity's `Application.persistentDataPath`. On Windows this is normally `%USERPROFILE%\AppData\LocalLow\DJKFusion\Velocity Rivals`. Time Attack ghosts are separate files in the same directory.
+
+The garage includes a rotating preview of the selected model's paint and finish. Select Rookie, Rival or Elite difficulty before an event; it changes AI acceleration and maximum speed. Settings include steering sensitivity. Countdown, jump, drift, boost, impact, power-up and goal audio are synthesized placeholders; hit and pickup particles are generated at runtime. These new integrations require Unity playtesting.
 
 Multiplayer is a separate **LAN gate sprint**, not networked championship or Arena Clash. See [multiplayer scope and test steps](docs/MULTIPLAYER.md).
 

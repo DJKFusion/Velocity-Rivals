@@ -126,7 +126,7 @@ namespace VelocityRivals
             layout.childForceExpandWidth = true;
             title = Label(panel, heading.ToUpperInvariant(), 48, 68);
             title.color = cyan;
-            Label(panel, subtitle, 23, 58);
+            Label(panel, subtitle, 23, Mathf.Clamp(30 * subtitle.Split('\n').Length, 58, 250));
         }
 
         private Text Label(Transform parent, string text, int size, float height)
@@ -199,6 +199,7 @@ namespace VelocityRivals
             Page("Choose your event", "Championship • arena sport • combat • stunts • time trial • training");
             Focus(Cycle("Mode", new[] { "Velocity Championship", "Arena Clash", "Boost Battle", "Stunt Rush", "Time Attack", "Free Play" }, () => (int)selectedMode, value => selectedMode = (GameMode)value));
             Cycle("Environment", GameSession.EnvironmentNames, () => selectedEnvironment, value => selectedEnvironment = value);
+            Cycle("AI difficulty", new[] { "Rookie", "Rival", "Elite" }, () => SaveStore.Current.difficulty, value => { SaveStore.Current.difficulty = value; SaveStore.Save(); });
             var vehicles = new List<string>();
             for (int i = 0; i < SaveStore.Current.UnlockedVehicles; i++) vehicles.Add(GameSession.VehicleNames[i]);
             Cycle("Vehicle", vehicles, () => SaveStore.Current.selectedVehicle, value => { SaveStore.Current.selectedVehicle = value; SaveStore.Save(); });
@@ -221,6 +222,10 @@ namespace VelocityRivals
         {
             var p = SaveStore.Current;
             Page("Garage", $"{p.UnlockedVehicles}/6 vehicles unlocked • Next unlock at {p.UnlockedVehicles * 500} XP\nSelections apply to your vehicle on the next event.");
+            var preview = new GameObject("Paint and finish preview", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement), typeof(GaragePreview));
+            preview.transform.SetParent(panel, false);
+            preview.GetComponent<RawImage>().raycastTarget = false;
+            preview.GetComponent<LayoutElement>().preferredHeight = 140;
             Focus(Cycle("Paint", PaintNames, () => p.paint, value => { p.paint = value; SaveStore.Save(); }));
             Cycle("Wheels", new[] { "Street", "Sport", "Aero" }, () => p.wheels, value => { p.wheels = value; SaveStore.Save(); });
             Cycle("Boost trail", new[] { "Ion", "Plasma", "Solar" }, () => p.trail, value => { p.trail = value; SaveStore.Save(); });
@@ -239,6 +244,7 @@ namespace VelocityRivals
             Cycle("Music volume", volumes, () => Mathf.RoundToInt(p.musicVolume * 10), value => { p.musicVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save(); });
             Cycle("Effects volume", volumes, () => Mathf.RoundToInt(p.effectsVolume * 10), value => { p.effectsVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save(); });
             Cycle("Graphics", new[] { "Performance", "Balanced", "Quality" }, () => p.quality, value => { p.quality = value; ApplyQuality(value); SaveStore.Save(); });
+            Cycle("Steering sensitivity", new[] { "50%", "75%", "100%", "125%", "150%" }, () => Mathf.RoundToInt((p.steeringSensitivity - .5f) * 4), value => { p.steeringSensitivity = .5f + value * .25f; SaveStore.Save(); });
             Label(panel, "Keyboard: WASD drive, Shift boost, Space jump, Ctrl drift, Q/E roll, R recover.\nGamepad: RT/LT throttle/reverse, stick steer, A jump, B boost, X drift, Y recover.\nEsc / Start pauses. Button remapping is not implemented yet.", 22, 140);
             Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); });
         }

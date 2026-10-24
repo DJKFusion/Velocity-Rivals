@@ -1,7 +1,9 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace VelocityRivals
 {
+    public enum GameCue { Countdown, Go, Goal, Pickup, Impact, Knockout, Jump, Boost, Drift }
     /// <summary>Original synthesized placeholder music and UI cues; no downloaded audio.</summary>
     public sealed class SoundDirector : MonoBehaviour
     {
@@ -9,6 +11,8 @@ namespace VelocityRivals
         private AudioSource effects;
         private AudioClip click;
         private AudioClip victory;
+        readonly Dictionary<GameCue, AudioClip> cues = new Dictionary<GameCue, AudioClip>();
+        readonly Dictionary<GameCue, float> nextCue = new Dictionary<GameCue, float>();
         public static SoundDirector Instance { get; private set; }
 
         private void Awake()
@@ -21,6 +25,15 @@ namespace VelocityRivals
             music.clip = Music();
             click = Tone("Menu pulse", 660, 0.08f);
             victory = Tone("Finish signal", 880, 0.7f);
+            cues.Add(GameCue.Countdown, Tone("Countdown", 440, .12f));
+            cues.Add(GameCue.Go, Tone("Go", 880, .35f));
+            cues.Add(GameCue.Goal, Tone("Goal", 1175, .55f));
+            cues.Add(GameCue.Pickup, Tone("Power pickup", 1320, .18f));
+            cues.Add(GameCue.Impact, Tone("Impact", 75, .12f));
+            cues.Add(GameCue.Knockout, Tone("Knockout", 45, .6f));
+            cues.Add(GameCue.Jump, Tone("Jump", 520, .12f));
+            cues.Add(GameCue.Boost, Tone("Boost", 160, .25f));
+            cues.Add(GameCue.Drift, Tone("Tire skid", 1450, .12f));
             ApplyVolumes();
             music.Play();
         }
@@ -33,6 +46,13 @@ namespace VelocityRivals
         }
         public void Click() { if (effects && click) effects.PlayOneShot(click, 0.35f); }
         public void Finish() { if (effects && victory) effects.PlayOneShot(victory, 0.5f); }
+        public void Cue(GameCue cue)
+        {
+            if (!effects || !cues.TryGetValue(cue, out var clip)) return;
+            if (nextCue.TryGetValue(cue, out float at) && Time.unscaledTime < at) return;
+            nextCue[cue] = Time.unscaledTime + (cue == GameCue.Drift || cue == GameCue.Boost ? .3f : .08f);
+            effects.PlayOneShot(clip, .45f);
+        }
 
         private static AudioClip Tone(string name, float frequency, float duration)
         {
@@ -79,6 +99,7 @@ namespace VelocityRivals
             if (music && music.clip) Destroy(music.clip);
             if (click) Destroy(click);
             if (victory) Destroy(victory);
+            foreach (var clip in cues.Values) if (clip != null) Destroy(clip);
             if (Instance == this) Instance = null;
         }
     }

@@ -91,9 +91,11 @@ namespace VelocityRivals
             if (IsPlayer && ControlsEnabled && Time.timeScale > 0)
             {
                 float airRollInput = rollAxis.ReadValue<float>();
-                SetInput(new DriveInput { Throttle = throttle.ReadValue<float>(), Steering = Mathf.Abs(airRollInput) > .1f ? airRollInput : steering.ReadValue<float>(),
+                SetInput(new DriveInput { Throttle = throttle.ReadValue<float>(), Steering = Mathf.Clamp((Mathf.Abs(airRollInput) > .1f ? airRollInput : steering.ReadValue<float>()) * SaveStore.Current.steeringSensitivity, -1, 1),
                     Brake = brake.IsPressed(), Boost = boost.IsPressed(), Jump = jump.IsPressed(), AirRoll = roll.IsPressed() || Mathf.Abs(airRollInput) > .1f });
                 if (reset.WasPressedThisFrame()) Respawn(safePosition + Vector3.up, safeRotation);
+                if (IsBoosting) SoundDirector.Instance?.Cue(GameCue.Boost);
+                if (Grounded && input.Brake && SpeedKmh > 35) SoundDirector.Instance?.Cue(GameCue.Drift);
             }
             if (!ControlsEnabled) { input = default; jumpQueued = false; }
             if (exhaust != null) exhaust.emitting = IsBoosting;
@@ -166,6 +168,7 @@ namespace VelocityRivals
             else BoostAmount = Mathf.Min(1, BoostAmount + Time.fixedDeltaTime * (Grounded ? .14f : .05f));
             if (jumpQueued && ControlsEnabled && jumps < 2 && (Grounded || jumps == 1))
             {
+                if (IsPlayer) SoundDirector.Instance?.Cue(GameCue.Jump);
                 body.AddForce((Grounded ? groundNormal : Vector3.up) * 7f, ForceMode.VelocityChange);
                 if (jumps == 1 && (Mathf.Abs(input.Throttle) + Mathf.Abs(input.Steering)) > .4f)
                 {
@@ -325,6 +328,13 @@ namespace VelocityRivals
             controls?.Disable(); controls?.Dispose();
             foreach (var material in ownedMaterials) if (material != null) Release(material);
             if (engineClip != null) Release(engineClip);
+        }
+
+        void OnCollisionEnter(Collision collision)
+        {
+            if (!IsPlayer || collision.relativeVelocity.magnitude < 6 || collision.contactCount == 0) return;
+            SoundDirector.Instance?.Cue(GameCue.Impact);
+            MatchEffects.Burst(collision.GetContact(0).point, Color.yellow);
         }
 
         static void Release(Object resource)

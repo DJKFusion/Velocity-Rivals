@@ -31,6 +31,8 @@ namespace VelocityRivals
         public float musicVolume = 0.3f;
         public float effectsVolume = 0.75f;
         public int quality = 1;
+        public int difficulty = 1;
+        public float steeringSensitivity = 1;
         public List<RaceRecord> records = new List<RaceRecord>();
         public List<string> achievements = new List<string>();
         public int Level => 1 + xp / 500;
@@ -70,6 +72,8 @@ namespace VelocityRivals
                     profile.spoiler = Mathf.Clamp(profile.spoiler, 0, 2);
                     profile.finish = Mathf.Clamp(profile.finish, 0, 2);
                     profile.quality = Mathf.Clamp(profile.quality, 0, 2);
+                    profile.difficulty = Mathf.Clamp(profile.difficulty, 0, 2);
+                    if (profile.steeringSensitivity < .5f || profile.steeringSensitivity > 1.5f || float.IsNaN(profile.steeringSensitivity)) profile.steeringSensitivity = 1;
                     profile.masterVolume = Mathf.Clamp01(profile.masterVolume);
                     profile.musicVolume = Mathf.Clamp01(profile.musicVolume);
                     profile.effectsVolume = Mathf.Clamp01(profile.effectsVolume);

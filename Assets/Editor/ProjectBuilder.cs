@@ -20,7 +20,13 @@ namespace VelocityRivals.Editor
             EditorApplication.delayCall += () =>
             {
                 if (!EditorApplication.isPlayingOrWillChangePlaymode && !BuildPipeline.isBuildingPlayer)
+                {
                     ConfigureRendering();
+                    // Only replace the untouched, unnamed default scene on the first import.
+                    var scene = SceneManager.GetActiveScene();
+                    if (!Application.isBatchMode && scene.IsValid() && string.IsNullOrEmpty(scene.path) && !scene.isDirty && scene.rootCount <= 2 && File.Exists(EntryScene))
+                        EditorSceneManager.OpenScene(EntryScene);
+                }
             };
         }
 
@@ -59,6 +65,15 @@ namespace VelocityRivals.Editor
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             EditorSceneManager.OpenScene(EntryScene);
+        }
+
+        [MenuItem("Velocity Rivals/Play Game")]
+        public static void PlayGame()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            EditorSceneManager.OpenScene(EntryScene);
+            EditorApplication.isPlaying = true;
         }
 
         [MenuItem("Velocity Rivals/Regenerate Entry Scene and Vehicle Assets")]

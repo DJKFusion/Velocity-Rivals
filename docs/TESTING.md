@@ -2,7 +2,7 @@
 
 ## Executed in the cloud
 
-- Nine C# console tests compiled and passed using .NET SDK 8.0.426. They use the actual `RaceProgress.cs` and `LanFrameBuffer.cs` source files: finish-line/skip prevention, reverse rejection, three-lap completion and progress ordering, duplicate rejection, invalid configuration, fragmented frames, coalesced frames, invalid sizes and bounded receive buffers.
+- Fourteen C# console tests compiled and passed using .NET SDK 8.0.426. They use the actual `RaceProgress.cs`, `LanFrameBuffer.cs` and `CombatVitals.cs` source files: finish-line/skip prevention, reverse rejection, three-lap completion, duplicate/configuration guards, network fragmentation/coalescing/bounds, shield expiry, knockout damage, delayed protected respawn and overdrive expiry/reset.
 - Eight Blender FBX exports imported successfully back into Blender 4.3.2. Assertions compared mesh counts, vertices and bounds. Measurements are in `Tools/Blender/Generated/validation.json`.
 - Six generated car models were visually inspected in the offline Blender contact sheet. This is not a Unity screenshot.
 - `Tools/validate_source.py` validated manifest/assembly JSON, unique Unity GUIDs, source scene/prefab/stat GUID references, six vehicle asset sets and C# syntax using tree-sitter. Syntax parsing is not Unity API compilation.
@@ -36,7 +36,7 @@ PlayMode covers vehicle spawning, pause/resume/menu state, restart cleanup, all 
 3. **Racing:** complete every circuit in both directions. Wrong-way crossings, skipped gates and repeated finish crossings must not grant laps. Race each AI to completion; record stuck or off-track cases and tune speed/steering before claiming readiness.
 4. **Championship:** finish three rounds, advance only from results, verify points and overall trophy outcome; restart mid-championship clears standings.
 5. **Arena Clash:** score at each end; verify appropriate team gets points and players/core reset; exercise first-to-five, time expiry and draw.
-6. **Boost Battle:** low-speed contact gives no points; fast contact increments the correct score once; confirm cooldown, knockback, target/time result.
+6. **Boost Battle:** low-speed contact gives no points; fast contact increments the correct score once; confirm armor loss, shield protection, overdrive damage, pulse range, knockout scores, delayed respawn, pause-safe timers and first-to-fifteen/time result. Follow UPDATE-COMBAT.md.
 7. **Stunts:** rotation followed by an upright landing scores; flipped landings do not grant the same reward; timer/results/restart work.
 8. **Time Attack:** complete a full run; restart to see ghost; slower runs do not replace fastest ghost; records survive closing and reopening the game.
 9. **Garage/save:** earn XP and unlock a second vehicle; change all cosmetic fields, quit normally, reopen and check selections and appearance. Test backup recovery using a copied test profile, not your only save.
