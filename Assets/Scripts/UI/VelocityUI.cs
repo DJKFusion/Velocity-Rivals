@@ -115,7 +115,7 @@ namespace VelocityRivals
                 var car = session.Player;
                 string clock = session.CurrentMode == GameMode.FreePlay ? "PRACTICE" : $"{session.RemainingTime:0.0}s REMAINING";
                 hud.text = $"{session.CurrentMode}   |   {clock}\n" +
-                    $"{car.SpeedKmh:0} km/h    BOOST {car.BoostAmount * 100:0}%\n{session.StatusText}";
+                    $"{car.SpeedKmh:0} km/h    BOOST {car.BoostAmount * 100:0}%\n{session.StatusText}\n{session.LocationName.ToUpperInvariant()}";
                 if (session.IsCircuit)
                 {
                     var laps = session.LapTimes;
@@ -123,6 +123,7 @@ namespace VelocityRivals
                     if (session.WrongWay) hud.text += "\n<color=#FFB347>WRONG WAY — follow the route to the yellow gate</color>";
                 }
                 hint.text = "WASD / triggers + left stick: drive   •   Shift / B: boost   •   Space / A: jump   •   Ctrl / X: drift\nR / Y: recover   •   Q/E / LB + stick: air roll   •   Esc / Start: pause";
+                if (session.Elapsed < 8 && !session.Finished) hint.text = session.EventObjective + "\nWASD / triggers + stick: drive • Shift / B: boost • Esc / Start: pause";
             }
             else { hud.text = ""; hint.text = "Mouse or arrows / D-pad to navigate • Enter / A to select"; }
         }
@@ -252,12 +253,42 @@ namespace VelocityRivals
             careerSelection = Mathf.Clamp(careerSelection, 0, progress.NextEvent);
             var entry = CareerTour.Get(careerSelection);
             Page(progress.Complete ? "Velocity Tour complete" : "Career Tour", $"{progress.TotalMedals}/{CareerTour.Count * 3} MEDAL POINTS • {entry.Cup.ToUpperInvariant()}\nBronze unlocks the next event. Replay any unlocked event for gold.");
-            Preview(160);
+            panel.GetComponent<VerticalLayoutGroup>().spacing = 8;
+            Preview(120);
             Label(panel, $"EVENT {careerSelection + 1}/{CareerTour.Count} — {entry.Name}\n{GameSession.EnvironmentNames[entry.Environment]} • {CareerTour.MedalName(progress.medals[careerSelection])}\n{entry.Goal}", 26, 150);
             Focus(Button("START CAREER EVENT", StartCareer));
             if (careerSelection > 0) Button("PREVIOUS EVENT", () => { careerSelection--; CareerMenu(); });
             if (careerSelection < progress.NextEvent) Button("NEXT EVENT", () => { careerSelection++; CareerMenu(); });
             Button("GARAGE", Garage);
+            Button("TOUR PROGRESS", TourProgress);
+            Button("MAIN MENU", MainMenu);
+        }
+
+        private void TourProgress()
+        {
+            var progress = SaveStore.Current.career;
+            Page("Your trophy cabinet", $"{progress.TotalMedals}/{CareerTour.Count * 3} medal points • Bronze opens the next event");
+            for (int cup = 0; cup < 4; cup++)
+            {
+                string text = CareerTour.Get(cup * 3).Cup.ToUpperInvariant();
+                for (int j = 0; j < 3; j++)
+                {
+                    int i = cup * 3 + j;
+                    text += "\n" + CareerTour.Get(i).Name + " — " + (progress.IsUnlocked(i) ? CareerTour.MedalName(progress.medals[i]) : "LOCKED");
+                }
+                Label(panel, text, 23, 120);
+            }
+            Focus(Button("BACK TO TOUR", CareerMenu));
+            if (progress.Complete) Button("TOUR FINALE", TourFinale);
+        }
+
+        private void TourFinale()
+        {
+            Page("Velocity champion", "ROOKIE • CHALLENGER • RIVAL • VELOCITY FINALS\nAll four cups complete. Your place in the tour is earned.");
+            Preview(180);
+            Label(panel, $"{SaveStore.Current.career.TotalMedals}/36 MEDAL POINTS\n{SaveStore.Current.UnlockedVehicles}/6 CARS UNLOCKED\nThank you for playing Velocity Rivals.\nReplay the tour to earn every gold medal, or set a new Time Attack record.", 27, 180);
+            Focus(Button("VIEW TROPHIES", TourProgress));
+            Button("CREDITS", Credits);
             Button("MAIN MENU", MainMenu);
         }
 
@@ -373,6 +404,7 @@ namespace VelocityRivals
             Label(panel, "DRIVE\nW / S accelerate and reverse • A / D steer\nShift boost • Ctrl handbrake • Space jump, press again for an aerial jump\nQ / E roll in the air • R recover your car\nController: triggers + left stick, B boost, X drift, A jump, Y recover.", 24, 205);
             Label(panel, "WIN YOUR EVENT\nChampionship / Time Attack: follow the yellow map gate and complete three laps.\nArena Clash: push the white core into the orange goal. First to five wins.\nBoost Battle: hit opponents at speed; collect shields, overdrive and pulse pickups.\nStunt Rush: jump, rotate and land upright. Reach 1,000 points before time runs out.", 23, 215);
             Label(panel, "Esc / Start pauses. Earn XP to unlock cars in the garage.\nCyan on the map is you, orange is another vehicle, yellow is the next gate.", 23, 85);
+            if (!paused) Button("START PRACTICE", () => { selectedMode = GameMode.FreePlay; selectedEnvironment = 3; StartMatch(); });
             Focus(Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); }));
         }
 
@@ -396,10 +428,17 @@ namespace VelocityRivals
             session.SetPaused(true);
             Page("Paused", "Take a breather. Your event is paused.");
             Focus(Button("RESUME", Resume));
-            Button("RESTART EVENT", RestartCurrent);
+            Button("RESTART EVENT", () => ConfirmAbandon(true));
             Button("SETTINGS", () => Settings(true));
             Button("HOW TO PLAY", () => HowToPlay(true));
-            Button("MAIN MENU", MainMenu);
+            Button("MAIN MENU", () => ConfirmAbandon(false));
+        }
+        private void ConfirmAbandon(bool restart)
+        {
+            Page(restart ? "Restart this event?" : "Leave this event?",
+                "This unfinished event will not earn a medal. Restarting a championship starts again from round one.\nYour previously saved medals, records and unlocked cars are kept.");
+            Focus(Button("KEEP PLAYING", Resume));
+            Button(restart ? "RESTART NOW" : "LEAVE EVENT", restart ? (Action)RestartCurrent : MainMenu);
         }
         private void Resume() { ClearPanel(); session.SetPaused(false); if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null); }
         private void OnMatchEnded()
@@ -407,8 +446,10 @@ namespace VelocityRivals
             if (showingResults) return;
             showingResults = true;
             sound.Finish();
-            Page("Event complete", session.ResultText);
-            Label(panel, $"LEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP\n{SaveStore.Current.UnlockedVehicles}/6 VEHICLES UNLOCKED", 30, 100);
+            Page(session.FirstTourCompletion ? "Tour complete" : "Event complete", session.ResultText);
+            string reward = session.CanAdvanceChampionship ? "Points recorded — XP awarded after the final round" : "+" + session.ResultXp + " XP";
+            Label(panel, $"{reward}\nLEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP • {SaveStore.Current.UnlockedVehicles}/6 CARS", 28, 95);
+            if (!string.IsNullOrEmpty(session.UnlockedCarNames)) Label(panel, "NEW CAR UNLOCKED: " + session.UnlockedCarNames, 26, 55);
             if (!string.IsNullOrEmpty(SaveStore.LastError)) Label(panel, SaveStore.LastError, 18, 70);
             if (session.CanAdvanceChampionship)
             {
@@ -422,7 +463,8 @@ namespace VelocityRivals
             }
             else if (session.CareerEventIndex >= 0)
             {
-                Focus(Button("CONTINUE TOUR", () => { careerSelection = SaveStore.Current.career.NextEvent; CareerMenu(); }));
+                if (session.FirstTourCompletion) Focus(Button("TOUR FINALE", TourFinale));
+                else Focus(Button("CONTINUE TOUR", () => { careerSelection = SaveStore.Current.career.NextEvent; CareerMenu(); }));
                 Button("REPLAY EVENT", RestartCurrent);
             }
             else Focus(Button("RACE AGAIN", RestartCurrent));
@@ -441,6 +483,7 @@ namespace VelocityRivals
                 var r = records[i];
                 string environment = r.environment >= 0 && r.environment < 5 ? GameSession.EnvironmentNames[r.environment] : "Earlier version";
                 string vehicle = r.vehicle >= 0 && r.vehicle < 6 ? GameSession.VehicleNames[r.vehicle] : "All vehicles";
+                if ((r.mode == "TimeAttack" || r.mode == "Championship") && r.layoutRevision != CircuitLayout.Revision) environment += " (old layout)";
                 text += $"{r.mode} • {environment} • {vehicle}\n{r.finishes} finishes • Best {LapDisplay(r.bestSeconds)} • Score {r.bestScore}\n\n";
             }
             Label(panel, string.IsNullOrEmpty(text) ? "Finish your first event to set a record." : text, 22, 340);
@@ -451,7 +494,7 @@ namespace VelocityRivals
         }
         private void Credits()
         {
-            Page("Credits", "VELOCITY RIVALS • Original game project for DJKFusion");
+            Page("Credits", $"VELOCITY RIVALS {Application.version} • Original game project for DJKFusion");
             Label(panel, "Original vehicles, environments and electronic soundtrack.\nMidnight Grid • Skyline Dreams • Solar Drift\nNeon Pursuit • Afterburn • Hyperdrive\nChrome Horizon • Ion Storm • Final Overdrive\n\nBuilt with Unity and the Universal Render Pipeline.\nVehicle models created with Blender.\n\nGame project for DJKFusion.", 25, 350);
             Focus(Button("BACK", MainMenu));
         }

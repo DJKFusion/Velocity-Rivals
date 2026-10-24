@@ -135,6 +135,10 @@ namespace VelocityRivals.Tests
                     Assert.IsNotNull(session.Player);
                     Assert.IsFalse(session.Finished);
                     Assert.IsFalse(float.IsNaN(session.Player.transform.position.x));
+                    var world = session.Player.transform.parent;
+                    Assert.IsNotNull(world.GetComponentInChildren<WorldScenery>());
+                    Assert.GreaterOrEqual(world.GetComponentsInChildren<TextMesh>().Length, 4, "Each venue needs visible location signs.");
+                    if (session.IsCircuit) Assert.AreEqual(CircuitLayout.Build(environment).Count, session.Circuit.Count);
                     var colliders = session.Player.transform.parent.GetComponentsInChildren<BoxCollider>();
                     Assert.IsNotEmpty(colliders);
                     foreach (var collider in colliders)
@@ -263,6 +267,29 @@ namespace VelocityRivals.Tests
             Object.Destroy(sound);
             yield return null;
             Assert.IsTrue(imported != null, "Destroying the director must not destroy imported music assets.");
+        }
+
+        [UnityTest]
+        public IEnumerator CareerTrophyCabinetShowsAllCupsAndReturnsToTheTour()
+        {
+            root = new GameObject("Trophy cabinet test"); root.AddComponent<GameBootstrap>();
+            yield return null; yield return null;
+            UnityEngine.UI.Button FindButton(string name)
+            {
+                foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                    if (button.name == name) return button;
+                Assert.Fail("Missing button: " + name); return null;
+            }
+            FindButton("CAREER TOUR").onClick.Invoke(); yield return null;
+            FindButton("TOUR PROGRESS").onClick.Invoke(); yield return null;
+            string text = "";
+            foreach (var label in Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None)) text += label.text;
+            StringAssert.Contains("ROOKIE CUP", text);
+            StringAssert.Contains("VELOCITY FINALS", text);
+            StringAssert.Contains("LOCKED", text);
+            FindButton("BACK TO TOUR").onClick.Invoke(); yield return null;
+            Assert.IsNotNull(FindButton("START CAREER EVENT"));
+            Assert.IsFalse(GameSession.Instance.Running);
         }
 
         [UnityTest]

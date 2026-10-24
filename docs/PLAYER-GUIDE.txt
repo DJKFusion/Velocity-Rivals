@@ -1,0 +1,49 @@
+VELOCITY RIVALS — SINGLE PLAYER
+
+GETTING STARTED
+Extract the entire game ZIP. Keep VelocityRivals.exe, UnityPlayer.dll and the
+VelocityRivals_Data folder together, then launch VelocityRivals.exe.
+No account or online server is needed to play.
+
+Choose HOW TO PLAY, then START PRACTICE to learn the controls in Cyber Dome.
+CAREER TOUR contains 12 events across four cups. Bronze opens the next event.
+TOUR PROGRESS displays your earned medals and locked events. Replay for gold.
+Championships have three rounds; use NEXT CHAMPIONSHIP ROUND after each result.
+Complete the tour to reach the finale. All gold medals earn another achievement.
+
+CONTROLS
+Keyboard: W/S accelerate/reverse, A/D steer, Shift boost, Ctrl handbrake,
+Space jump (press again for an aerial jump), Q/E air roll, R recover, Esc pause.
+Controller: triggers accelerate/reverse, left stick steer, B boost, X handbrake,
+A jump, LB plus stick air roll, Y recover, Start pause.
+Menus: mouse, arrows or D-pad; Enter or A selects.
+
+EVENTS
+Championship: pass each checkpoint in order and finish three laps per round.
+Time Attack: complete three laps; your best run becomes a personal ghost.
+Arena Clash: push the core into the orange goal; first team to five wins.
+Boost Battle: hit opponents at speed and collect combat power-ups.
+Stunt Rush: jump, rotate and land upright; aim for at least 1,000 points.
+Free Play: untimed practice. Pause to return to the menu.
+
+PROGRESS
+Events award XP; each 500 XP unlocks another vehicle until all six are available.
+Garage selections, settings, records and career medals save on this computer.
+Leaving an unfinished event does not award a career medal. Restarting a
+championship resets its current rounds, but keeps previously saved progress.
+Version 0.5 introduces new circuit layouts. Older circuit records remain labeled
+as old layouts. New ghosts and times are stored separately. Unlocks are retained.
+
+DISPLAY AND COMFORT
+SETTINGS > DISPLAY & EFFECTS offers Performance, Balanced and Quality presets,
+windowed/borderless display, and Reduced effects. Reduce quality if driving is
+not smooth. Reduced effects disables bloom, vignette, impact bursts, drift smoke,
+showroom rotation and speed-related camera widening.
+
+SAVES AND TROUBLESHOOTING
+Windows save folder: %USERPROFILE%\AppData\LocalLow\DJKFusion\Velocity Rivals
+The profile is velocity-profile.json; its .bak file contains an earlier save.
+Back up this folder before moving PCs or changing save files.
+If the game fails, retain Player.log from the same folder and note the version,
+event, environment, selected car and what happened immediately beforehand.
+An on-screen save error means your latest progress may not be on disk.

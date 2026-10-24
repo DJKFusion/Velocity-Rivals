@@ -10,6 +10,7 @@ namespace VelocityRivals
         public string mode;
         public int environment = -1;
         public int vehicle = -1;
+        public int layoutRevision;
         public float bestSeconds;
         public int bestScore;
         public int finishes;
@@ -132,8 +133,9 @@ namespace VelocityRivals
             profile.events++;
             if (won && completed) profile.wins++;
             profile.xp += completed ? 150 + (won ? 150 : 0) + Mathf.Clamp(score / 20, 0, 200) : 50;
-            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle);
-            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle }; profile.records.Add(record); }
+            int revision = mode == "Championship" || mode == "TimeAttack" ? CircuitLayout.Revision : 0;
+            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision);
+            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle, layoutRevision = revision }; profile.records.Add(record); }
             if (completed) record.finishes++;
             record.bestScore = Mathf.Max(record.bestScore, score);
             if (completed && seconds > 0 && !float.IsInfinity(seconds) && !float.IsNaN(seconds) && (record.bestSeconds <= 0 || seconds < record.bestSeconds))

@@ -10,7 +10,7 @@ namespace VelocityRivals.Editor
 {
     public sealed class SinglePlayerBuildGuard : IPreprocessBuildWithReport
     {
-        public const string Version = "0.4.0";
+        public const string Version = "0.5.0";
         public int callbackOrder => 0;
         public void OnPreprocessBuild(BuildReport report) => Validate();
         [MenuItem("Velocity Rivals/Check Single Player Build")]
@@ -22,6 +22,7 @@ namespace VelocityRivals.Editor
             foreach (var assembly in CompilationPipeline.GetAssemblies(AssembliesType.Player))
                 if (assembly.name == "VelocityRivals.Multiplayer") throw new BuildFailedException("The multiplayer assembly must be excluded from this build.");
             if (!File.Exists(ProjectBuilder.EntryScene)) throw new BuildFailedException("Entry scene is missing.");
+            if (!File.Exists("docs/PLAYER-GUIDE.txt")) throw new BuildFailedException("The packaged player guide is missing.");
             foreach (string vehicle in GameSession.VehicleNames)
                 if (!Resources.Load<GameObject>("VehicleModels/" + vehicle) || !Resources.Load<VehicleStats>("VehicleStats/" + vehicle))
                     throw new BuildFailedException("Vehicle model or stats missing: " + vehicle);

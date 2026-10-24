@@ -108,6 +108,22 @@ namespace VelocityRivals.Tests
         }
 
         [Test]
+        public void NewCircuitRecordsPreserveButDoNotCompeteWithOldLayoutTimes()
+        {
+            SaveStore.Current.records.Add(new RaceRecord { mode = "TimeAttack", environment = 0, vehicle = 0, bestSeconds = 10, layoutRevision = 0 });
+            SaveStore.Current.xp = 1200;
+            SaveStore.Current.career.Record(0, 3);
+            SaveStore.RecordResult("TimeAttack", true, 150, 200, 0, 0);
+            SaveStore.Reload();
+            Assert.AreEqual(2, SaveStore.Current.records.Count);
+            Assert.AreEqual(10, SaveStore.Current.records[0].bestSeconds);
+            Assert.AreEqual(CircuitLayout.Revision, SaveStore.Current.records[1].layoutRevision);
+            Assert.AreEqual(150, SaveStore.Current.records[1].bestSeconds);
+            Assert.AreEqual(3, SaveStore.Current.career.medals[0]);
+            Assert.GreaterOrEqual(SaveStore.Current.xp, 1200);
+        }
+
+        [Test]
         public void CareerMedalsAndDisplayPreferencesSurviveReload()
         {
             SaveStore.Current.career.Record(0, 3);

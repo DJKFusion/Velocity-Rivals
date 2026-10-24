@@ -27,6 +27,16 @@ namespace VelocityRivals
         public int CareerEventIndex { get; private set; } = -1;
         public int LastCareerMedal { get; private set; }
         public bool ResultWon { get; private set; }
+        public int ResultXp { get; private set; }
+        public string UnlockedCarNames { get; private set; } = "";
+        public bool FirstTourCompletion { get; private set; }
+        public string LocationName => racing ? CircuitLayout.Section(environment, NextCheckpoint, track.Count) : EnvironmentNames[environment];
+        public string EventObjective => mode == GameMode.Championship ? "Three rounds. Follow every checkpoint; finish three laps per round." :
+            mode == GameMode.TimeAttack ? "Follow the yellow map marker. Complete three laps to save a time." :
+            mode == GameMode.ArenaClash ? "Push the white core into the orange goal. First team to five wins." :
+            mode == GameMode.BoostBattle ? "Hit rivals at speed. Collect shields, overdrive and pulse pickups." :
+            mode == GameMode.StuntRush ? "Jump, rotate and land upright. Score 1,000 points before time runs out." :
+            "Practise driving, boosting and jumping. Recover with R / Y; pause to leave.";
         public int PlayerScore => playerScore;
         public int RivalScore => rivalScore;
         public bool ActionEnabled => Running && !Paused && !Finished && countdown <= 0;
@@ -104,6 +114,7 @@ namespace VelocityRivals
             Cleanup();
             Time.timeScale = 1;
             Paused = Finished = ResultWon = false;
+            ResultXp = 0; UnlockedCarNames = ""; FirstTourCompletion = false;
             Running = true;
             elapsed = collisionCooldown = goalCooldown = 0;
             wrongWaySeconds = 0;
@@ -373,7 +384,12 @@ namespace VelocityRivals
             StopCarsForResults();
             bool completed = !racing || playerProgress.Complete;
             float seconds = mode == GameMode.Championship ? championshipElapsed : elapsed;
+            int previousXp = SaveStore.Current.xp, previousCars = SaveStore.Current.UnlockedVehicles;
+            bool tourWasComplete = SaveStore.Current.career.Complete;
             SaveStore.RecordResult(mode.ToString(), won, seconds, score, initialEnvironment, selectedVehicle, completed);
+            ResultXp = SaveStore.Current.xp - previousXp;
+            for (int i = previousCars; i < SaveStore.Current.UnlockedVehicles; i++)
+                UnlockedCarNames += (UnlockedCarNames.Length == 0 ? "" : " • ") + VehicleNames[i];
             if (CareerEventIndex >= 0)
             {
                 LastCareerMedal = CareerTour.Get(CareerEventIndex).Medal(completed, won, seconds, score);
@@ -381,9 +397,12 @@ namespace VelocityRivals
                 ResultText += "\nCAREER: " + CareerTour.MedalName(LastCareerMedal);
                 if (SaveStore.Current.career.Complete)
                 {
+                    FirstTourCompletion = !tourWasComplete;
                     ResultText += "\nVELOCITY TOUR COMPLETE — replay events to collect every gold medal.";
                     if (!SaveStore.Current.achievements.Contains("Velocity Tour complete")) SaveStore.Current.achievements.Add("Velocity Tour complete");
                 }
+                if (SaveStore.Current.career.TotalMedals == CareerTour.Count * 3 && !SaveStore.Current.achievements.Contains("All gold champion"))
+                    SaveStore.Current.achievements.Add("All gold champion");
                 SaveStore.Save();
             }
             MatchEnded?.Invoke();
@@ -428,7 +447,19 @@ namespace VelocityRivals
                 float steer = Mathf.Clamp(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg / 35, -1, 1);
                 bool sharp = Mathf.Abs(steer) > .65f;
                 if (Physics.SphereCast(racer.Car.transform.position + Vector3.up * .5f + racer.Car.transform.forward * 2.8f, .6f, racer.Car.transform.forward, out RaycastHit hit, 7) && hit.rigidbody != null && hit.rigidbody != racer.Car.GetComponent<Rigidbody>()) steer += racer.Id % 2 == 0 ? .4f : -.4f;
-                racer.Car.SetInput(new DriveInput { Throttle = sharp && racer.Car.SpeedKmh > 65 ? .2f : 1, Steering = Mathf.Clamp(steer, -1, 1), Brake = sharp && racer.Car.SpeedKmh > 95, Boost = !sharp && racer.Car.BoostAmount > .5f && local.z > 20 });
+                float targetSpeed = sharp ? 65 : 125;
+                bool straightAhead = !sharp;
+                if (racing)
+                {
+                    int next = racer.Progress.NextCheckpoint;
+                    Vector3 approach = track[next] - track[(next + track.Count - 1) % track.Count];
+                    Vector3 exit = track[(next + 3) % track.Count] - track[next];
+                    float bend = Vector3.Angle(approach, exit);
+                    targetSpeed = Mathf.Min(targetSpeed, Mathf.Lerp(125, 50, Mathf.Clamp01(bend / 65)));
+                    straightAhead &= bend < 12;
+                }
+                racer.Car.SetInput(new DriveInput { Throttle = racer.Car.SpeedKmh > targetSpeed ? .1f : 1, Steering = Mathf.Clamp(steer, -1, 1),
+                    Brake = racer.Car.SpeedKmh > targetSpeed + 12, Boost = straightAhead && racer.Car.SpeedKmh < targetSpeed && racer.Car.BoostAmount > .5f && local.z > 5 });
                 racer.Stuck = racer.Car.SpeedKmh < 4 ? racer.Stuck + Time.deltaTime : 0;
                 if (racer.Stuck > 4 || racer.Car.transform.position.y < -8 || Vector3.Dot(racer.Car.transform.up, Vector3.up) < -.5f)
                 {
@@ -515,15 +546,8 @@ namespace VelocityRivals
             track.Clear();
             if (racing)
             {
-                float radiusX = new[] { 62f, 76f, 90f, 58f, 72f }[environment];
-                float radiusZ = new[] { 42f, 37f, 50f, 45f, 58f }[environment];
-                const int segments = 32;
-                for (int i = 0; i < segments; i++)
-                {
-                    float a = i * Mathf.PI * 2 / segments;
-                    float variation = environment == 4 ? Mathf.Sin(a * 3) * 5 : environment == 2 ? Mathf.Sin(a * 2) * 7 : 0;
-                    track.Add(new Vector3(Mathf.Sin(a) * (radiusX + variation), 0, Mathf.Cos(a) * radiusZ));
-                }
+                foreach (var point in CircuitLayout.Build(environment)) track.Add(new Vector3(point.X, 0, point.Z));
+                int segments = track.Count;
                 for (int i = 0; i < segments; i++)
                 {
                     Vector3 a = track[i], b = track[(i + 1) % segments];
@@ -546,7 +570,7 @@ namespace VelocityRivals
                     if (environment == 1 && (i == 7 || i == 23))
                         Box("Skyfall launch ramp", middle + Vector3.up * .45f, new Vector3(7, .5f, 8), road, facing * Quaternion.Euler(-10, 0, 0));
                 }
-                if (environment != 1) Box("Landscape", new Vector3(0, -.9f, 0), new Vector3(260, 1, 220), terrain);
+                if (environment != 1) Box("Landscape", new Vector3(0, -.9f, 0), new Vector3(440, 1, 400), terrain);
                 else Box("Cloud deck", new Vector3(0, -30, 0), new Vector3(300, 1, 260), terrain);
             }
             else

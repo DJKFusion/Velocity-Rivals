@@ -185,6 +185,7 @@ namespace VelocityRivals.Editor
                 "Use HOW TO PLAY for event rules and SETTINGS for music and graphics.\r\n" +
                 "Saves: %USERPROFILE%\\AppData\\LocalLow\\DJKFusion\\Velocity Rivals\r\n";
             File.WriteAllText(Path.Combine(Path.GetDirectoryName(fullPath), "START HERE.txt"), instructions);
+            File.Copy("docs/PLAYER-GUIDE.txt", Path.Combine(Path.GetDirectoryName(fullPath), "PLAYER GUIDE.txt"), true);
             File.WriteAllText(Path.Combine(Path.GetDirectoryName(fullPath), "BUILD INFO.txt"),
                 "Velocity Rivals Single Player " + SinglePlayerBuildGuard.Version + "\nUnity " + Application.unityVersion + "\nBuilt UTC: " + DateTime.UtcNow.ToString("O") +
                 "\nBuildPipeline result: " + report.summary.result + "\nBuild success does not certify gameplay QA. Test reports are retained separately in the source project's Artifacts directory.\n");

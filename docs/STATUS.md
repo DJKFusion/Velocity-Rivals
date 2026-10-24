@@ -1,6 +1,6 @@
 # Implementation and verification ledger
 
-Status meanings: **verified here** means a named tool ran successfully in the cloud; **implemented / Unity untested** means source/assets exist but Editor behavior is not established; **unfinished** means the feature is absent or substantially incomplete. None of the gameplay rows below are production-complete. Version 0.4.0 targets Windows single player; networking source is archived behind a disabled assembly and is not part of the default player. See [SINGLE-PLAYER-RELEASE.md](SINGLE-PLAYER-RELEASE.md).
+Status meanings: **verified here** means a named tool ran successfully in the cloud; **implemented / Unity untested** means source/assets exist but Editor behavior is not established; **unfinished** means the feature is absent or substantially incomplete. None of the gameplay rows below are production-complete. Version 0.5.0 targets Windows single player; networking source is archived behind a disabled assembly and is not part of the default player. See [SINGLE-PLAYER-RELEASE.md](SINGLE-PLAYER-RELEASE.md).
 
 | Area | Status | Concrete implementation / remaining work |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ Status meanings: **verified here** means a named tool ran successfully in the cl
 | Stunt Rush | Implemented / Unity untested | Rotation/airtime/upright landing scores and timer; no precision landing combo system |
 | Time Attack | Implemented / Unity untested | Three-lap time and ghost recording/playback; per-track online leaderboard unfinished |
 | Free Play | Implemented / Unity untested | Training, ramps and restart/menu return |
-| Worlds | Implemented / Unity untested | Five themes/circuit variants, road markings, lit towers/natural formations, spectator tiers and roof ribs; production architecture, shortcut balance, ambience and smoothly rideable walls unfinished |
+| Worlds | Implemented / Unity untested | Five authored circuit layouts, named districts, inner/outer buildings, tunnels, bridge supports, terrain formations and enclosed stadium architecture; production architecture, shortcut balance, ambience and smoothly rideable walls unfinished |
 | Garage | Implemented partially / Unity untested | Saved paint/finish, wheel scale, trail colour, stripe/spoiler variants; lit rotating preview of the actual selected car with matching cosmetics; texture decal library and wheel mesh swaps unfinished |
 | Menus | Implemented / Unity untested | Main, mode, garage, records, settings, soundtrack, controls guide, pause, results, credits and career tour; local events pause on focus loss; text-only animated title, no loading cinematic |
 | Audio | Files verified here; playback Unity untested | Nine original stereo synthwave tracks, menu/event shuffle playlists, crossfades, pause ducking, custom-song import menus; synthesized engine/UI/gameplay cues; production sound design/crowd ambience unfinished |
@@ -27,9 +27,13 @@ Status meanings: **verified here** means a named tool ran successfully in the cl
 | 60 FPS | Unverified | 60 FPS cap is configured; no measured frame-rate, CPU/GPU budget, LOD or target-machine profiling |
 | Steam/Epic/PS5/Xbox | Unfinished | Release requirements documented; no store SDKs, platform packages, devkits or certified builds |
 
+## 0.5 changes awaiting Windows verification
+
+The owner subsequently confirmed that the corrected 0.4 build script succeeded and the EXE launched and played well. No passing rerun XML or performance measurements were supplied. Version 0.5 adds structured worlds, revised AI corner braking, career presentation and versioned records/ghosts; those changes require a fresh test/build and playtest. See [UPDATE-STRUCTURED-WORLDS.md](UPDATE-STRUCTURED-WORLDS.md).
+
 ## Latest supplied Unity evidence
 
-The 24 October Windows PlayMode report ran 11 tests: one imported-vehicle check passed; ten failed on the same invalid scenery rotation. Both box helpers have been corrected to use explicit identity rotations. The updated suite adds a focused scenery regression; a successful Windows rerun and build are still pending. See [TESTING.md](TESTING.md).
+The 24 October Windows PlayMode report ran 11 tests: one imported-vehicle check passed; ten failed on the same invalid scenery rotation. Both box helpers have been corrected to use explicit identity rotations. The updated suite adds a focused scenery regression; a later successful build/launch was reported by the owner, without a new XML report. See [TESTING.md](TESTING.md).
 
 ## Known issues and risks to resolve in Unity
 

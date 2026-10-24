@@ -192,6 +192,47 @@ static class Program
                 Throws<ArgumentException>(() => RelayTransport.ValidateEndpoint("https://example.com"));
                 Throws<ArgumentException>(() => RelayTransport.ValidateEndpoint("wss://user:secret@example.com"));
             });
+            Test("authored circuits close with evenly spaced finite gates inside recovery bounds", () => {
+                for (int theme = 0; theme < 5; theme++) {
+                    var route = CircuitLayout.Build(theme);
+                    Check(route.Count > 40 && route.Count < 90);
+                    for (int i = 0; i < route.Count; i++) {
+                        var p = route[i]; float distance = CircuitLayout.Distance(p, route[(i + 1) % route.Count]);
+                        Check(float.IsFinite(p.X) && float.IsFinite(p.Z) && Math.Abs(p.X) < 150 && Math.Abs(p.Z) < 150);
+                        Check(distance > 8 && distance <= 10.1f);
+                    }
+                }
+            });
+            Test("circuits leave clearance between distant road sections", () => {
+                for (int theme = 0; theme < 5; theme++) {
+                    var route = CircuitLayout.Build(theme);
+                    for (int i = 0; i < route.Count; i++) for (int j = i + 5; j < route.Count; j++) {
+                        if (route.Count - (j - i) < 5) continue;
+                        Check(CircuitLayout.Distance(route[i], route[j]) > 26);
+                    }
+                }
+            });
+            Test("circuits have smooth corners and individually authored layouts", () => {
+                var signatures = new HashSet<string>();
+                for (int theme = 0; theme < 5; theme++) {
+                    var route = CircuitLayout.Build(theme); signatures.Add(string.Join(";", route.Select(p => p.X + "," + p.Z)));
+                    for (int i = 0; i < route.Count; i++) {
+                        var a = route[i]; var b = route[(i+1)%route.Count]; var c = route[(i+2)%route.Count];
+                        float dot = ((b.X-a.X)*(c.X-b.X)+(b.Z-a.Z)*(c.Z-b.Z)) / (CircuitLayout.Distance(a,b)*CircuitLayout.Distance(b,c));
+                        Check(dot > .65f);
+                    }
+                }
+                Check(signatures.Count == 5);
+            });
+            Test("district labels cover all four sectors and invalid themes are rejected", () => {
+                for (int theme = 0; theme < 5; theme++) {
+                    var labels = new HashSet<string>();
+                    for (int sector = 0; sector < 4; sector++) labels.Add(CircuitLayout.Section(theme, sector*20, 80));
+                    Check(labels.Count == 4);
+                }
+                Throws<ArgumentOutOfRangeException>(() => CircuitLayout.Build(-1));
+                Throws<ArgumentOutOfRangeException>(() => CircuitLayout.Build(5));
+            });
             Test("career unlocks each event in order and reaches an explicit ending", () => {
                 var career = new CareerProgress(); Check(career.NextEvent == 0 && !career.Complete);
                 Check(!career.Record(1, 3) && !career.IsUnlocked(-1) && !career.IsUnlocked(CareerTour.Count));

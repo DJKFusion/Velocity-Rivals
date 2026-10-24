@@ -4,11 +4,12 @@ using UnityEngine;
 namespace VelocityRivals
 {
     /// <summary>Collision-free scenery combined by material. Match destruction releases owned resources.</summary>
-    public sealed class WorldScenery : MonoBehaviour
+    public sealed partial class WorldScenery : MonoBehaviour
     {
         readonly List<Material> materials = new List<Material>();
         readonly List<Mesh> meshes = new List<Mesh>();
         readonly Dictionary<Material, List<CombineInstance>> groups = new Dictionary<Material, List<CombineInstance>>();
+        readonly Dictionary<PrimitiveType, Mesh> primitiveMeshes = new Dictionary<PrimitiveType, Mesh>();
         static readonly Color[] Accents = { new Color(.05f,.8f,1), new Color(.6f,.3f,1), new Color(1,.55f,.12f), new Color(.85f,.1f,.5f), new Color(.4f,.8f,1) };
 
         public static void Build(Transform parent, List<Vector3> route, int theme, bool racing)
@@ -25,10 +26,14 @@ namespace VelocityRivals
         }
         void Shape(PrimitiveType type, Vector3 position, Vector3 size, Quaternion rotation, Material material)
         {
-            var temporary = GameObject.CreatePrimitive(type);
-            var mesh = temporary.GetComponent<MeshFilter>().sharedMesh;
+            if (!primitiveMeshes.TryGetValue(type, out var mesh))
+            {
+                var temporary = GameObject.CreatePrimitive(type);
+                mesh = temporary.GetComponent<MeshFilter>().sharedMesh;
+                primitiveMeshes.Add(type, mesh);
+                temporary.SetActive(false); Destroy(temporary);
+            }
             groups[material].Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.TRS(position, rotation, size) });
-            temporary.SetActive(false); Destroy(temporary);
         }
         // Quaternion's == operator assumes unit rotations; a zero quaternion is not a sentinel.
         void Box(Vector3 p, Vector3 size, Material material)
@@ -63,31 +68,7 @@ namespace VelocityRivals
                         Box(a+Vector3.up*6,new Vector3(20,.5f,.6f),dark,facing);
                         Box(a+Vector3.up*5.7f,new Vector3(18,.12f,.65f),neon,facing);
                     }
-                    if (i % 2 != 0) continue;
-                    Vector3 radial = new Vector3(a.x,0,a.z).normalized;
-                    Vector3 centre = a + radial * 29;
-                    if (theme == 2 || theme == 4)
-                    {
-                        for (int j = 0; j < 3; j++)
-                        {
-                            Vector3 p = centre + Vector3.Cross(radial,Vector3.up)*j*6;
-                            float height = 9 + (i+j*7)%17;
-                            Shape(theme==4?PrimitiveType.Capsule:PrimitiveType.Sphere,p+Vector3.up*height*.35f,new Vector3(7,height*.5f,8),Quaternion.Euler(8,i*19,15),terrain);
-                        }
-                    }
-                    else
-                    {
-                        float height=18+i%7*5;
-                        Box(centre+Vector3.up*height*.5f,new Vector3(9,height,9),glass);
-                        Box(centre+Vector3.up*(height+.2f),new Vector3(9.5f,.4f,9.5f),neon);
-                        for(int floor=2;floor<height;floor+=3)
-                        {
-                            Box(centre+Vector3.up*floor,new Vector3(9.1f,.12f,9.1f),dark);
-                            for(int window=-3;window<=3;window+=2)
-                                if ((floor+window+i)%3!=0)
-                                    Box(centre+new Vector3(window,floor+1,-4.56f),new Vector3(.65f,1.1f,.05f),floor%2==0?warm:neon);
-                        }
-                    }
+
                 }
                 if(route.Count>1)
                 {
@@ -128,6 +109,7 @@ namespace VelocityRivals
                 }
                 Box(new Vector3(0,.025f,0),new Vector3(88,.02f,.12f),paint);
             }
+            BuildDistricts(route, theme, racing, dark, glass, neon, warm, terrain, paint);
             foreach(var group in groups)
             {
                 if(group.Value.Count==0) continue;

@@ -19,7 +19,7 @@ namespace VelocityRivals
         public void Begin(int environment, int vehicle, Transform target)
         {
             player = target;
-            file = Path.Combine(Application.persistentDataPath, "ghost-" + environment + "-" + vehicle + ".json");
+            file = Path.Combine(Path.GetDirectoryName(SaveStore.FilePath), "ghost-v" + CircuitLayout.Revision + "-" + environment + "-" + vehicle + ".json");
             try
             {
                 if (File.Exists(file) && new FileInfo(file).Length < 8 * 1024 * 1024)
@@ -72,7 +72,7 @@ namespace VelocityRivals
             recording.Duration = duration;
             try
             {
-                Directory.CreateDirectory(Application.persistentDataPath);
+                Directory.CreateDirectory(Path.GetDirectoryName(file));
                 string temp = file + ".tmp";
                 File.WriteAllText(temp, JsonUtility.ToJson(recording));
                 if (File.Exists(file)) File.Replace(temp, file, null);

@@ -2,7 +2,7 @@
 
 ## Executed in the cloud
 
-- Thirty-four C# console tests compiled and passed using .NET SDK 8.0.426. They use the actual checkpoint, network framing, combat, lap timing, shuffle playlist, duel rules, relay transport URL validation and Windows archive source files. New checks cover loaded-player countdown, three-lap first finish, arena goals, timeout/draw/reset, invalid clocks/configuration and TLS endpoint requirements. Six additional career checks cover sequential unlocks, replay, save normalization, medal thresholds, championship/stunt goals and catalog completeness. Archive tests use synthetic fixtures, not actual Unity binaries.
+- Thirty-eight C# console tests compiled and passed using .NET SDK 8.0.426. They use the actual checkpoint, network framing, combat, lap timing, shuffle playlist, duel rules, relay transport URL validation and Windows archive source files. New checks cover loaded-player countdown, three-lap first finish, arena goals, timeout/draw/reset, invalid clocks/configuration and TLS endpoint requirements. Four layout checks cover gate spacing, road separation, corner smoothness and district coverage. Six career checks cover sequential unlocks, replay, save normalization, medal thresholds, championship/stunt goals and catalog completeness. Archive tests use synthetic fixtures, not actual Unity binaries.
 - Eight Python WebSocket server tests passed: create/join/forwarding, wrong protocol, missing room, third client, role restrictions, disconnect, payload bounds and capacity.
 - The actual C# `RelayTransport` connected through the local Python server, created/joined a room, exchanged both directions and received a disconnect notice. This is not Unity gameplay or a public TLS deployment test.
 - Nine original OGG music files were generated and decoded with FFmpeg; stereo duration, finite samples, signal level and non-clipping peaks passed. Details are in `Tools/Audio/validation.json`. Audible listening and Unity playback remain unverified.
@@ -78,3 +78,7 @@ PlayMode covers vehicle spawning, pause/resume/menu state, restart cleanup, all 
 18. **Single-player career:** complete all 12 events, verify each bronze unlocks only the next event, retry for higher medals, quit/reopen between cups, and check the final tour-complete screen and achievement. Validate medal targets with real driving times.
 19. **Single-player build:** verify there is no multiplayer menu or component and no VelocityRivals.Multiplayer.dll in the Windows package. Test offline with the network disconnected. Check the versioned ZIP and SHA-256 sidecar.
 20. **Display/showroom:** cycle every unlocked vehicle and cosmetic, check camera framing, fullscreen/windowed mode, all quality presets and reduced effects. Verify no invisible cosmetics, clipped menu controls or leaking preview stages.
+
+## 0.5 structured worlds
+
+The owner reported a working 0.4 Windows EXE after the rotation fix. The new 0.5 Unity tests and player build remain unrun here. Added Unity checks cover actual circuit layouts and district signs in all mode/environment combinations, trophy-cabinet navigation and preservation/separation of old-layout records. Test every new covered section, AI completion, start-area stands, old-profile loading and camera clearance; measure the denser worlds on target hardware. See UPDATE-STRUCTURED-WORLDS.md.
