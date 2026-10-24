@@ -4,25 +4,47 @@ using System.Collections.Generic;
 namespace VelocityRivals
 {
     public enum GameCue { Countdown, Go, Goal, Pickup, Impact, Knockout, Jump, Boost, Drift }
-    /// <summary>Original synthesized placeholder music and UI cues; no downloaded audio.</summary>
+    /// <summary>Streamed menu/race playlists with crossfades and original synthesized effects.</summary>
     public sealed class SoundDirector : MonoBehaviour
     {
-        private AudioSource music;
+        private readonly AudioSource[] music = new AudioSource[2];
+        private AudioClip[] menuTracks, raceTracks;
+        private ShufflePlaylist menuOrder, raceOrder;
+        private AudioClip fallback;
+        private LanRaceSession lan;
+        private int active;
+        private bool raceMusic;
+        private float fade = 1, fadeDuration = 1.5f, outgoingGain, startedAt, duck = 1;
         private AudioSource effects;
         private AudioClip click;
         private AudioClip victory;
         readonly Dictionary<GameCue, AudioClip> cues = new Dictionary<GameCue, AudioClip>();
         readonly Dictionary<GameCue, float> nextCue = new Dictionary<GameCue, float>();
         public static SoundDirector Instance { get; private set; }
+        public string NowPlaying => music[active] && music[active].clip ? music[active].clip.name : "";
+        public string PlaylistName => raceMusic ? "Race" : "Menu";
+        public int MenuTrackCount => menuTracks.Length;
+        public int RaceTrackCount => raceTracks.Length;
 
         private void Awake()
         {
             Instance = this;
-            music = gameObject.AddComponent<AudioSource>();
+            for (int i = 0; i < music.Length; i++)
+            {
+                music[i] = gameObject.AddComponent<AudioSource>();
+                music[i].playOnAwake = false;
+                music[i].spatialBlend = 0;
+                music[i].ignoreListenerPause = true;
+                music[i].priority = 32;
+            }
             effects = gameObject.AddComponent<AudioSource>();
-            music.loop = true;
-            music.spatialBlend = effects.spatialBlend = 0;
-            music.clip = Music();
+            effects.spatialBlend = 0;
+            effects.playOnAwake = false;
+            menuTracks = LoadTracks("Music/Menu");
+            raceTracks = LoadTracks("Music/Race");
+            menuOrder = new ShufflePlaylist(menuTracks.Length, System.Environment.TickCount);
+            raceOrder = new ShufflePlaylist(raceTracks.Length, System.Environment.TickCount ^ 7919);
+            lan = FindFirstObjectByType<LanRaceSession>();
             click = Tone("Menu pulse", 660, 0.08f);
             victory = Tone("Finish signal", 880, 0.7f);
             cues.Add(GameCue.Countdown, Tone("Countdown", 440, .12f));
@@ -35,13 +57,72 @@ namespace VelocityRivals
             cues.Add(GameCue.Boost, Tone("Boost", 160, .25f));
             cues.Add(GameCue.Drift, Tone("Tire skid", 1450, .12f));
             ApplyVolumes();
-            music.Play();
+            AdvanceTrack();
+        }
+
+        private static AudioClip[] LoadTracks(string folder)
+        {
+            var tracks = new List<AudioClip>();
+            foreach (var clip in Resources.LoadAll<AudioClip>(folder))
+                if (clip != null && clip.length > .1f) tracks.Add(clip);
+            tracks.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+            return tracks.ToArray();
+        }
+
+        private void Update()
+        {
+            var session = GameSession.Instance;
+            bool racing = (session != null && session.Running && !session.Finished) || (lan != null && lan.Active);
+            if (racing != raceMusic) { raceMusic = racing; AdvanceTrack(); }
+            duck = Mathf.MoveTowards(duck, session != null && session.Paused ? .4f : 1, Time.unscaledDeltaTime * 2);
+            fade = Mathf.Clamp01(fade + Time.unscaledDeltaTime / fadeDuration);
+            if (fade >= 1 && music[1 - active].isPlaying) music[1 - active].Stop();
+            ApplyMusicVolume();
+            var current = music[active];
+            // The grace interval lets streamed clips start and prevents a rapid retry loop if audio is unavailable.
+            if (fade >= 1 && current.clip && Time.unscaledTime - startedAt > Mathf.Min(3, current.clip.length * .5f))
+            {
+                float transition = Mathf.Min(1.5f, current.clip.length * .2f);
+                if (current.time >= current.clip.length - transition || !current.isPlaying) AdvanceTrack();
+            }
+        }
+
+        public void NextTrack() { if (fade >= 1) AdvanceTrack(); }
+
+        private void AdvanceTrack()
+        {
+            AudioClip[] tracks = raceMusic ? raceTracks : menuTracks;
+            var order = raceMusic ? raceOrder : menuOrder;
+            AudioClip clip;
+            int next = order.Next();
+            if (next >= 0) clip = tracks[next];
+            else
+            {
+                if (!fallback) fallback = Music();
+                clip = fallback;
+            }
+            outgoingGain = fade;
+            active = 1 - active;
+            music[active].Stop();
+            music[active].clip = clip;
+            music[active].volume = 0;
+            fadeDuration = Mathf.Min(1.5f, clip.length * .2f);
+            startedAt = Time.unscaledTime;
+            fade = 0;
+            music[active].Play();
+        }
+
+        private void ApplyMusicVolume()
+        {
+            float volume = SaveStore.Current.musicVolume * duck;
+            if (music[active]) music[active].volume = volume * fade;
+            if (music[1 - active]) music[1 - active].volume = volume * outgoingGain * (1 - fade);
         }
 
         public void ApplyVolumes()
         {
             AudioListener.volume = SaveStore.Current.masterVolume;
-            if (music) music.volume = SaveStore.Current.musicVolume;
+            ApplyMusicVolume();
             if (effects) effects.volume = SaveStore.Current.effectsVolume;
         }
         public void Click() { if (effects && click) effects.PlayOneShot(click, 0.35f); }
@@ -96,7 +177,10 @@ namespace VelocityRivals
 
         private void OnDestroy()
         {
-            if (music && music.clip) Destroy(music.clip);
+            foreach (var source in music) if (source) { source.Stop(); source.clip = null; Destroy(source); }
+            if (effects) { effects.Stop(); Destroy(effects); }
+            // Imported assets are shared; only destroy clips created by this component.
+            if (fallback) Destroy(fallback);
             if (click) Destroy(click);
             if (victory) Destroy(victory);
             foreach (var clip in cues.Values) if (clip != null) Destroy(clip);

@@ -4,7 +4,7 @@ The current deliverable is development source. The Windows pipeline script exist
 
 ## Windows
 
-Install the exact Editor and Windows build support in Unity Hub. Run Test Runner, build using the menu or PowerShell driver, and distribute the whole `Builds/Windows` directory. Exercise installation, save permissions, display modes, controller hot-plug and clean shutdown on separate PCs. Retain symbol files and build logs for crash diagnosis. Add signed installers, versioning, crash reporting and patch infrastructure before public distribution.
+Install the exact Editor and Windows build support in Unity Hub. Run Test Runner, then use **Velocity Rivals → Build Windows ZIP**, or run `Tools/Build-Windows.ps1 -RunTests -Package`. The ZIP includes the full player directory and controls instructions. See [BUILD-WINDOWS.md](BUILD-WINDOWS.md). Exercise installation, save permissions, display modes, controller hot-plug and clean shutdown on separate PCs. Retain symbol files and build logs for crash diagnosis. Add signed installers, versioning, crash reporting and patch infrastructure before public distribution.
 
 ## Steam and Epic Games Store
 

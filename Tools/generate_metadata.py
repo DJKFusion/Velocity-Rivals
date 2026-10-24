@@ -25,6 +25,13 @@ for path in sorted(assets.rglob('*')):
     elif path.suffix.lower() == '.fbx':
         # Leave importer settings at Editor defaults; preserve a stable identity.
         body = 'ModelImporter:\n  serializedVersion: 22200\n  internalIDToNameTable: []\n  externalObjects: {}\n  materials:\n    materialImportMode: 0\n'
+    elif path.suffix.lower() in ('.ogg', '.wav', '.mp3'):
+        body = ('AudioImporter:\n  externalObjects: {}\n  serializedVersion: 7\n'
+                '  defaultSettings:\n    serializedVersion: 2\n    loadType: 2\n'
+                '    sampleRateSetting: 0\n    sampleRateOverride: 44100\n'
+                '    compressionFormat: 1\n    quality: 0.8\n    conversionMode: 0\n'
+                '  forceToMono: 0\n  normalize: 1\n  preloadAudioData: 0\n'
+                '  loadInBackground: 1\n  ambisonic: 0\n')
     else:
         body = 'DefaultImporter:\n  externalObjects: {}\n'
     meta.write_text(prefix + body + '  userData:\n  assetBundleName:\n  assetBundleVariant:\n')

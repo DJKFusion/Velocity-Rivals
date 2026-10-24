@@ -1,6 +1,7 @@
 param(
     [string]$Unity = "C:\Program Files\Unity\Hub\Editor\6000.6.7f1\Editor\Unity.exe",
-    [switch]$RunTests
+    [switch]$RunTests,
+    [switch]$Package
 )
 $ErrorActionPreference = 'Stop'
 $Project = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -20,7 +21,12 @@ if ($RunTests) {
         }
     }
 }
-& $Unity -batchmode -nographics -quit -projectPath $Project -buildTarget Win64 -executeMethod VelocityRivals.Editor.ProjectBuilder.BuildWindows -logFile (Join-Path $Artifacts 'build.log')
+$Method = if ($Package) { 'VelocityRivals.Editor.ProjectBuilder.BuildWindowsPackage' } else { 'VelocityRivals.Editor.ProjectBuilder.BuildWindows' }
+& $Unity -batchmode -nographics -quit -projectPath $Project -buildTarget Win64 -executeMethod $Method -logFile (Join-Path $Artifacts 'build.log')
 if ($LASTEXITCODE -ne 0) { throw 'Unity build failed. See Artifacts/build.log.' }
-if (!(Test-Path (Join-Path $Project 'Builds/Windows/VelocityRivals.exe'))) { throw 'No executable was produced.' }
-Write-Host "Build ready at $Project\Builds\Windows. Ship the entire folder, including the Data directory and UnityPlayer.dll."
+$Executable = if ($env:VELOCITY_BUILD_PATH) {
+    if ([IO.Path]::IsPathRooted($env:VELOCITY_BUILD_PATH)) { $env:VELOCITY_BUILD_PATH } else { Join-Path $Project $env:VELOCITY_BUILD_PATH }
+} else { Join-Path $Project 'Builds/Windows/VelocityRivals.exe' }
+if (!(Test-Path $Executable)) { throw 'No executable was produced.' }
+Write-Host "Build ready at $Executable. Ship the entire folder, including the Data directory and UnityPlayer.dll."
+if ($Package) { Write-Host "Game ZIP is in $Project\Builds\Packages. Extract it fully before launching the game." }

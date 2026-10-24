@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
+using System.IO.Compression;
 using VelocityRivals;
+using VelocityRivals.Editor;
 
 static class Program
 {
@@ -85,9 +88,85 @@ static class Program
                 v.Damage(100, 1); v.Shield(2); v.Overdrive(2);
                 Check(!v.Shielded(2) && v.DamageMultiplier(2) == 1);
             });
-            Console.WriteLine(passed + " tests passed. These cover shared C# logic, not Unity runtime behavior.");
+            Test("playlist handles no tracks, one track and invalid counts", () => {
+                Check(new ShufflePlaylist(0, 1).Next() == -1);
+                var single = new ShufflePlaylist(1, 1);
+                for (int i = 0; i < 10; i++) Check(single.Next() == 0);
+                Throws<ArgumentOutOfRangeException>(() => new ShufflePlaylist(-1, 1));
+            });
+            Test("playlist visits every track exactly once without boundary repeats", () => {
+                for (int count = 2; count <= 12; count++) {
+                    var playlist = new ShufflePlaylist(count, count); int previous = -1;
+                    for (int cycle = 0; cycle < 100; cycle++) {
+                        var seen = new HashSet<int>();
+                        for (int i = 0; i < count; i++) {
+                            int next = playlist.Next();
+                            Check(next >= 0 && next < count && next != previous && seen.Add(next)); previous = next;
+                        }
+                        Check(seen.Count == count);
+                    }
+                }
+            });
+            Test("lap timing records splits and fastest completed lap", () => {
+                var laps = new LapTiming();
+                Check(laps.CurrentLap(10) == 10 && laps.CompleteLap(1, 30));
+                Check(laps.LastLap == 30 && laps.BestLap == 30 && laps.CurrentLap(35) == 5);
+                Check(laps.CompleteLap(2, 58) && laps.LastLap == 28 && laps.BestLap == 28);
+                Check(laps.CompleteLap(3, 91) && laps.LastLap == 33 && laps.BestLap == 28);
+            });
+            Test("lap timing rejects duplicate skipped backwards and invalid samples", () => {
+                var laps = new LapTiming(); Check(!laps.CompleteLap(2, 30));
+                Check(!laps.CompleteLap(1, float.NaN) && !laps.CompleteLap(1, float.PositiveInfinity));
+                Check(laps.CompleteLap(1, 30) && !laps.CompleteLap(1, 31));
+                Check(!laps.CompleteLap(2, 29) && !laps.CompleteLap(2, 30));
+                Check(laps.CompletedLaps == 1 && laps.LastLap == 30);
+            });
+            Test("lap timing stays still when match time is paused", () => {
+                var laps = new LapTiming(); laps.CompleteLap(1, 30);
+                for (int i = 0; i < 100; i++) Check(laps.CurrentLap(35) == 5);
+                Check(laps.CompleteLap(2, 60) && laps.LastLap == 30);
+            });
+            Test("Windows archive preserves executable, nested data and player dependencies", () => {
+                WithBuildFixture((dir, exe, zip) => {
+                    WindowsArchive.Create(exe, zip);
+                    using var archive = ZipFile.OpenRead(zip);
+                    Check(archive.GetEntry("VelocityRivals.exe") != null && archive.GetEntry("UnityPlayer.dll") != null);
+                    using var reader = new StreamReader(archive.GetEntry("VelocityRivals_Data/Managed/fixture.txt").Open());
+                    Check(reader.ReadToEnd() == "test data, not a playable build");
+                });
+            });
+            Test("Windows archive refuses incomplete builds", () => {
+                WithBuildFixture((dir, exe, zip) => {
+                    string player = Path.Combine(dir, "UnityPlayer.dll"); File.Delete(player);
+                    Throws<FileNotFoundException>(() => WindowsArchive.Create(exe, zip)); Check(!File.Exists(zip));
+                    File.WriteAllText(player, "fixture"); Directory.Delete(Path.Combine(dir, "VelocityRivals_Data"), true);
+                    Throws<DirectoryNotFoundException>(() => WindowsArchive.Create(exe, zip)); Check(!File.Exists(zip));
+                });
+            });
+            Test("Windows archive avoids self-inclusion and preserves existing packages", () => {
+                WithBuildFixture((dir, exe, zip) => {
+                    Throws<ArgumentException>(() => WindowsArchive.Create(exe, Path.Combine(dir, "self.zip")));
+                    File.WriteAllText(zip, "previous package");
+                    Throws<IOException>(() => WindowsArchive.Create(exe, zip));
+                    Check(File.ReadAllText(zip) == "previous package");
+                });
+            });
+            Console.WriteLine(passed + " tests passed. These cover shared C# logic and archive fixtures, not Unity runtime behavior or a real Windows build.");
             return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e); return 1; }
+    }
+
+    static void WithBuildFixture(Action<string, string, string> test)
+    {
+        string root = Path.Combine(Path.GetTempPath(), "velocity-package-test-" + Guid.NewGuid().ToString("N"));
+        string player = Path.Combine(root, "Player");
+        Directory.CreateDirectory(Path.Combine(player, "VelocityRivals_Data", "Managed"));
+        string executable = Path.Combine(player, "VelocityRivals.exe");
+        File.WriteAllText(executable, "test fixture, not an executable");
+        File.WriteAllText(Path.Combine(player, "UnityPlayer.dll"), "test fixture");
+        File.WriteAllText(Path.Combine(player, "VelocityRivals_Data", "Managed", "fixture.txt"), "test data, not a playable build");
+        try { test(player, executable, Path.Combine(root, "game.zip")); }
+        finally { Directory.Delete(root, true); }
     }
 }

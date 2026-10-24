@@ -30,11 +30,26 @@ namespace VelocityRivals
             }
             catch (Exception e) { Debug.LogWarning("Ghost unavailable: " + e.Message); previous = null; }
             if (previous == null) return;
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube); go.name = "Personal best ghost"; go.transform.SetParent(transform);
-            Destroy(go.GetComponent<Collider>()); go.transform.localScale = new Vector3(1.8f, .6f, 3.5f); visual = go.transform;
+            var model = Resources.Load<GameObject>("VehicleModels/" + GameSession.VehicleNames[Mathf.Clamp(vehicle, 0, GameSession.VehicleNames.Length - 1)]);
+            visual = new GameObject("Personal best ghost").transform;
+            visual.SetParent(transform, false);
+            var go = model ? Instantiate(model, visual) : GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = "Ghost car"; go.transform.SetParent(visual, false);
+            foreach (var collider in go.GetComponentsInChildren<Collider>()) { collider.enabled = false; Destroy(collider); }
+            if (model) go.transform.localPosition = new Vector3(0, -.22f, 0);
+            else go.transform.localScale = new Vector3(1.8f, .6f, 3.5f);
             material = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
             material.color = new Color(.15f, .8f, .9f); material.EnableKeyword("_EMISSION"); material.SetColor("_EmissionColor", new Color(.1f, .4f, .5f));
-            go.GetComponent<Renderer>().sharedMaterial = material;
+            foreach (var renderer in go.GetComponentsInChildren<Renderer>())
+            {
+                var surfaces = new Material[renderer.sharedMaterials.Length];
+                for (int i = 0; i < surfaces.Length; i++) surfaces[i] = material;
+                renderer.sharedMaterials = surfaces;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+            VehicleMeshBatch.Bake(go.transform, new List<Transform>());
+            foreach (var renderer in go.GetComponentsInChildren<Renderer>())
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             visual.gameObject.SetActive(false);
         }
         public void Tick(float time)

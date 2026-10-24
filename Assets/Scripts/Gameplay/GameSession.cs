@@ -28,6 +28,15 @@ namespace VelocityRivals
         public int RivalScore => rivalScore;
         public bool ActionEnabled => Running && !Paused && !Finished && countdown <= 0;
         public string CombatStatus => battle != null ? battle.PlayerStatus : "";
+        public bool IsCircuit => racing;
+        public IReadOnlyList<Vector3> Circuit => track;
+        public IReadOnlyList<VehicleController> Vehicles => cars;
+        public int NextCheckpoint => playerProgress != null ? playerProgress.NextCheckpoint : -1;
+        public bool HasArenaCore => core != null;
+        public Vector3 ArenaCorePosition => core != null ? core.position : Vector3.zero;
+        public LapTiming LapTimes { get; private set; } = new LapTiming();
+        public bool WrongWay => wrongWaySeconds >= 1.5f;
+        private float wrongWaySeconds;
         private ArenaBattle battle;
         private int countdownBeat;
         public bool CanAdvanceChampionship => mode == GameMode.Championship && Finished && round < 2 && playerProgress != null && playerProgress.Complete;
@@ -82,6 +91,8 @@ namespace VelocityRivals
             Paused = Finished = false;
             Running = true;
             elapsed = collisionCooldown = goalCooldown = 0;
+            wrongWaySeconds = 0;
+            LapTimes = new LapTiming();
             countdown = 3;
             countdownBeat = 4;
             playerScore = rivalScore = finishedRivals = 0;
@@ -150,6 +161,11 @@ namespace VelocityRivals
             foreach (var car in cars) if (car != null) car.ControlsEnabled = !value && countdown <= 0 && car.enabled;
         }
 
+        private void OnApplicationFocus(bool focused)
+        {
+            if (!focused && !Application.isBatchMode && Running && !Finished) SetPaused(true);
+        }
+
         private VehicleController SpawnCar(int index, Vector3 position, Quaternion rotation, Color color, bool player)
         {
             var template = Resources.Load<VehicleStats>("VehicleStats/" + VehicleNames[index]);
@@ -206,7 +222,13 @@ namespace VelocityRivals
         private void UpdateRace()
         {
             TryCheckpoint(Player.transform.position, previousPlayer, playerProgress);
+            LapTimes.CompleteLap(playerProgress.CompletedLaps, elapsed);
             previousPlayer = Player.transform.position;
+            int gateIndex = playerProgress.NextCheckpoint;
+            Vector3 trackForward = (track[gateIndex] - track[(gateIndex + track.Count - 1) % track.Count]).normalized;
+            Vector3 velocity = Player.GetComponent<Rigidbody>().linearVelocity;
+            bool backwards = velocity.sqrMagnitude > 25 && Vector3.Dot(velocity.normalized, trackForward) < -.35f;
+            wrongWaySeconds = backwards ? wrongWaySeconds + Time.deltaTime : 0;
             foreach (var racer in racers)
             {
                 if (racer.Progress.Complete) continue;

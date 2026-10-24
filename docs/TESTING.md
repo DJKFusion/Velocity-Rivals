@@ -2,7 +2,8 @@
 
 ## Executed in the cloud
 
-- Fourteen C# console tests compiled and passed using .NET SDK 8.0.426. They use the actual `RaceProgress.cs`, `LanFrameBuffer.cs` and `CombatVitals.cs` source files: finish-line/skip prevention, reverse rejection, three-lap completion, duplicate/configuration guards, network fragmentation/coalescing/bounds, shield expiry, knockout damage, delayed protected respawn and overdrive expiry/reset.
+- Twenty-two C# console tests compiled and passed using .NET SDK 8.0.426. They use the actual checkpoint, network framing, combat, lap timing, shuffle playlist and Windows archive source files: finish-line/skip prevention, reverse rejection, three-lap completion, duplicate/configuration guards, network fragmentation/coalescing/bounds, shield expiry, knockout damage, delayed protected respawn, overdrive expiry/reset, lap splits/invalid input/pause time, exhaustive playlist cycles, and complete/incomplete package handling. Archive tests use synthetic fixtures, not actual Unity binaries.
+- Three original OGG music files were generated and decoded with FFmpeg; stereo duration, finite samples, signal level and non-clipping peaks passed. Details are in `Tools/Audio/validation.json`. Audible listening and Unity playback remain unverified.
 - Eight Blender FBX exports imported successfully back into Blender 4.3.2. Assertions compared mesh counts, vertices and bounds. Measurements are in `Tools/Blender/Generated/validation.json`.
 - Six generated car models were visually inspected in the offline Blender contact sheet. This is not a Unity screenshot.
 - `Tools/validate_source.py` validated manifest/assembly JSON, unique Unity GUIDs, source scene/prefab/stat GUID references, six vehicle asset sets and C# syntax using tree-sitter. Syntax parsing is not Unity API compilation.
@@ -25,9 +26,9 @@ Use Window → General → Test Runner, then run both EditMode and PlayMode suit
 
 EditMode covers ordered checkpoint progress, exact lap completion, invalid configuration, profile save/load and customization, record selection/XP, and recovery from a damaged primary save. Save tests use unique temporary directories and restore the original storage setting.
 
-PlayMode covers vehicle spawning, pause/resume/menu state, restart cleanup, all 30 mode/environment combinations, AI movement after countdown, battle impact scoring/cooldown, and starting an event through actual menu buttons. These are smoke tests; they do not demonstrate AI race completion or game balance.
+PlayMode covers vehicle spawning, pause/resume/menu state, restart cleanup, all 30 mode/environment combinations, AI movement after countdown, battle impact scoring/cooldown, starting an event through actual menu buttons, and music import/streaming/menu-race-pause transitions/imported-asset lifetime. These are smoke tests; they do not demonstrate AI race completion or game balance.
 
-`Tools/Build-Windows.ps1 -RunTests` runs both suites, rejects failed/zero-test/missing reports and then builds. Reports must belong to the current run; the script removes only its previous report files before running. Read `Artifacts/EditMode.log`, `PlayMode.log`, `build.log` and XML results if anything fails.
+`Tools/Build-Windows.ps1 -RunTests -Package` runs both suites, rejects failed/zero-test/missing reports and then builds and packages the entire Windows directory. Reports must belong to the current run; the script removes only its previous report files before running. Read `Artifacts/EditMode.log`, `PlayMode.log`, `build.log` and XML results if anything fails.
 
 ## Manual acceptance checks (unrun)
 
@@ -44,3 +45,5 @@ PlayMode covers vehicle spawning, pause/resume/menu state, restart cleanup, all 
 11. **LAN:** follow `MULTIPLAYER.md`; run two player instances, compare positions/timer/scores/results, disconnect each side, reconnect and test third-client rejection. Protocol unit tests alone do not pass this check.
 12. **Windows:** run the built EXE on a clean Windows account, verify its entire data directory is present, controller reconnects, alt-tab works, saves persist, and exit is clean.
 13. **Performance:** Unity Profiler plus a Development Build on target hardware. Measure CPU/GPU frame times over complete races and arenas, memory after 20 restarts, GC spikes, draw calls and physics cost. Target 16.67 ms total frame budget for 60 FPS; record hardware and quality settings. No target has yet been measured.
+14. **Music update:** hear all three supplied tracks; add an MP3 to each playlist through the import menus, restart Play Mode and verify selection/track names. Listen through full tracks and menu/race/result crossfades; pause to check ducking, skip a track, mute/unmute and verify saved levels. Test an empty playlist's fallback and verify the built EXE includes custom songs.
+15. **Race HUD update:** compare the map's car/next gate with the world, complete laps and verify last/best timing, pause to verify timers stop, drive backward to trigger the warning and turn around to clear it. Check the map in arenas and at each supported resolution. Alt-tab a local event and confirm it remains paused until Resume.

@@ -20,6 +20,8 @@ namespace VelocityRivals
         private Text hud;
         private Text hint;
         private Text title;
+        private Text nowPlaying;
+        private GameObject mapPanel;
         private SoundDirector sound;
         private GameMode selectedMode;
         private int selectedEnvironment;
@@ -61,13 +63,28 @@ namespace VelocityRivals
             hr.anchorMin = hr.anchorMax = new Vector2(0, 1);
             hr.pivot = new Vector2(0, 1);
             hr.anchoredPosition = new Vector2(35, -24);
-            hr.sizeDelta = new Vector2(1250, 200);
+            hr.sizeDelta = new Vector2(1450, 260);
             hud.alignment = TextAnchor.UpperLeft;
             hint = Label(canvas.transform, "", 20, 55);
             var br = hint.rectTransform;
             br.anchorMin = new Vector2(0, 0); br.anchorMax = new Vector2(1, 0);
             br.pivot = new Vector2(0.5f, 0);
             br.anchoredPosition = new Vector2(0, 20); br.sizeDelta = new Vector2(-50, 65);
+            mapPanel = new GameObject("Race map", typeof(RectTransform), typeof(CanvasRenderer), typeof(RaceMap));
+            mapPanel.transform.SetParent(canvas.transform, false);
+            var map = mapPanel.GetComponent<RaceMap>();
+            map.Session = session;
+            map.raycastTarget = false;
+            var mapRect = map.rectTransform;
+            mapRect.anchorMin = mapRect.anchorMax = mapRect.pivot = Vector2.one;
+            mapRect.anchoredPosition = new Vector2(-30, -30);
+            mapRect.sizeDelta = new Vector2(260, 260);
+            var mapCaption = Label(mapPanel.transform, "YOU ▲   •   NEXT GATE ■", 17, 25);
+            mapCaption.rectTransform.anchorMin = new Vector2(0, 0);
+            mapCaption.rectTransform.anchorMax = new Vector2(1, 0);
+            mapCaption.rectTransform.pivot = new Vector2(.5f, 1);
+            mapCaption.rectTransform.sizeDelta = new Vector2(0, 30);
+            mapPanel.SetActive(false);
             session.MatchEnded += OnMatchEnded;
             ApplyQuality(SaveStore.Current.quality);
             MainMenu();
@@ -76,6 +93,8 @@ namespace VelocityRivals
         private void Update()
         {
             if (!session) return;
+            mapPanel.SetActive(session.Running && !session.Finished && !session.Paused && !(lan != null && lan.Active));
+            if (nowPlaying) nowPlaying.text = sound.PlaylistName.ToUpperInvariant() + " PLAYLIST\n" + sound.NowPlaying;
             if (lan != null && lan.Active)
             {
                 if (!networkWasActive) { ClearPanel(); networkWasActive = true; }
@@ -91,11 +110,19 @@ namespace VelocityRivals
             {
                 if (session.Paused) Resume(); else PauseMenu();
             }
+            if (session.Paused && !panel) PauseMenu();
             if (session.Running && session.Player)
             {
                 var car = session.Player;
-                hud.text = $"{selectedMode}   |   {Mathf.Max(0, session.RemainingTime):0.0}s\n" +
-                    $"{car.SpeedKmh:0} km/h    BOOST {car.BoostAmount * 100:0}%    LAP {session.PlayerLap}/{session.TotalLaps}\n{session.StatusText}";
+                string clock = session.CurrentMode == GameMode.FreePlay ? "PRACTICE" : $"{session.RemainingTime:0.0}s REMAINING";
+                hud.text = $"{session.CurrentMode}   |   {clock}\n" +
+                    $"{car.SpeedKmh:0} km/h    BOOST {car.BoostAmount * 100:0}%\n{session.StatusText}";
+                if (session.IsCircuit)
+                {
+                    var laps = session.LapTimes;
+                    hud.text += $"\nLAP TIME {laps.CurrentLap(session.Elapsed):0.00}s   LAST {LapDisplay(laps.LastLap)}   BEST {LapDisplay(laps.BestLap)}";
+                    if (session.WrongWay) hud.text += "\n<color=#FFB347>WRONG WAY — follow the route to the yellow gate</color>";
+                }
                 hint.text = "WASD / triggers + left stick: drive   •   Shift / B: boost   •   Space / A: jump   •   Ctrl / X: drift\nR / Y: recover   •   Q/E / LB + stick: air roll   •   Esc / Start: pause";
             }
             else { hud.text = ""; hint.text = "Mouse or arrows / D-pad to navigate • Enter / A to select"; }
@@ -107,7 +134,10 @@ namespace VelocityRivals
         {
             if (panel) { panel.gameObject.SetActive(false); Destroy(panel.gameObject); }
             title = null;
+            nowPlaying = null;
+            panel = null;
         }
+        private static string LapDisplay(float seconds) => seconds > 0 ? seconds.ToString("0.00") + "s" : "—";
         private void Page(string heading, string subtitle)
         {
             ClearPanel();
@@ -187,6 +217,7 @@ namespace VelocityRivals
             Button("GARAGE", Garage);
             Button("RECORDS & ACHIEVEMENTS", Records);
             Button("SETTINGS", () => Settings(false));
+            Button("HOW TO PLAY", () => HowToPlay(false));
             Button("MULTIPLAYER STATUS", Multiplayer);
             Button("CREDITS", Credits);
             Button("QUIT", () => Application.Quit());
@@ -242,11 +273,34 @@ namespace VelocityRivals
             string[] volumes = { "0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%" };
             Focus(Cycle("Master volume", volumes, () => Mathf.RoundToInt(p.masterVolume * 10), value => { p.masterVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save(); }));
             Cycle("Music volume", volumes, () => Mathf.RoundToInt(p.musicVolume * 10), value => { p.musicVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save(); });
+            Button("SOUNDTRACK", () => Soundtrack(paused));
             Cycle("Effects volume", volumes, () => Mathf.RoundToInt(p.effectsVolume * 10), value => { p.effectsVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save(); });
             Cycle("Graphics", new[] { "Performance", "Balanced", "Quality" }, () => p.quality, value => { p.quality = value; ApplyQuality(value); SaveStore.Save(); });
             Cycle("Steering sensitivity", new[] { "50%", "75%", "100%", "125%", "150%" }, () => Mathf.RoundToInt((p.steeringSensitivity - .5f) * 4), value => { p.steeringSensitivity = .5f + value * .25f; SaveStore.Save(); });
             Label(panel, "Keyboard: WASD drive, Shift boost, Space jump, Ctrl drift, Q/E roll, R recover.\nGamepad: RT/LT throttle/reverse, stick steer, A jump, B boost, X drift, Y recover.\nEsc / Start pauses. Button remapping is not implemented yet.", 22, 140);
             Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); });
+        }
+
+        private void Soundtrack(bool paused)
+        {
+            Page("Soundtrack", "Electronic / synthwave • music changes automatically between menus and events");
+            nowPlaying = Label(panel, "", 32, 120);
+            Label(panel, $"{sound.MenuTrackCount} menu tracks • {sound.RaceTrackCount} race tracks\nEach playlist shuffles without repeating a track until the cycle ends.", 24, 100);
+            Focus(Button("NEXT TRACK", () => sound.NextTrack()));
+            string[] volumes = { "0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%" };
+            Cycle("Music volume", volumes, () => Mathf.RoundToInt(SaveStore.Current.musicVolume * 10), value => {
+                SaveStore.Current.musicVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save();
+            });
+            Button("BACK", () => Settings(paused));
+        }
+
+        private void HowToPlay(bool paused)
+        {
+            Page("How to play", "Start with Free Play in Cyber Dome to learn your car.");
+            Label(panel, "DRIVE\nW / S accelerate and reverse • A / D steer\nShift boost • Ctrl handbrake • Space jump, press again for an aerial jump\nQ / E roll in the air • R recover your car\nController: triggers + left stick, B boost, X drift, A jump, Y recover.", 24, 205);
+            Label(panel, "WIN YOUR EVENT\nChampionship / Time Attack: follow the yellow map gate and complete three laps.\nArena Clash: push the white core into the orange goal. First to five wins.\nBoost Battle: hit opponents at speed; collect shields, overdrive and pulse pickups.\nStunt Rush: jump, rotate and land upright. Reach 1,000 points before time runs out.", 23, 215);
+            Label(panel, "Esc / Start pauses. Earn XP to unlock cars in the garage.\nCyan on the map is you, orange is another vehicle, yellow is the next gate.", 23, 85);
+            Focus(Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); }));
         }
 
         private static void ApplyQuality(int quality)
@@ -271,6 +325,7 @@ namespace VelocityRivals
             Focus(Button("RESUME", Resume));
             Button("RESTART EVENT", StartMatch);
             Button("SETTINGS", () => Settings(true));
+            Button("HOW TO PLAY", () => HowToPlay(true));
             Button("MAIN MENU", MainMenu);
         }
         private void Resume() { ClearPanel(); session.SetPaused(false); if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null); }
@@ -328,7 +383,7 @@ namespace VelocityRivals
         private void Credits()
         {
             Page("Credits", "VELOCITY RIVALS • Original game project for DJKFusion");
-            Label(panel, "Procedural vehicles, environments, user interface and synthesized placeholder audio.\n\nBuilt with Unity and the Universal Render Pipeline.\nBlender is used for procedural asset generation.\n\nThis development build needs Editor validation, tuning and final production art/audio. No third-party game assets are included.", 25, 350);
+            Label(panel, "Original vehicles, environments and electronic soundtrack.\nMidnight Grid • Neon Pursuit • Afterburn\n\nBuilt with Unity and the Universal Render Pipeline.\nVehicle models created with Blender.\n\nGame project for DJKFusion.", 25, 350);
             Focus(Button("BACK", MainMenu));
         }
     }

@@ -120,6 +120,32 @@ namespace VelocityRivals.Editor
         [MenuItem("Velocity Rivals/Build Windows")]
         public static void BuildWindows()
         {
+            string output = BuildWindowsPlayer();
+            if (output == null) return;
+            Debug.Log("Windows build succeeded: " + output);
+            if (!Application.isBatchMode) EditorUtility.RevealInFinder(output);
+        }
+
+        [MenuItem("Velocity Rivals/Build Windows ZIP")]
+        public static void BuildWindowsPackage()
+        {
+            string output = BuildWindowsPlayer();
+            if (output == null) return;
+            string name = "VelocityRivals-Windows-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + ".zip";
+            string archive = Path.GetFullPath(Path.Combine("Builds/Packages", name));
+            WindowsArchive.Create(output, archive);
+            Debug.Log("Windows game package ready: " + archive);
+            if (!Application.isBatchMode) EditorUtility.RevealInFinder(archive);
+        }
+
+        private static string BuildWindowsPlayer()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Stop Play Mode before building the game.");
+            if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64))
+                throw new InvalidOperationException("Install Windows Build Support for this Unity Editor through Unity Hub → Installs → gear menu → Add modules.");
+            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return null;
+            if (!File.Exists(EntryScene)) throw new FileNotFoundException("The game entry scene is missing.", EntryScene);
             ConfigureRendering();
             string output = Environment.GetEnvironmentVariable("VELOCITY_BUILD_PATH");
             if (string.IsNullOrEmpty(output)) output = "Builds/Windows/VelocityRivals.exe";
@@ -133,7 +159,16 @@ namespace VelocityRivals.Editor
             });
             if (report.summary.result != BuildResult.Succeeded)
                 throw new Exception("Windows build failed: " + report.summary.result);
-            Debug.Log("Windows build succeeded: " + output);
+            string fullPath = Path.GetFullPath(output);
+            if (!File.Exists(fullPath)) throw new FileNotFoundException("Unity reported success but the executable is missing.", fullPath);
+            string instructions = "Velocity Rivals\r\n\r\nExtract this entire ZIP before playing. Keep the EXE, Data folder and UnityPlayer.dll together.\r\n" +
+                "Launch " + Path.GetFileName(fullPath) + ".\r\n\r\n" +
+                "WASD: drive | Shift: boost | Space: jump | Ctrl: drift | Q/E: air roll | R: recover | Esc: pause\r\n" +
+                "Controller: triggers and left stick drive, B boost, A jump, X drift, Y recover, Start pause.\r\n" +
+                "Use HOW TO PLAY for event rules and SETTINGS for music and graphics.\r\n" +
+                "Saves: %USERPROFILE%\\AppData\\LocalLow\\DJKFusion\\Velocity Rivals\r\n";
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(fullPath), "START HERE.txt"), instructions);
+            return fullPath;
         }
     }
 }

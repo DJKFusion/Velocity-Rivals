@@ -114,6 +114,43 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator SoundtrackImportsAndSwitchesBetweenMenuAndRace()
+        {
+            root = new GameObject("Test soundtrack");
+            root.AddComponent<GameBootstrap>();
+            yield return null;
+            yield return null;
+            var sound = SoundDirector.Instance;
+            Assert.IsNotNull(sound);
+            Assert.GreaterOrEqual(sound.MenuTrackCount, 1);
+            Assert.GreaterOrEqual(sound.RaceTrackCount, 2);
+            Assert.AreEqual("Menu", sound.PlaylistName);
+            foreach (var clip in Resources.LoadAll<AudioClip>("Music"))
+            {
+                Assert.Greater(clip.length, .1f, clip.name);
+                Assert.AreEqual(AudioClipLoadType.Streaming, clip.loadType, clip.name);
+            }
+            var session = GameSession.Instance;
+            session.StartMatch(GameMode.FreePlay, 3, 0, Color.cyan);
+            yield return null;
+            yield return null;
+            Assert.AreEqual("Race", sound.PlaylistName);
+            string track = sound.NowPlaying;
+            session.SetPaused(true);
+            yield return null;
+            Assert.AreEqual("Race", sound.PlaylistName);
+            Assert.AreEqual(track, sound.NowPlaying);
+            session.ReturnToMenu();
+            yield return null;
+            yield return null;
+            Assert.AreEqual("Menu", sound.PlaylistName);
+            var imported = Resources.LoadAll<AudioClip>("Music/Menu")[0];
+            Object.Destroy(sound);
+            yield return null;
+            Assert.IsTrue(imported != null, "Destroying the director must not destroy imported music assets.");
+        }
+
+        [UnityTest]
         public IEnumerator ImportedVehiclesHaveReadableGeometryAndMeterScale()
         {
             root = new GameObject("Model import validation");

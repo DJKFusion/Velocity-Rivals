@@ -57,9 +57,17 @@ except ImportError:
 report = json.loads((root / 'Tools/Blender/Generated/validation.json').read_text())
 if len(report['assets']) != 8 or not all(a['passed'] for a in report['assets']):
     errors.append('Blender report does not contain eight passing exports.')
+audio_report = json.loads((root / 'Tools/Audio/validation.json').read_text())
+if len(audio_report['tracks']) != 3 or not all(track['passed'] for track in audio_report['tracks']):
+    errors.append('Audio report does not contain three passing generated tracks.')
+for track in audio_report['tracks']:
+    path = root / 'Assets/Resources/Music' / track['playlist'] / (track['track'] + '.ogg')
+    if not path.is_file() or path.read_bytes()[:4] != b'OggS' or path.stat().st_size != track['bytes']:
+        errors.append(f'Missing or changed supplied soundtrack file: {path}')
 if errors:
     print('\n'.join(errors), file=sys.stderr)
     raise SystemExit(1)
 print(f'PASS JSON manifests, {len(guids)} unique asset GUIDs, all asset references, six vehicle prefab/stat/model sets.')
 print(f'PASS C# syntax parsing: {parsed} files.' if parsed else 'C# syntax was not checked.')
+print('PASS three supplied OGG files match the audio validation report.')
 print('Unity import, API compilation, tests, gameplay, multiplayer, builds and performance remain separate checks.')

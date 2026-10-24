@@ -2,7 +2,7 @@
 
 An original Unity 6 arcade racing and vehicle-sports project for DJKFusion.
 
-This delivery contains integrated development source, a bootstrap scene, six vehicle prefabs and tunable stat assets, six generated car meshes, procedural environments, six local modes, menus, saves, audio placeholders, and an experimental two-player LAN gate sprint. It is **not a tested Windows executable or a finished release**. Unity import, compilation, physics tuning, multiplayer playtests and GPU profiling remain required.
+This delivery contains integrated development source, a bootstrap scene, six vehicle prefabs and tunable stat assets, six generated car meshes, procedural environments, six local modes, menus, saves, an original synthwave soundtrack, synthesized effects, and an experimental two-player LAN gate sprint. It is **not a tested Windows executable or a finished release**. Unity import, compilation, physics tuning, multiplayer playtests and GPU profiling remain required.
 
 ## Open the game
 
@@ -48,17 +48,25 @@ The garage includes a rotating preview of the selected model's paint and finish.
 
 Multiplayer is a separate **LAN gate sprint**, not networked championship or Arena Clash. See [multiplayer scope and test steps](docs/MULTIPLAYER.md).
 
+The latest update adds a live map with the next checkpoint, current/last/best lap times, wrong-way warnings, a car-shaped Time Attack ghost, How to Play screens, and local-event auto-pause when the application loses focus. Lap bests are for the current round; event records and ghosts still persist separately. These HUD and gameplay integrations require Unity verification.
+
+## Music
+
+Three original synthwave tracks are included: **Midnight Grid**, **Neon Pursuit** and **Afterburn**. Menu and event playlists change automatically with crossfades and reduced music volume during pause. **Settings → Soundtrack** shows the current track and lets you skip or change volume.
+
+To add your own songs, stop Play Mode and use **Velocity Rivals → Music → Import Race Track** or **Import Menu Track**, then choose an MP3, WAV or OGG file. Start Play Mode again to refresh the playlist. Songs are included in subsequent Windows builds. [Full music instructions](docs/MUSIC.md).
+
 ## Build and test
 
-Inside Unity use **Window → General → Test Runner** and run EditMode and PlayMode tests. Then use **Velocity Rivals → Build Windows**. The Editor needs Windows build support installed through Hub.
+Inside Unity use **Window → General → Test Runner** and run EditMode and PlayMode tests. Then use **Velocity Rivals → Build Windows ZIP** to build the game and package all required files. The Editor needs Windows build support installed through Hub. [Step-by-step Windows build instructions](docs/BUILD-WINDOWS.md).
 
 Alternatively, from PowerShell in this project:
 
 ```powershell
-.\Tools\Build-Windows.ps1 -RunTests
+.\Tools\Build-Windows.ps1 -RunTests -Package
 ```
 
-Pass `-Unity 'C:\path\to\Editor\Unity.exe'` if your installation is elsewhere. Logs and test reports go to `Artifacts`. A successful build goes to `Builds/Windows/VelocityRivals.exe`; distribute the entire Windows directory, not just the EXE. No EXE is included in this source delivery.
+Close the project in Unity before running the script. Pass `-Unity 'C:\path\to\Editor\Unity.exe'` if your installation is elsewhere. Logs and test reports go to `Artifacts`. A successful build goes to `Builds/Windows/VelocityRivals.exe`; its full package goes to `Builds/Packages`. Extract the full game ZIP before launching the EXE. No EXE is included in this source delivery.
 
 Standalone pure-logic tests, which do not require Unity:
 
@@ -66,7 +74,7 @@ Standalone pure-logic tests, which do not require Unity:
 dotnet run --project Tools/LogicTests/LogicTests.csproj --configuration Release
 ```
 
-These compile the **same** checkpoint and network framing classes the game uses. They do not substitute for Unity tests. See [testing evidence and acceptance checks](docs/TESTING.md), [feature status and known issues](docs/STATUS.md), and [release requirements](docs/RELEASE.md).
+These compile the **same** checkpoint, combat, lap timing, playlist, network framing and archive classes the project uses. Packaging tests use synthetic fixtures, not an actual player build. They do not substitute for Unity tests. See [testing evidence and acceptance checks](docs/TESTING.md), [feature status and known issues](docs/STATUS.md), and [release requirements](docs/RELEASE.md).
 
 ## Assets and architecture
 

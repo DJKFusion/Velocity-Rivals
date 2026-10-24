@@ -1,0 +1,38 @@
+{
+  "generator": "Original additive synthesis; no external samples",
+  "tracks": [
+    {
+      "track": "01 - Midnight Grid",
+      "playlist": "Menu",
+      "bpm": 100,
+      "seconds": 57.6,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 751317,
+      "decoded_peak": 0.9217056035995483,
+      "passed": true
+    },
+    {
+      "track": "01 - Neon Pursuit",
+      "playlist": "Race",
+      "bpm": 128,
+      "seconds": 45.0,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 686206,
+      "decoded_peak": 0.9623410105705261,
+      "passed": true
+    },
+    {
+      "track": "02 - Afterburn",
+      "playlist": "Race",
+      "bpm": 140,
+      "seconds": 41.143,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 620688,
+      "decoded_peak": 0.9354922771453857,
+      "passed": true
+    }
+  ]
+}

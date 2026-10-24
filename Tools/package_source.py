@@ -12,6 +12,8 @@ with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
 with zipfile.ZipFile(output) as archive:
     assert archive.testzip() is None, 'Archive integrity check failed'
     names = set(archive.namelist())
-    for required in ('Assets/Scenes/VelocityRivals.unity', 'ProjectSettings/ProjectVersion.txt', 'Packages/manifest.json', 'README.md', 'Tools/LogicTests/LogicTests.csproj'):
+    for required in ('Assets/Scenes/VelocityRivals.unity', 'ProjectSettings/ProjectVersion.txt', 'Packages/manifest.json', 'README.md', 'Tools/LogicTests/LogicTests.csproj',
+                     'Assets/Resources/Music/Menu/01 - Midnight Grid.ogg', 'Assets/Resources/Music/Race/01 - Neon Pursuit.ogg',
+                     'Assets/Resources/Music/Race/02 - Afterburn.ogg', 'docs/MUSIC.md', 'docs/BUILD-WINDOWS.md'):
         assert 'Velocity-Rivals/' + required in names, required
 print(f'{output}: {len(paths)} files, {output.stat().st_size} bytes; ZIP integrity and required entries verified.')
