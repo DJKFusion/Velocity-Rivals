@@ -27,6 +27,10 @@ Status meanings: **verified here** means a named tool ran successfully in the cl
 | 60 FPS | Unverified | 60 FPS cap is configured; no measured frame-rate, CPU/GPU budget, LOD or target-machine profiling |
 | Steam/Epic/PS5/Xbox | Unfinished | Release requirements documented; no store SDKs, platform packages, devkits or certified builds |
 
+## Latest supplied Unity evidence
+
+The 24 October Windows PlayMode report ran 11 tests: one imported-vehicle check passed; ten failed on the same invalid scenery rotation. Both box helpers have been corrected to use explicit identity rotations. The updated suite adds a focused scenery regression; a successful Windows rerun and build are still pending. See [TESTING.md](TESTING.md).
+
 ## Known issues and risks to resolve in Unity
 
 1. Input System 1.11.2 failed under Unity 6000.6 because Unity's generic `TreeView` migration made its Editor code obsolete errors. The manifest now uses Input System 1.20.1, whose package metadata supports Unity 6000.0+ and whose source handles Unity 6000.2+ generic tree views. The remaining package import and compatibility checks are still pending; save the lockfile after successful resolution.

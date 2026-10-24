@@ -30,8 +30,11 @@ namespace VelocityRivals
             groups[material].Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.TRS(position, rotation, size) });
             temporary.SetActive(false); Destroy(temporary);
         }
-        void Box(Vector3 p, Vector3 size, Material material, Quaternion rotation = default)
-            => Shape(PrimitiveType.Cube, p, size, rotation == default ? Quaternion.identity : rotation, material);
+        // Quaternion's == operator assumes unit rotations; a zero quaternion is not a sentinel.
+        void Box(Vector3 p, Vector3 size, Material material)
+            => Box(p, size, material, Quaternion.identity);
+        void Box(Vector3 p, Vector3 size, Material material, Quaternion rotation)
+            => Shape(PrimitiveType.Cube, p, size, rotation, material);
 
         void Generate(List<Vector3> route, int theme, bool racing)
         {

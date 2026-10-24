@@ -478,11 +478,13 @@ namespace VelocityRivals
             materials.Add(m);
             return m;
         }
-        private GameObject Box(string name, Vector3 position, Vector3 scale, Material mat, Quaternion rotation = default)
+        private GameObject Box(string name, Vector3 position, Vector3 scale, Material mat)
+            => Box(name, position, scale, mat, Quaternion.identity);
+        private GameObject Box(string name, Vector3 position, Vector3 scale, Material mat, Quaternion rotation)
         {
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name; go.transform.SetParent(world); go.transform.position = position; go.transform.localScale = scale;
-            if (rotation != default) go.transform.rotation = rotation;
+            go.transform.rotation = rotation;
             go.GetComponent<Renderer>().sharedMaterial = mat;
             return go;
         }

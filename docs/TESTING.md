@@ -13,6 +13,14 @@
 
 No Unity Editor was available in the cloud. Unity Test Runner suites, gameplay, controller hardware, LAN end-to-end sessions, Windows builds and performance profiling have **not** run.
 
+## User-provided Windows run — 24 October 2026
+
+Unity 6000.6.7f1 reached PlayMode testing: 11 tests ran, one passed (imported vehicle geometry/scale), and ten failed with the same scenery-generation assertion. The log contained 4,046 zero-quaternion-to-matrix assertions. This establishes that this revision compiled far enough to run tests; it does not establish gameplay or a successful player build. The launcher had advanced beyond EditMode, but its XML report was not supplied here.
+
+The cause was treating `default(Quaternion)` as a sentinel and comparing it with Unity's rotation equality operator. That operator assumes unit quaternions; the zero value does not even compare equal to itself. Omitted box rotations therefore reached matrix/transform operations as invalid zero rotations. Both the combined scenery and gameplay box helpers now use explicit overloads that supply `Quaternion.identity`.
+
+A focused PlayMode regression builds all five scenery themes in circuit and arena layouts and checks generated geometry and unexpected logs. The existing 30 mode/environment smoke test also checks world-collider rotations. These revised Unity tests still need to run on Windows; no passing rerun or executable is claimed.
+
 ## Repeat independent checks
 
 ```sh

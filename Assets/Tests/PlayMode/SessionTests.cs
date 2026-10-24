@@ -91,6 +91,37 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator SceneryBuildsFiniteGeometryForEveryThemeAndLayout()
+        {
+            root = new GameObject("Scenery rotation regression");
+            var route = new System.Collections.Generic.List<Vector3> {
+                new Vector3(-40, 0, -40), new Vector3(40, 0, -40),
+                new Vector3(40, 0, 40), new Vector3(-40, 0, 40)
+            };
+            for (int theme = 0; theme < 5; theme++)
+                foreach (bool racing in new[] { false, true })
+                {
+                    var layout = new GameObject("Theme " + theme + " racing " + racing);
+                    layout.transform.SetParent(root.transform);
+                    WorldScenery.Build(layout.transform, route, theme, racing);
+                    yield return null;
+                    var filters = layout.GetComponentsInChildren<MeshFilter>();
+                    Assert.IsNotEmpty(filters, layout.name);
+                    foreach (var filter in filters)
+                    {
+                        var mesh = filter.sharedMesh;
+                        Assert.Greater(mesh.vertexCount, 0, filter.name);
+                        Assert.Greater(mesh.bounds.size.sqrMagnitude, 0, filter.name);
+                        foreach (var vertex in mesh.vertices)
+                            Assert.IsFalse(float.IsNaN(vertex.sqrMagnitude) || float.IsInfinity(vertex.sqrMagnitude), filter.name);
+                    }
+                    LogAssert.NoUnexpectedReceived();
+                    Object.Destroy(layout);
+                    yield return null;
+                }
+        }
+
+        [UnityTest]
         public IEnumerator EveryEnvironmentAndModeCreatesIntegratedWorld()
         {
             root = new GameObject("Test worlds");
@@ -104,6 +135,13 @@ namespace VelocityRivals.Tests
                     Assert.IsNotNull(session.Player);
                     Assert.IsFalse(session.Finished);
                     Assert.IsFalse(float.IsNaN(session.Player.transform.position.x));
+                    var colliders = session.Player.transform.parent.GetComponentsInChildren<BoxCollider>();
+                    Assert.IsNotEmpty(colliders);
+                    foreach (var collider in colliders)
+                    {
+                        Quaternion rotation = collider.transform.rotation;
+                        Assert.AreEqual(1f, Quaternion.Dot(rotation, rotation), .0001f, collider.name);
+                    }
                 }
         }
 
