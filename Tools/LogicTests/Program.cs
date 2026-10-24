@@ -233,6 +233,26 @@ static class Program
                 Throws<ArgumentOutOfRangeException>(() => CircuitLayout.Build(-1));
                 Throws<ArgumentOutOfRangeException>(() => CircuitLayout.Build(5));
             });
+            Test("Steam descriptors map the complete player without publishing a branch", () => WithBuildFixture((player,exe,zip) => {
+                string folder=Path.Combine(Path.GetDirectoryName(zip), "Steam descriptors");
+                string file=SteamDepotManifest.Write(exe,"12345","12346",folder,"0.6.0");
+                string app=File.ReadAllText(file), depot=File.ReadAllText(Path.Combine(folder,"depot_build.vdf"));
+                Check(app.Contains("12345") && app.Contains(player.Replace('\\','/')) && !app.Contains("SetLive"));
+                Check(depot.Contains("12346") && depot.Contains("\"recursive\" \"1\""));
+                Throws<IOException>(() => SteamDepotManifest.Write(exe,"12345","12346",folder,"0.6.0"));
+            }));
+            Test("Steam descriptors reject missing players and nonnumeric IDs", () => WithBuildFixture((player,exe,zip) => {
+                string folder=Path.Combine(Path.GetDirectoryName(zip), "Steam");
+                Throws<ArgumentException>(() => SteamDepotManifest.Write(exe,"YOUR_APP_ID","123",folder,"0.6.0"));
+                Throws<ArgumentException>(() => SteamDepotManifest.Write(exe,"123","0",folder,"0.6.0"));
+                File.Delete(exe);
+                Throws<FileNotFoundException>(() => SteamDepotManifest.Write(exe,"123","456",folder,"0.6.0"));
+                Check(!Directory.Exists(folder));
+            }));
+            Test("Steam configuration cannot be placed inside shipped content", () => WithBuildFixture((player,exe,zip) => {
+                Throws<ArgumentException>(() => SteamDepotManifest.Write(exe,"123","456",Path.Combine(player,"Steam"),"0.6.0"));
+                Check(!Directory.Exists(Path.Combine(player,"Steam")));
+            }));
             Test("career unlocks each event in order and reaches an explicit ending", () => {
                 var career = new CareerProgress(); Check(career.NextEvent == 0 && !career.Complete);
                 Check(!career.Record(1, 3) && !career.IsUnlocked(-1) && !career.IsUnlocked(CareerTour.Count));

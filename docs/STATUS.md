@@ -1,6 +1,6 @@
 # Implementation and verification ledger
 
-Status meanings: **verified here** means a named tool ran successfully in the cloud; **implemented / Unity untested** means source/assets exist but Editor behavior is not established; **unfinished** means the feature is absent or substantially incomplete. None of the gameplay rows below are production-complete. Version 0.5.0 targets Windows single player; networking source is archived behind a disabled assembly and is not part of the default player. See [SINGLE-PLAYER-RELEASE.md](SINGLE-PLAYER-RELEASE.md).
+Status meanings: **verified here** means a named tool ran successfully in the cloud; **implemented / Unity untested** means source/assets exist but Editor behavior is not established; **unfinished** means the feature is absent or substantially incomplete. None of the gameplay rows below are production-complete. Version 0.6.0 targets Windows single player; networking source is archived behind a disabled assembly and is not part of the default player. See [SINGLE-PLAYER-RELEASE.md](SINGLE-PLAYER-RELEASE.md).
 
 | Area | Status | Concrete implementation / remaining work |
 | --- | --- | --- |
@@ -26,6 +26,10 @@ Status meanings: **verified here** means a named tool ran successfully in the cl
 | Windows build | Build/ZIP workflow implemented / Unity untested | Double-click batch launcher + PowerShell tests/build driver, single-player assembly/shader/asset checks, versioned ZIP and SHA-256; full-folder archive helper tested against fixtures, module checks and included controls guide; no executable produced |
 | 60 FPS | Unverified | 60 FPS cap is configured; no measured frame-rate, CPU/GPU budget, LOD or target-machine profiling |
 | Steam/Epic/PS5/Xbox | Unfinished | Release requirements documented; no store SDKs, platform packages, devkits or certified builds |
+
+## 0.6 changes awaiting Windows verification
+
+The new widescreen UI, scrolling focus, race cards and save/quit flow have source checks and authored Unity tests but no Windows run here. Steam descriptors are fixture-tested; registration, upload and store review remain external steps. See UPDATE-UI-RELEASE.md and RELEASE-WEEK.md.
 
 ## 0.5 changes awaiting Windows verification
 

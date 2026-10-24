@@ -10,7 +10,7 @@ namespace VelocityRivals.Editor
 {
     public sealed class SinglePlayerBuildGuard : IPreprocessBuildWithReport
     {
-        public const string Version = "0.5.0";
+        public const string Version = "0.6.0";
         public int callbackOrder => 0;
         public void OnPreprocessBuild(BuildReport report) => Validate();
         [MenuItem("Velocity Rivals/Check Single Player Build")]

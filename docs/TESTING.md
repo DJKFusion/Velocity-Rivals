@@ -2,7 +2,7 @@
 
 ## Executed in the cloud
 
-- Thirty-eight C# console tests compiled and passed using .NET SDK 8.0.426. They use the actual checkpoint, network framing, combat, lap timing, shuffle playlist, duel rules, relay transport URL validation and Windows archive source files. New checks cover loaded-player countdown, three-lap first finish, arena goals, timeout/draw/reset, invalid clocks/configuration and TLS endpoint requirements. Four layout checks cover gate spacing, road separation, corner smoothness and district coverage. Six career checks cover sequential unlocks, replay, save normalization, medal thresholds, championship/stunt goals and catalog completeness. Archive tests use synthetic fixtures, not actual Unity binaries.
+- Forty-one C# console tests compiled and passed using .NET SDK 8.0.426. They use the actual checkpoint, network framing, combat, lap timing, shuffle playlist, duel rules, relay transport URL validation and Windows archive source files. New checks cover loaded-player countdown, three-lap first finish, arena goals, timeout/draw/reset, invalid clocks/configuration and TLS endpoint requirements. Three Steam descriptor checks cover full-folder mapping, no SetLive publishing instruction, invalid IDs/missing players and exclusion of configuration from game content. Four layout checks cover gate spacing, road separation, corner smoothness and district coverage. Six career checks cover sequential unlocks, replay, save normalization, medal thresholds, championship/stunt goals and catalog completeness. Archive tests use synthetic fixtures, not actual Unity binaries.
 - Eight Python WebSocket server tests passed: create/join/forwarding, wrong protocol, missing room, third client, role restrictions, disconnect, payload bounds and capacity.
 - The actual C# `RelayTransport` connected through the local Python server, created/joined a room, exchanged both directions and received a disconnect notice. This is not Unity gameplay or a public TLS deployment test.
 - Nine original OGG music files were generated and decoded with FFmpeg; stereo duration, finite samples, signal level and non-clipping peaks passed. Details are in `Tools/Audio/validation.json`. Audible listening and Unity playback remain unverified.
@@ -82,3 +82,7 @@ PlayMode covers vehicle spawning, pause/resume/menu state, restart cleanup, all 
 ## 0.5 structured worlds
 
 The owner reported a working 0.4 Windows EXE after the rotation fix. The new 0.5 Unity tests and player build remain unrun here. Added Unity checks cover actual circuit layouts and district signs in all mode/environment combinations, trophy-cabinet navigation and preservation/separation of old-layout records. Test every new covered section, AI completion, start-area stands, old-profile loading and camera clearance; measure the denser worlds on target hardware. See UPDATE-STRUCTURED-WORLDS.md.
+
+## 0.6 interface and distribution
+
+New Unity tests exercise controller-focus scrolling, repeated page/showroom cleanup and HUD pause/resume visibility. These tests and the new UI rendering remain unrun here. Verify mouse-wheel and gamepad navigation on every page at 720p/1080p/1440p and 16:10, including long results/save-error text. Check no overlapping showroom stages or clipped controls. Steam upload generation has fixture coverage; actual SteamPipe upload remains untested.

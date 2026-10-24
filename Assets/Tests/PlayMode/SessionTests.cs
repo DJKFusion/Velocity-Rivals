@@ -293,6 +293,61 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator MenuFocusScrollsIntoViewAndReturningDoesNotLeakShowrooms()
+        {
+            root = new GameObject("Menu layout test"); root.AddComponent<GameBootstrap>();
+            yield return null; yield return null;
+            UnityEngine.UI.Button FindButton(string name)
+            {
+                foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                    if (button.name == name) return button;
+                Assert.Fail("Missing button: " + name); return null;
+            }
+            for (int visit = 0; visit < 3; visit++)
+            {
+                FindButton("HOW TO PLAY").onClick.Invoke(); yield return null; yield return null;
+                var back = FindButton("BACK");
+                var scroll = back.GetComponentInParent<UnityEngine.UI.ScrollRect>();
+                Assert.IsNotNull(scroll);
+                Canvas.ForceUpdateCanvases();
+                scroll.content.anchoredPosition = Vector2.zero;
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(back.gameObject);
+                yield return null;
+                var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(scroll.viewport, back.transform);
+                Assert.GreaterOrEqual(bounds.min.y, scroll.viewport.rect.yMin - 1);
+                Assert.LessOrEqual(bounds.max.y, scroll.viewport.rect.yMax + 1);
+                Assert.AreEqual(1, Object.FindObjectsByType<GaragePreview>(FindObjectsSortMode.None).Length);
+                back.onClick.Invoke(); yield return null; yield return null;
+                Assert.AreEqual(1, Object.FindObjectsByType<GaragePreview>(FindObjectsSortMode.None).Length);
+                Assert.AreEqual(1, Object.FindObjectsByType<VehicleController>(FindObjectsSortMode.None).Length);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator RaceHudHidesWhilePausedAndRestoresOnResume()
+        {
+            root = new GameObject("HUD layout test"); root.AddComponent<GameBootstrap>();
+            yield return null; yield return null;
+            var session = GameSession.Instance;
+            // Start through the menu so its showroom is disposed just as it is during real play.
+            foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                if (button.name == "PLAY") { button.onClick.Invoke(); break; }
+            yield return null;
+            foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                if (button.name == "START EVENT") { button.onClick.Invoke(); break; }
+            yield return null; yield return null;
+            var hud = GameObject.Find("Speed and boost card"); Assert.IsNotNull(hud);
+            session.SetPaused(true); yield return null; yield return null;
+            Assert.IsFalse(hud.activeInHierarchy);
+            foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                if (button.name == "RESUME") { button.onClick.Invoke(); break; }
+            yield return null; yield return null;
+            Assert.IsTrue(hud.activeInHierarchy);
+            Assert.IsFalse(session.Paused);
+        }
+
+        [UnityTest]
         public IEnumerator ImportedVehiclesHaveReadableGeometryAndMeterScale()
         {
             root = new GameObject("Model import validation");

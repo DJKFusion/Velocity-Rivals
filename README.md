@@ -1,10 +1,10 @@
 # Velocity Rivals — Single Player
 
-Latest update: [structured worlds and career presentation](docs/UPDATE-STRUCTURED-WORLDS.md). Five redesigned circuits, district architecture, covered sections, arena facades, trophy cabinet and career finale. The owner confirmed the previous Windows EXE runs; this new version still needs its own build and playtest.
+Latest update: [menu and HUD redesign](docs/UPDATE-UI-RELEASE.md). Widescreen car showcase, scrolling keyboard/controller navigation, separate speed/boost and lap displays, and local Steam depot preparation. See [release-week planning](docs/RELEASE-WEEK.md) for launch requirements and no-upfront-listing-fee options. The new UI still needs its Windows acceptance run.
 
 An original Unity 6 arcade racing and vehicle-sports project for DJKFusion. The current edition plays offline and has no multiplayer menu, room setup or networking component. Multiplayer source is retained behind a disabled assembly constraint for future work.
 
-**Status: version 0.5.0 development/release candidate source.** No Windows EXE has been produced in this cloud workspace. Unity compilation, gameplay, shader appearance and target-PC performance still need verification before release. [Complete scope, build instructions and acceptance checklist](docs/SINGLE-PLAYER-RELEASE.md).
+**Status: version 0.6.0 development/release candidate source.** No Windows EXE has been produced in this cloud workspace. Unity compilation, gameplay, shader appearance and target-PC performance still need verification before release. [Complete scope, build instructions and acceptance checklist](docs/SINGLE-PLAYER-RELEASE.md).
 
 ## Open and play in Unity
 
@@ -71,4 +71,4 @@ python -m pip install tree-sitter tree-sitter-c-sharp
 python Tools/validate_source.py
 ```
 
-38 standalone C# checks passed here. They test shared logic and archive fixtures, including preserved networking regression sources; they are not Unity gameplay tests. [Testing evidence](docs/TESTING.md), [feature ledger](docs/STATUS.md), [asset provenance](docs/ART.md), and [release preparation](docs/RELEASE.md) describe the remaining work.
+41 standalone C# checks passed here. They test shared logic and archive fixtures, including preserved networking regression sources; they are not Unity gameplay tests. [Testing evidence](docs/TESTING.md), [feature ledger](docs/STATUS.md), [asset provenance](docs/ART.md), and [release preparation](docs/RELEASE.md) describe the remaining work.

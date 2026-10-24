@@ -1,6 +1,6 @@
-# Single-player edition — 0.5.0 candidate
+# Single-player edition — 0.6.0 candidate
 
-This update focuses on an offline Windows game. See [the structured-worlds update](UPDATE-STRUCTURED-WORLDS.md) for the 0.5 changes. It adds a 12-event career with a defined ending and excludes multiplayer from the default player assembly. It is **not yet a verified finished release**: this cloud workspace has no Unity Editor/license or Windows player, so compilation, shader rendering, gameplay QA and an executable build have not run here.
+This update focuses on an offline Windows game. See [the UI redesign](UPDATE-UI-RELEASE.md) for 0.6 and [structured worlds](UPDATE-STRUCTURED-WORLDS.md) for 0.5. It adds a 12-event career with a defined ending and excludes multiplayer from the default player assembly. It is **not yet a verified finished release**: this cloud workspace has no Unity Editor/license or Windows player, so compilation, shader rendering, gameplay QA and an executable build have not run here.
 
 ## What is in the edition
 
@@ -26,7 +26,7 @@ The bootstrap creates no networking component; menus, music and HUD no longer re
 3. Close the project in Unity.
 4. Double-click **`Build-SinglePlayer.cmd`** in the extracted project folder. Press a key when prompted.
 5. The script runs EditMode tests, PlayMode tests, build checks and the Windows build. It rejects failed, missing or empty test reports. It only reports packaging success when a new artifact report points to the EXE, ZIP and checksum.
-6. On success, File Explorer opens **`Builds/Packages`**. Extract the new `VelocityRivals-SinglePlayer-0.5.0-….zip` and launch **`VelocityRivals.exe`**. Keep the entire extracted folder together.
+6. On success, File Explorer opens **`Builds/Packages`**. Extract the new `VelocityRivals-SinglePlayer-0.6.0-….zip` and launch **`VelocityRivals.exe`**. Keep the entire extracted folder together.
 
 If Unity is installed elsewhere, set the `UNITY_EDITOR_PATH` environment variable to its `Unity.exe`, or use `Tools/Build-Windows.ps1 -Unity 'C:\your\Unity.exe' -RunTests -Package`. The default is `%ProgramFiles%\Unity\Hub\Editor\6000.6.7f1\Editor\Unity.exe`.
 
@@ -51,4 +51,4 @@ Upload the **built game ZIP** only after these checks. The GitHub source ZIP is 
 
 ## Verification performed here
 
-38 standalone C# checks pass, including six career checks and four authored-layout checks. The runner retains networking regression checks for preserved source, but that code is excluded from the default Unity player. Static C# syntax, Unity metadata/reference checks, audio-file validation and source ZIP checks pass. New Unity tests cover legacy save migration, track/car records, unfinished runs, career persistence, shader imports, assembly exclusion and career-menu flow; those tests are authored but unrun here.
+41 standalone C# checks pass, including six career checks and four authored-layout checks. The runner retains networking regression checks for preserved source, but that code is excluded from the default Unity player. Static C# syntax, Unity metadata/reference checks, audio-file validation and source ZIP checks pass. New Unity tests cover legacy save migration, track/car records, unfinished runs, career persistence, shader imports, assembly exclusion and career-menu flow; those tests are authored but unrun here.

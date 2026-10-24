@@ -16,7 +16,9 @@ Keyboard: W/S accelerate/reverse, A/D steer, Shift boost, Ctrl handbrake,
 Space jump (press again for an aerial jump), Q/E air roll, R recover, Esc pause.
 Controller: triggers accelerate/reverse, left stick steer, B boost, X handbrake,
 A jump, LB plus stick air roll, Y recover, Start pause.
-Menus: mouse, arrows or D-pad; Enter or A selects.
+Menus: mouse, arrows or D-pad; Enter or A selects; Esc or B goes back.
+Use the mouse wheel to scroll long pages. Keyboard/controller selection scrolls
+into view automatically. Speed and boost appear in a separate driving display.
 
 EVENTS
 Championship: pass each checkpoint in order and finish three laps per round.

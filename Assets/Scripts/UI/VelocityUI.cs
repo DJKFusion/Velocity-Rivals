@@ -11,7 +11,7 @@ using UnityEngine.Rendering.Universal;
 namespace VelocityRivals
 {
     /// <summary>Runtime-built controller-navigable UI; no hand-wired scene references.</summary>
-    public sealed class VelocityUI : MonoBehaviour
+    public sealed partial class VelocityUI : MonoBehaviour
     {
         private GameSession session;
         private Canvas canvas;
@@ -57,7 +57,7 @@ namespace VelocityRivals
             var scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = 0.5f;
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             hud = Label(canvas.transform, "", 28, 160);
             var hr = hud.rectTransform;
             hr.anchorMin = hr.anchorMax = new Vector2(0, 1);
@@ -85,6 +85,7 @@ namespace VelocityRivals
             mapCaption.rectTransform.pivot = new Vector2(.5f, 1);
             mapCaption.rectTransform.sizeDelta = new Vector2(0, 30);
             mapPanel.SetActive(false);
+            BuildRaceCards();
             countdownLabel = Label(canvas.transform, "", 96, 150);
             countdownLabel.rectTransform.anchorMin = countdownLabel.rectTransform.anchorMax = new Vector2(.5f,.5f);
             countdownLabel.rectTransform.sizeDelta = new Vector2(600,180);
@@ -99,67 +100,42 @@ namespace VelocityRivals
         private void Update()
         {
             if (!session) return;
+            RefreshPresentation();
             countdownLabel.text = session.Running && !session.Paused && !session.Finished && session.CountdownRemaining > 0 ? Mathf.CeilToInt(session.CountdownRemaining).ToString() : "";
             mapPanel.SetActive(session.Running && !session.Finished && !session.Paused);
             if (nowPlaying) nowPlaying.text = sound.PlaylistName.ToUpperInvariant() + " PLAYLIST\n" + sound.NowPlaying;
-            if (title) title.color = SaveStore.Current.reducedEffects ? cyan : Color.Lerp(Color.white, cyan, 0.25f + Mathf.Sin(Time.unscaledTime * 1.5f) * 0.15f);
-            bool pausePressed = (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-                || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
-            if (pausePressed && session.Running && !session.Finished)
+
+            bool escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+            bool back = escape || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
+            bool start = Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame;
+            if (session.Running && !session.Finished)
             {
-                if (session.Paused) Resume(); else PauseMenu();
+                if (session.Paused && back) { if (pageBack != null) pageBack(); else Resume(); }
+                else if (escape || start) { if (session.Paused) Resume(); else PauseMenu(); }
             }
+            else if (back && pageBack != null) pageBack();
             if (session.Paused && !panel) PauseMenu();
             if (session.Running && session.Player)
             {
-                var car = session.Player;
                 string clock = session.CurrentMode == GameMode.FreePlay ? "PRACTICE" : $"{session.RemainingTime:0.0}s REMAINING";
-                hud.text = $"{session.CurrentMode}   |   {clock}\n" +
-                    $"{car.SpeedKmh:0} km/h    BOOST {car.BoostAmount * 100:0}%\n{session.StatusText}\n{session.LocationName.ToUpperInvariant()}";
-                if (session.IsCircuit)
-                {
-                    var laps = session.LapTimes;
-                    hud.text += $"\nLAP TIME {laps.CurrentLap(session.Elapsed):0.00}s   LAST {LapDisplay(laps.LastLap)}   BEST {LapDisplay(laps.BestLap)}";
-                    if (session.WrongWay) hud.text += "\n<color=#FFB347>WRONG WAY — follow the route to the yellow gate</color>";
-                }
+                hud.text = $"{session.CurrentMode.ToString().ToUpperInvariant()}   |   {clock}\n" +
+                    session.StatusText + "\n" + session.LocationName.ToUpperInvariant();
                 hint.text = "WASD / triggers + left stick: drive   •   Shift / B: boost   •   Space / A: jump   •   Ctrl / X: drift\nR / Y: recover   •   Q/E / LB + stick: air roll   •   Esc / Start: pause";
                 if (session.Elapsed < 8 && !session.Finished) hint.text = session.EventObjective + "\nWASD / triggers + stick: drive • Shift / B: boost • Esc / Start: pause";
             }
-            else { hud.text = ""; hint.text = "Mouse or arrows / D-pad to navigate • Enter / A to select"; }
+            else { hud.text = ""; hint.text = ""; }
         }
 
         private void OnDestroy() { if (session) session.MatchEnded -= OnMatchEnded; }
 
         private void ClearPanel()
         {
-            if (panel) { panel.gameObject.SetActive(false); Destroy(panel.gameObject); }
-            title = null;
-            nowPlaying = null;
-            panel = null;
+            if (pageRoot) { pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
+            title = null; nowPlaying = null; panel = null; pageRoot = null; pageBack = null;
+            showcaseName = null; showcaseStats = null; showcaseProgress = null; pageFade = null;
         }
         private static string LapDisplay(float seconds) => seconds > 0 ? seconds.ToString("0.00") + "s" : "—";
-        private void Page(string heading, string subtitle)
-        {
-            ClearPanel();
-            var go = new GameObject(heading, typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup));
-            go.transform.SetParent(canvas.transform, false);
-            panel = go.GetComponent<RectTransform>();
-            panel.anchorMin = panel.anchorMax = panel.pivot = new Vector2(0.5f, 0.5f);
-            panel.sizeDelta = new Vector2(1040, 900);
-            go.GetComponent<Image>().color = new Color(0.025f, 0.045f, 0.09f, 0.97f);
-            var layout = go.GetComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(44, 44, 28, 28);
-            layout.spacing = 12;
-            layout.childControlHeight = true;
-            layout.childForceExpandHeight = false;
-            layout.childControlWidth = true;
-            layout.childForceExpandWidth = true;
-            title = Label(panel, heading.ToUpperInvariant(), 48, 68);
-            title.color = cyan;
-            int subtitleLines = 0;
-            foreach (string line in subtitle.Split('\n')) subtitleLines += Mathf.Max(1, Mathf.CeilToInt(line.Length / 70f));
-            Label(panel, subtitle, 23, Mathf.Clamp(30 * subtitleLines, 58, 270));
-        }
+        private void Page(string heading, string subtitle) => BuildPageFrame(heading, subtitle);
 
         private Text Label(Transform parent, string text, int size, float height)
         {
@@ -170,6 +146,7 @@ namespace VelocityRivals
             label.color = Color.white; label.alignment = TextAnchor.MiddleCenter;
             label.raycastTarget = false;
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Overflow;
             go.GetComponent<LayoutElement>().preferredHeight = height;
             return label;
         }
@@ -178,15 +155,22 @@ namespace VelocityRivals
         {
             var go = new GameObject(caption, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             go.transform.SetParent(panel, false);
-            go.GetComponent<Image>().color = new Color(0.075f, 0.16f, 0.24f);
-            go.GetComponent<LayoutElement>().preferredHeight = 57;
+            go.GetComponent<Image>().color = new Color(.08f, .18f, .24f);
+            go.GetComponent<LayoutElement>().preferredHeight = 62;
+            go.GetComponent<LayoutElement>().minHeight = 62;
             var button = go.GetComponent<Button>();
             var colors = button.colors;
             colors.normalColor = Color.white; colors.highlightedColor = new Color(0.4f, 1, 1);
             colors.selectedColor = new Color(0.4f, 1, 1); colors.pressedColor = new Color(0.2f, 0.65f, 0.8f);
             button.colors = colors;
             var text = Label(go.transform, caption, 25, 0);
-            Stretch(text.rectTransform, 8);
+            Stretch(text.rectTransform, 12);
+            text.rectTransform.offsetMin = new Vector2(24, 8); text.rectTransform.offsetMax = new Vector2(-38, -8);
+            text.alignment = TextAnchor.MiddleLeft;
+            var accent = Plate("Focus accent", go.transform, cyan);
+            accent.anchorMin = Vector2.zero; accent.anchorMax = new Vector2(0,1); accent.offsetMin = Vector2.zero; accent.offsetMax = new Vector2(4,0);
+            var focus = go.AddComponent<MenuFocusReveal>(); focus.Accent = accent.GetComponent<Image>(); focus.Accent.enabled = false;
+            if (caption == "BACK" || caption.StartsWith("BACK TO") || (caption == "MAIN MENU" && pageBack == null)) pageBack = action;
             button.onClick.AddListener(() => { sound.Click(); action(); });
             return button;
         }
@@ -216,7 +200,7 @@ namespace VelocityRivals
             if (session.Running || session.Finished) session.ReturnToMenu();
             Page("Velocity Rivals", $"SINGLE PLAYER • LEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP\n{SaveStore.Current.career.TotalMedals}/{CareerTour.Count * 3} career medal points");
             panel.GetComponent<VerticalLayoutGroup>().spacing = 8;
-            Preview(string.IsNullOrEmpty(SaveStore.LastError) ? 140 : 80);
+            MakeHomeLayout();
             Focus(Button("CAREER TOUR", () => { careerSelection = SaveStore.Current.career.NextEvent; CareerMenu(); }));
             Button("PLAY", ModeMenu);
             Button("GARAGE", Garage);
@@ -224,26 +208,36 @@ namespace VelocityRivals
             Button("SETTINGS", () => Settings(false));
             Button("HOW TO PLAY", () => HowToPlay(false));
             Button("CREDITS", Credits);
-            Button("QUIT", QuitGame);
-            if (!string.IsNullOrEmpty(SaveStore.LastError)) Label(panel, SaveStore.LastError, 18, 50);
+            Button("QUIT", ConfirmQuit);
+            if (!string.IsNullOrEmpty(SaveStore.LastError)) Label(panel, SaveStore.LastError, 18, 70);
+            pageBack = ConfirmQuit;
         }
 
+        private void ConfirmQuit()
+        {
+            Page("Leave the garage?", "Your completed events and garage choices are saved on this computer.");
+            Focus(Button("BACK", MainMenu));
+            Button("SAVE & QUIT", QuitGame);
+        }
         private void QuitGame()
         {
-            SaveStore.Save();
+            if (!SaveStore.Save())
+            {
+                Page("Progress could not be saved", SaveStore.LastError);
+                Focus(Button("TRY SAVING AGAIN", QuitGame));
+                Button("BACK", MainMenu);
+                Button("QUIT WITHOUT SAVING", ExitApplication);
+                return;
+            }
+            ExitApplication();
+        }
+        private void ExitApplication()
+        {
             #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
             #else
             Application.Quit();
             #endif
-        }
-
-        private void Preview(float height)
-        {
-            var preview = new GameObject("Vehicle showroom", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement), typeof(GaragePreview));
-            preview.transform.SetParent(panel, false);
-            preview.GetComponent<RawImage>().raycastTarget = false;
-            preview.GetComponent<LayoutElement>().preferredHeight = height;
         }
 
         private void CareerMenu()
@@ -254,7 +248,6 @@ namespace VelocityRivals
             var entry = CareerTour.Get(careerSelection);
             Page(progress.Complete ? "Velocity Tour complete" : "Career Tour", $"{progress.TotalMedals}/{CareerTour.Count * 3} MEDAL POINTS • {entry.Cup.ToUpperInvariant()}\nBronze unlocks the next event. Replay any unlocked event for gold.");
             panel.GetComponent<VerticalLayoutGroup>().spacing = 8;
-            Preview(120);
             Label(panel, $"EVENT {careerSelection + 1}/{CareerTour.Count} — {entry.Name}\n{GameSession.EnvironmentNames[entry.Environment]} • {CareerTour.MedalName(progress.medals[careerSelection])}\n{entry.Goal}", 26, 150);
             Focus(Button("START CAREER EVENT", StartCareer));
             if (careerSelection > 0) Button("PREVIOUS EVENT", () => { careerSelection--; CareerMenu(); });
@@ -285,7 +278,6 @@ namespace VelocityRivals
         private void TourFinale()
         {
             Page("Velocity champion", "ROOKIE • CHALLENGER • RIVAL • VELOCITY FINALS\nAll four cups complete. Your place in the tour is earned.");
-            Preview(180);
             Label(panel, $"{SaveStore.Current.career.TotalMedals}/36 MEDAL POINTS\n{SaveStore.Current.UnlockedVehicles}/6 CARS UNLOCKED\nThank you for playing Velocity Rivals.\nReplay the tour to earn every gold medal, or set a new Time Attack record.", 27, 180);
             Focus(Button("VIEW TROPHIES", TourProgress));
             Button("CREDITS", Credits);
@@ -341,7 +333,6 @@ namespace VelocityRivals
             var p = SaveStore.Current;
             Page("Garage", p.UnlockedVehicles == 6 ? "ALL SIX VEHICLES UNLOCKED\nCustomise your car for your next event." : $"{p.UnlockedVehicles}/6 vehicles unlocked • Next unlock at {p.UnlockedVehicles * 500} XP\nSelections apply to your vehicle on the next event.");
             panel.GetComponent<VerticalLayoutGroup>().spacing = 6;
-            Preview(160);
             var vehicles = new List<string>();
             for (int i = 0; i < p.UnlockedVehicles; i++) vehicles.Add(GameSession.VehicleNames[i]);
             Focus(Cycle("Vehicle", vehicles, () => p.selectedVehicle, value => { p.selectedVehicle = value; SaveStore.Save(); }));
@@ -432,12 +423,14 @@ namespace VelocityRivals
             Button("SETTINGS", () => Settings(true));
             Button("HOW TO PLAY", () => HowToPlay(true));
             Button("MAIN MENU", () => ConfirmAbandon(false));
+            pageBack = Resume;
         }
         private void ConfirmAbandon(bool restart)
         {
             Page(restart ? "Restart this event?" : "Leave this event?",
                 "This unfinished event will not earn a medal. Restarting a championship starts again from round one.\nYour previously saved medals, records and unlocked cars are kept.");
             Focus(Button("KEEP PLAYING", Resume));
+            pageBack = Resume;
             Button(restart ? "RESTART NOW" : "LEAVE EVENT", restart ? (Action)RestartCurrent : MainMenu);
         }
         private void Resume() { ClearPanel(); session.SetPaused(false); if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null); }
