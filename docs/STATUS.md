@@ -29,7 +29,7 @@ Status meanings: **verified here** means a named tool ran successfully in the cl
 
 ## Known issues and risks to resolve in Unity
 
-1. First Editor import and package compatibility are unverified. The manifest uses explicit package versions; resolve any actual Editor-reported incompatibility before upgrading packages, and save the resulting lockfile.
+1. Input System 1.11.2 failed under Unity 6000.6 because Unity's generic `TreeView` migration made its Editor code obsolete errors. The manifest now uses Input System 1.20.1, whose package metadata supports Unity 6000.0+ and whose source handles Unity 6000.2+ generic tree views. The remaining package import and compatibility checks are still pending; save the lockfile after successful resolution.
 2. Physics feel, AI cornering, jumping, suspension and collision recovery need real frame-by-frame playtests. Ray adhesion is not proof of continuous wall riding or ceiling driving.
 3. Imported FBX orientation/scale and tire animation need Unity review. Blender roundtrip checks cannot establish Unity importer conventions.
 4. Auto-recovery returns to a recent safe ground location. Manual recovery should be tested near checkpoint planes to ensure no accidental skips or stuck cycles.

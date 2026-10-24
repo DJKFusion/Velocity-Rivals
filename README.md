@@ -8,7 +8,7 @@ This delivery contains integrated development source, a bootstrap scene, six veh
 
 1. Finish installing **Unity 6000.6.7f1**, the version selected in your Unity Hub screenshot.
 2. Extract the source ZIP to a local folder. In Unity Hub choose **Projects → Add → Add project from disk** and select the folder containing `Assets`, `Packages`, and `ProjectSettings`. This is an existing project; do not create another project over it.
-3. Open it using 6000.6.7f1. Allow Unity Package Manager to download the packages declared in `Packages/manifest.json`. The manifest pins Input System 1.11.2, URP 17.0.4, uGUI 2.0.0 and Test Framework 1.4.5; the installed Editor must verify compatibility. No unverified package lockfile is supplied. Commit the lockfile Unity generates after successful resolution.
+3. Open it using 6000.6.7f1. Allow Unity Package Manager to download the packages declared in `Packages/manifest.json`. The manifest pins Input System 1.20.1, URP 17.0.4, uGUI 2.0.0 and Test Framework 1.4.5; the installed Editor must verify compatibility. No unverified package lockfile is supplied. Commit the lockfile Unity generates after successful resolution.
 4. The Editor setup automatically creates and assigns a URP pipeline. Open **Velocity Rivals → Open Game**, or double-click `Assets/Scenes/VelocityRivals.unity`.
 5. Press **Play**, select **PLAY**, choose an event/environment, and select **START EVENT**. Begin with Free Play in Cyber Dome to check the controls before racing.
 
