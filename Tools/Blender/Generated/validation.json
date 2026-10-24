@@ -1,0 +1,210 @@
+{
+  "generator": "Velocity Rivals original procedural starter art",
+  "blender": "4.3.2",
+  "units": "meters",
+  "source_forward": "-Y",
+  "export_forward": "-Z",
+  "export_up": "Y",
+  "assets": [
+    {
+      "file": "Viper.fbx",
+      "source": {
+        "meshes": 26,
+        "vertices": 2016,
+        "polygons": 1796,
+        "dimensions": [
+          2.1048,
+          3.8075,
+          1.21
+        ]
+      },
+      "roundtrip": {
+        "meshes": 26,
+        "vertices": 2016,
+        "polygons": 1796,
+        "dimensions": [
+          2.1048,
+          3.8075,
+          1.21
+        ]
+      },
+      "bytes": 152364,
+      "passed": true
+    },
+    {
+      "file": "Bulwark.fbx",
+      "source": {
+        "meshes": 29,
+        "vertices": 2184,
+        "polygons": 1958,
+        "dimensions": [
+          2.409,
+          3.98,
+          1.36
+        ]
+      },
+      "roundtrip": {
+        "meshes": 29,
+        "vertices": 2184,
+        "polygons": 1958,
+        "dimensions": [
+          2.409,
+          3.98,
+          1.36
+        ]
+      },
+      "bytes": 165388,
+      "passed": true
+    },
+    {
+      "file": "Phantom.fbx",
+      "source": {
+        "meshes": 25,
+        "vertices": 1960,
+        "polygons": 1742,
+        "dimensions": [
+          1.884,
+          3.563,
+          1.17
+        ]
+      },
+      "roundtrip": {
+        "meshes": 25,
+        "vertices": 1960,
+        "polygons": 1742,
+        "dimensions": [
+          1.884,
+          3.563,
+          1.17
+        ]
+      },
+      "bytes": 148284,
+      "passed": true
+    },
+    {
+      "file": "Apex.fbx",
+      "source": {
+        "meshes": 30,
+        "vertices": 2240,
+        "polygons": 2012,
+        "dimensions": [
+          2.193,
+          4.1075,
+          1.21
+        ]
+      },
+      "roundtrip": {
+        "meshes": 30,
+        "vertices": 2240,
+        "polygons": 2012,
+        "dimensions": [
+          2.193,
+          4.1075,
+          1.21
+        ]
+      },
+      "bytes": 170636,
+      "passed": true
+    },
+    {
+      "file": "Nomad.fbx",
+      "source": {
+        "meshes": 27,
+        "vertices": 2192,
+        "polygons": 1934,
+        "dimensions": [
+          2.2224,
+          3.8575,
+          1.41
+        ]
+      },
+      "roundtrip": {
+        "meshes": 27,
+        "vertices": 2192,
+        "polygons": 1934,
+        "dimensions": [
+          2.2224,
+          3.8575,
+          1.41
+        ]
+      },
+      "bytes": 161308,
+      "passed": true
+    },
+    {
+      "file": "Comet.fbx",
+      "source": {
+        "meshes": 27,
+        "vertices": 2232,
+        "polygons": 1962,
+        "dimensions": [
+          1.997,
+          4.1575,
+          1.585
+        ]
+      },
+      "roundtrip": {
+        "meshes": 27,
+        "vertices": 2232,
+        "polygons": 1962,
+        "dimensions": [
+          1.997,
+          4.1575,
+          1.585
+        ]
+      },
+      "bytes": 163740,
+      "passed": true
+    },
+    {
+      "file": "CheckpointGate.fbx",
+      "source": {
+        "meshes": 6,
+        "vertices": 336,
+        "polygons": 324,
+        "dimensions": [
+          12.55,
+          0.685,
+          5.275
+        ]
+      },
+      "roundtrip": {
+        "meshes": 6,
+        "vertices": 336,
+        "polygons": 324,
+        "dimensions": [
+          12.55,
+          0.685,
+          5.275
+        ]
+      },
+      "bytes": 39660,
+      "passed": true
+    },
+    {
+      "file": "EnergyGoal.fbx",
+      "source": {
+        "meshes": 6,
+        "vertices": 336,
+        "polygons": 324,
+        "dimensions": [
+          8.5,
+          0.53,
+          4.25
+        ]
+      },
+      "roundtrip": {
+        "meshes": 6,
+        "vertices": 336,
+        "polygons": 324,
+        "dimensions": [
+          8.5,
+          0.53,
+          4.25
+        ]
+      },
+      "bytes": 39804,
+      "passed": true
+    }
+  ]
+}

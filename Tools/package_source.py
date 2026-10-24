@@ -1,0 +1,17 @@
+"""Package source and original assets, excluding Git, Unity and build caches."""
+from pathlib import Path
+import zipfile
+
+root = Path(__file__).resolve().parents[1]
+output = root.parent / 'Velocity-Rivals-source.zip'
+excluded = {'.git', 'Library', 'Temp', 'Logs', 'UserSettings', 'Builds', 'Artifacts', 'obj', 'bin', '__pycache__'}
+paths = [p for p in root.rglob('*') if p.is_file() and not any(part in excluded for part in p.relative_to(root).parts)]
+with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
+    for path in sorted(paths):
+        archive.write(path, Path('Velocity-Rivals') / path.relative_to(root))
+with zipfile.ZipFile(output) as archive:
+    assert archive.testzip() is None, 'Archive integrity check failed'
+    names = set(archive.namelist())
+    for required in ('Assets/Scenes/VelocityRivals.unity', 'ProjectSettings/ProjectVersion.txt', 'Packages/manifest.json', 'README.md', 'Tools/LogicTests/LogicTests.csproj'):
+        assert 'Velocity-Rivals/' + required in names, required
+print(f'{output}: {len(paths)} files, {output.stat().st_size} bytes; ZIP integrity and required entries verified.')

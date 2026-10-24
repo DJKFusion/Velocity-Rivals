@@ -1,0 +1,6 @@
+{
+  "name": "VelocityRivals.EditModeTests",
+  "references": ["VelocityRivals.Runtime"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "VelocityRivals.PlayModeTests",
+  "references": ["VelocityRivals.Runtime", "Unity.InputSystem", "Unity.ugui"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}
