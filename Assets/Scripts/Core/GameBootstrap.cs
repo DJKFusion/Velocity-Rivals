@@ -35,7 +35,8 @@ namespace VelocityRivals
             var tone = volume.profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
             var colour = volume.profile.Add<ColorAdjustments>(true);
-            colour.contrast.Override(10); colour.saturation.Override(8);
+            colour.postExposure.Override(.35f);
+            colour.contrast.Override(4); colour.saturation.Override(8);
             var vignette = volume.profile.Add<Vignette>(true);
             vignette.intensity.Override(.18f); vignette.smoothness.Override(.4f);
         }

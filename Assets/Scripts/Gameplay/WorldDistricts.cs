@@ -179,16 +179,13 @@ namespace VelocityRivals
         }
         void Sign(string text,Vector3 position,Quaternion rotation,Color color,float size)
         {
-            // Both faces remain readable while approaching from either direction.
-            for(int face=0;face<2;face++)
-            {
-                var go=new GameObject("District sign");go.transform.SetParent(transform,false);
-                go.transform.SetPositionAndRotation(position+rotation*Vector3.forward*(face==0?-.5f:.5f),rotation*Quaternion.Euler(0,face*180,0));
-                var label=go.AddComponent<TextMesh>();label.text=text;label.anchor=TextAnchor.MiddleCenter;
-                label.alignment=TextAlignment.Center;label.fontSize=48;label.characterSize=size;label.color=color;
-                label.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                go.GetComponent<MeshRenderer>().sharedMaterial=label.font.material;
-            }
+            var go=new GameObject("District sign");go.transform.SetParent(transform,false);
+            go.transform.position=position;
+            var label=go.AddComponent<TextMesh>();label.text=text;label.anchor=TextAnchor.MiddleCenter;
+            label.alignment=TextAlignment.Center;label.fontSize=48;label.characterSize=size;label.color=color;
+            label.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            go.GetComponent<MeshRenderer>().sharedMaterial=label.font.material;
+            go.AddComponent<ReadableWorldSign>();
         }
     }
 }

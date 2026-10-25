@@ -98,6 +98,14 @@ namespace VelocityRivals
         }
         void MakeHomeLayout()
         {
+            var logo = Resources.Load<Texture2D>("Branding/VelocityRivalsLogo");
+            if (logo)
+            {
+                var mark = new GameObject("Velocity Rivals logo",typeof(RectTransform),typeof(RawImage));
+                mark.transform.SetParent(pageRoot,false);
+                BoxRect(mark.GetComponent<RectTransform>(),1280,40,150,150);
+                mark.GetComponent<RawImage>().texture=logo;mark.GetComponent<RawImage>().raycastTarget=false;
+            }
             menuScroll.GetComponent<RectTransform>().offsetMax=new Vector2(-1120,menuScroll.GetComponent<RectTransform>().offsetMax.y);
             showcase.offsetMin=new Vector2(596,48);BuildShowcase(true);
         }
@@ -119,8 +127,8 @@ namespace VelocityRivals
         void BuildRaceCards()
         {
             var info=Plate("Race information card",canvas.transform,new Color(.015f,.025f,.04f,.82f));
-            BoxRect(info,28,25,720,240);raceInfoCard=info.gameObject;
-            hud.transform.SetParent(info,false);BoxRect(hud.rectTransform,20,12,680,215);hud.fontSize=25;hud.alignment=TextAnchor.UpperLeft;
+            BoxRect(info,28,25,720,175);raceInfoCard=info.gameObject;
+            hud.transform.SetParent(info,false);BoxRect(hud.rectTransform,20,12,680,150);hud.fontSize=24;hud.alignment=TextAnchor.UpperLeft;
             var speed=Plate("Speed and boost card",canvas.transform,new Color(.015f,.025f,.04f,.88f));
             speed.anchorMin=speed.anchorMax=new Vector2(1,0);speed.pivot=new Vector2(1,0);
             speed.anchoredPosition=new Vector2(-28,105);speed.sizeDelta=new Vector2(340,190);speedCard=speed.gameObject;
@@ -129,7 +137,7 @@ namespace VelocityRivals
             boostText=FixedText(speed,"BOOST",20,22,105,290,35,cyan);
             var track=Plate("Boost track",speed,new Color(.1f,.17f,.22f));BoxRect(track,22,151,296,10);
             boostFill=Plate("Boost level",track,cyan);boostFill.anchorMin=Vector2.zero;boostFill.anchorMax=Vector2.one;boostFill.offsetMin=boostFill.offsetMax=Vector2.zero;
-            var timing=Plate("Lap timing card",canvas.transform,new Color(.015f,.025f,.04f,.82f));BoxRect(timing,28,278,940,44);timingCard=timing.gameObject;
+            var timing=Plate("Lap timing card",canvas.transform,new Color(.015f,.025f,.04f,.82f));BoxRect(timing,28,210,940,44);timingCard=timing.gameObject;
             timingText=FixedText(timing,"",23,16,0,910,44,Color.white);
             var help=Plate("Driving hints card",canvas.transform,new Color(.015f,.025f,.04f,.8f));
             help.anchorMin=Vector2.zero;help.anchorMax=new Vector2(1,0);help.pivot=new Vector2(.5f,0);help.anchoredPosition=new Vector2(0,15);help.sizeDelta=new Vector2(-56,75);

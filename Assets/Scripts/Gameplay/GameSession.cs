@@ -534,13 +534,13 @@ namespace VelocityRivals
             Material rail = Material("Energy rail", accent, true);
             Material architecture = Material("Architecture", new Color(.12f, .16f, .24f));
             var light = new GameObject("Sun", typeof(Light)); light.transform.SetParent(world); light.transform.rotation = Quaternion.Euler(48, -25, 0);
-            light.GetComponent<Light>().type = LightType.Directional; light.GetComponent<Light>().intensity = environment == 2 ? 1.6f : 1.1f;
+            light.GetComponent<Light>().type = LightType.Directional; light.GetComponent<Light>().intensity = environment == 2 ? 1.6f : 1.65f;
             light.GetComponent<Light>().shadows = LightShadows.Soft;
             light.GetComponent<Light>().color = environment == 2 ? new Color(1, .85f, .68f) : new Color(.75f, .85f, 1);
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(.3f, .4f, .55f);
-            RenderSettings.ambientEquatorColor = new Color(.14f, .18f, .24f);
-            RenderSettings.ambientGroundColor = new Color(.07f, .08f, .11f);
+            RenderSettings.ambientSkyColor = new Color(.48f, .56f, .68f);
+            RenderSettings.ambientEquatorColor = new Color(.32f, .38f, .46f);
+            RenderSettings.ambientGroundColor = new Color(.18f, .21f, .27f);
             RenderSettings.ambientLight = new Color(.35f, .4f, .5f);
             RenderSettings.fog = true; RenderSettings.fogColor = new Color(.04f, .06f, .12f); RenderSettings.fogDensity = .0025f;
             track.Clear();
@@ -560,8 +560,7 @@ namespace VelocityRivals
                         Box("Barrier", middle + facing * Vector3.right * side * 10.3f + Vector3.up * .65f, new Vector3(.5f, 1.3f, length), architecture, facing);
                         Box("Light ribbon", middle + facing * Vector3.right * side * 10.3f + Vector3.up * 1.35f, new Vector3(.55f, .12f, length), rail, facing);
                     }
-                    var gate = Box("Checkpoint " + i, a + Vector3.up * .025f, new Vector3(19, .05f, .3f), rail, facing);
-                    Destroy(gate.GetComponent<Collider>());
+                    // Checkpoints are logical planes; the HUD marks the next one without striping every road segment.
                     if (i % 4 == 0)
                     {
                         Box("Gate left", a + facing * Vector3.left * 9.8f + Vector3.up * 3, new Vector3(.3f, 6, .3f), rail);

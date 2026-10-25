@@ -137,7 +137,7 @@ namespace VelocityRivals.Tests
                     Assert.IsFalse(float.IsNaN(session.Player.transform.position.x));
                     var world = session.Player.transform.parent;
                     Assert.IsNotNull(world.GetComponentInChildren<WorldScenery>());
-                    Assert.GreaterOrEqual(world.GetComponentsInChildren<TextMesh>().Length, 4, "Each venue needs visible location signs.");
+                    Assert.GreaterOrEqual(world.GetComponentsInChildren<TextMesh>().Length, 2, "Each venue needs visible location signs.");
                     if (session.IsCircuit) Assert.AreEqual(CircuitLayout.Build(environment).Count, session.Circuit.Count);
                     var colliders = session.Player.transform.parent.GetComponentsInChildren<BoxCollider>();
                     Assert.IsNotEmpty(colliders);
@@ -345,6 +345,26 @@ namespace VelocityRivals.Tests
             yield return null; yield return null;
             Assert.IsTrue(hud.activeInHierarchy);
             Assert.IsFalse(session.Paused);
+        }
+
+        [UnityTest]
+        public IEnumerator WorldSignsFaceTheCameraAndHideWhenTooCloseOrBehind()
+        {
+            root = new GameObject("Sign readability test");
+            var cameraObject = new GameObject("Sign camera", typeof(Camera));
+            cameraObject.transform.SetParent(root.transform); cameraObject.tag = "MainCamera";
+            var sign = GameObject.CreatePrimitive(PrimitiveType.Quad); sign.transform.SetParent(root.transform);
+            sign.AddComponent<ReadableWorldSign>();
+            sign.transform.position = Vector3.forward * 50;
+            yield return null; yield return null;
+            Assert.IsTrue(sign.GetComponent<MeshRenderer>().enabled);
+            Assert.Less(Quaternion.Angle(cameraObject.transform.rotation,sign.transform.rotation), .1f);
+            sign.transform.position = Vector3.forward * 10;
+            yield return null; yield return null;
+            Assert.IsFalse(sign.GetComponent<MeshRenderer>().enabled);
+            sign.transform.position = Vector3.back * 50;
+            yield return null; yield return null;
+            Assert.IsFalse(sign.GetComponent<MeshRenderer>().enabled);
         }
 
         [UnityTest]
