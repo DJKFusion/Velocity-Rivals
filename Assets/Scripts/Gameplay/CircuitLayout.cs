@@ -6,7 +6,9 @@ namespace VelocityRivals
     /// <summary>Authored control points, rounded into evenly spaced closed circuits.</summary>
     public static class CircuitLayout
     {
-        public const int Revision = 3;
+        public const int Revision = 4;
+        public const float Expansion = 1.8f;
+        public const float ArenaExpansion = 1.4f;
         public readonly struct Point
         {
             public readonly float X, Z;
@@ -35,7 +37,7 @@ namespace VelocityRivals
         {
             Validate(theme);
             var source = controls[theme]; int count = source.Length / 2;
-            Point At(int i) { i = (i + count) % count; return new Point(source[i * 2], source[i * 2 + 1]); }
+            Point At(int i) { i = (i + count) % count; return new Point(source[i * 2] * Expansion, source[i * 2 + 1] * Expansion); }
             var dense = new List<Point>();
             for (int i = 0; i < count; i++)
                 for (int j = 0; j < 16; j++)

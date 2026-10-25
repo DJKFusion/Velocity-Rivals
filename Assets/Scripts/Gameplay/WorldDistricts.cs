@@ -24,11 +24,12 @@ namespace VelocityRivals
             var roof = Surface("District roof", theme == 4 ? new Color(.8f,.9f,.96f) : new Color(.08f,.13f,.19f), .35f);
             var foliage = Surface("Alpine foliage",new Color(.065f,.16f,.15f));
             int placed = 0;
-            for (int x = -150; x <= 150; x += 30)
-                for (int z = -150; z <= 150; z += 30)
+            int extent = racing ? 270 : 150, spacing = racing ? 45 : 30;
+            for (int x = -extent; x <= extent; x += spacing)
+                for (int z = -extent; z <= extent; z += spacing)
                 {
                     Vector3 centre = new Vector3(x, 0, z);
-                    if (centre.sqrMagnitude > 190 * 190 || !ClearFootprint(centre, 16, route, racing)) continue;
+                    if (centre.sqrMagnitude > (extent + 40) * (extent + 40) || !ClearFootprint(centre, 16, route, racing)) continue;
                     int seed = Mathf.Abs(x * 37 + z * 19);
                     if (theme == 2 || theme == 4)
                     {

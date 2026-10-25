@@ -1,5 +1,12 @@
 # Implementation and verification ledger
 
+All five circuits are now about 80% longer and arenas have 1.96× the floor area.
+Scenery, goal scoring, arena bounds, minimaps, pickups and medal targets match the
+expanded layouts. Old records/ghosts are separated by layout revision 4; saved
+progress is retained. 53 standalone and static source checks pass. New Unity
+geometry/scoring tests and actual larger-map playtests remain pending. See
+[EXPANDED-MAPS.md](EXPANDED-MAPS.md).
+
 The release-polish pass fixes pause restoration for stopped rivals, pauses on active
 controller loss, adds a frozen three-second resume countdown and optional rumble,
 validates local ghost data, and shows sorted championship standings. Source checks

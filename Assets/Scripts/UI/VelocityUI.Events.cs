@@ -23,7 +23,15 @@ namespace VelocityRivals
             map.transform.SetParent(showcase,false);BoxRect(map.GetComponent<RectTransform>(),24,140,416,240);
             map.GetComponent<CoursePreview>().raycastTarget=false;
             map.GetComponent<CoursePreview>().Configure(environment,mode==GameMode.Championship||mode==GameMode.TimeAttack||mode==GameMode.Elimination);
-            FixedText(showcase,"WHITE MARKER  /  START",17,24,390,416,30,cyan);
+            bool circuit=mode==GameMode.Championship||mode==GameMode.TimeAttack||mode==GameMode.Elimination;
+            string dimensions="126 × 140 m ARENA";
+            if(circuit)
+            {
+                var route=CircuitLayout.Build(environment);float metres=0;
+                for(int i=0;i<route.Count;i++)metres+=CircuitLayout.Distance(route[i],route[(i+1)%route.Count]);
+                dimensions=$"{metres/1000f:0.00} km / LAP  •  WHITE: START";
+            }
+            FixedText(showcase,dimensions,17,24,390,416,30,cyan);
             FixedText(showcase,"SELECTED CAR\n"+GameSession.VehicleNames[SaveStore.Current.selectedVehicle].ToUpperInvariant(),24,24,440,416,80,Color.white);
         }
         void StartDrivingSchool()

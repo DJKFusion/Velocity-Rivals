@@ -16,6 +16,7 @@ namespace VelocityRivals
         {
             var go = new GameObject("Combined scenery"); go.transform.SetParent(parent, false);
             go.AddComponent<WorldScenery>().Generate(route, theme, racing);
+            if (!racing) go.transform.localScale = new Vector3(CircuitLayout.ArenaExpansion, 1, CircuitLayout.ArenaExpansion);
         }
         Material Surface(string name, Color colour, float metal = 0, bool glow = false)
         {
@@ -143,8 +144,8 @@ namespace VelocityRivals
             probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
             probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.OnAwake;
             probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
-            probe.resolution = 128; probe.size = new Vector3(280, 80, 260);
-            probe.boxProjection = true; probe.nearClipPlane = .3f; probe.farClipPlane = 250;
+            probe.resolution = 128; probe.size = racing ? new Vector3(560, 80, 520) : new Vector3(280, 80, 260);
+            probe.boxProjection = true; probe.nearClipPlane = .3f; probe.farClipPlane = racing ? 500 : 350;
             probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
             probe.backgroundColor = new Color(.18f, .25f, .35f);
         }

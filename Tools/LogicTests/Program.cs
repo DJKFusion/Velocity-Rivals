@@ -299,13 +299,26 @@ static class Program
             Test("authored circuits close with evenly spaced finite gates inside recovery bounds", () => {
                 for (int theme = 0; theme < 5; theme++) {
                     var route = CircuitLayout.Build(theme);
-                    Check(route.Count > 40 && route.Count < 90);
+                    Check(route.Count > 80 && route.Count < 160);
                     for (int i = 0; i < route.Count; i++) {
                         var p = route[i]; float distance = CircuitLayout.Distance(p, route[(i + 1) % route.Count]);
-                        Check(float.IsFinite(p.X) && float.IsFinite(p.Z) && Math.Abs(p.X) < 150 && Math.Abs(p.Z) < 150);
+                        Check(float.IsFinite(p.X) && float.IsFinite(p.Z) && Math.Abs(p.X) < 260 && Math.Abs(p.Z) < 260);
                         Check(distance > 8 && distance <= 10.1f);
                     }
                 }
+            });
+            Test("expanded courses retain road density and career targets below event deadlines", () => {
+                for(int theme=0;theme<5;theme++) {
+                    var route=CircuitLayout.Build(theme);float metres=0;
+                    for(int i=0;i<route.Count;i++)metres+=CircuitLayout.Distance(route[i],route[(i+1)%route.Count]);
+                    Check(metres>850 && metres<1400);
+                    Console.WriteLine($"  Theme {theme}: {metres:0} metres / {route.Count} gates");
+                }
+                foreach(int index in new[]{0,3,7,9}) {
+                    var entry=CareerTour.Get(index);
+                    Check(entry.GoldSeconds>=270 && entry.GoldSeconds*1.3f<600);
+                }
+                Check(90*CircuitLayout.ArenaExpansion==126 && 100*CircuitLayout.ArenaExpansion==140);
             });
             Test("circuits leave clearance between distant road sections", () => {
                 for (int theme = 0; theme < 5; theme++) {

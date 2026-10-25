@@ -245,6 +245,7 @@ namespace VelocityRivals
 
         private VehicleController SpawnCar(int index, Vector3 position, Quaternion rotation, Color color, bool player)
         {
+            if (!racing) position = Vector3.Scale(position, new Vector3(CircuitLayout.ArenaExpansion, 1, CircuitLayout.ArenaExpansion));
             var template = Resources.Load<VehicleStats>("VehicleStats/" + VehicleNames[index]);
             var stats = template != null ? Instantiate(template) : ScriptableObject.CreateInstance<VehicleStats>();
             stats.DisplayName = VehicleNames[index];
@@ -424,7 +425,7 @@ namespace VelocityRivals
         {
             if (mode == GameMode.ArenaClash)
             {
-                if (core != null && goalCooldown <= 0 && core.position.y >= 0 && core.position.y < 6 && Mathf.Abs(core.position.x) < 10 && Mathf.Abs(core.position.z) > 41 && Mathf.Abs(core.position.z) < 50)
+                if (core != null && goalCooldown <= 0 && core.position.y >= 0 && core.position.y < 6 && Mathf.Abs(core.position.x) < 10 * CircuitLayout.ArenaExpansion && Mathf.Abs(core.position.z) > 41 * CircuitLayout.ArenaExpansion && Mathf.Abs(core.position.z) < 50 * CircuitLayout.ArenaExpansion)
                 {
                     if (core.position.z > 0) playerScore++; else rivalScore++;
                     SoundDirector.Instance?.Cue(GameCue.Goal);
@@ -434,7 +435,7 @@ namespace VelocityRivals
                     Player.Respawn(new Vector3(0, 1.5f, -18), Quaternion.identity);
                     for (int i = 0; i < racers.Count; i++) racers[i].Car.Respawn(new Vector3((i - 1) * 12, 1.5f, 18), Quaternion.Euler(0, 180, 0));
                 }
-                if (core != null && (core.position.y < -4 || Mathf.Abs(core.position.x) > 46 || Mathf.Abs(core.position.z) > 51))
+                if (core != null && (core.position.y < -4 || Mathf.Abs(core.position.x) > 46 * CircuitLayout.ArenaExpansion || Mathf.Abs(core.position.z) > 51 * CircuitLayout.ArenaExpansion))
                 { core.position = new Vector3(0, 3, 0); core.linearVelocity = Vector3.zero; core.angularVelocity = Vector3.zero; goalCooldown = 1; }
                 StatusText = "ARENA CLASH · BLUE " + playerScore + " — " + rivalScore + " ORANGE\nPush the energy core into the orange goal · First to 5";
                 if (playerScore >= 5 || rivalScore >= 5 || elapsed >= duration) EndScoreMode("ARENA CLASH");
@@ -519,7 +520,7 @@ namespace VelocityRivals
                 {
                     // One blue teammate; two orange opponents approach from behind the core.
                     bool blue = racer.Id == 1;
-                    Vector3 goal = new Vector3(0, 1, blue ? 45 : -45);
+                    Vector3 goal = new Vector3(0, 1, (blue ? 45 : -45) * CircuitLayout.ArenaExpansion);
                     Vector3 approach = (core.position - goal).normalized;
                     target = Vector3.Distance(racer.Car.transform.position, core.position + approach * 5) > 7 ? core.position + approach * 5 : core.position;
                 }
@@ -545,7 +546,7 @@ namespace VelocityRivals
         public bool IsOutsidePlayableArea(Vector3 position)
         {
             if (position.y < -4 || position.y > 60) return true;
-            if (!racing) return Mathf.Abs(position.x) > 46 || Mathf.Abs(position.z) > 51;
+            if (!racing) return Mathf.Abs(position.x) > 46 * CircuitLayout.ArenaExpansion || Mathf.Abs(position.z) > 51 * CircuitLayout.ArenaExpansion;
             // Measure against segments, not checkpoint centres: corners and legitimate jumps stay valid.
             position.y = 0;
             for (int i = 0; i < track.Count; i++)
@@ -602,6 +603,11 @@ namespace VelocityRivals
             => Box(name, position, scale, mat, Quaternion.identity);
         private GameObject Box(string name, Vector3 position, Vector3 scale, Material mat, Quaternion rotation)
         {
+            if (!racing)
+            {
+                var expansion = new Vector3(CircuitLayout.ArenaExpansion, 1, CircuitLayout.ArenaExpansion);
+                position = Vector3.Scale(position, expansion); scale = Vector3.Scale(scale, expansion);
+            }
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name; go.transform.SetParent(world); go.transform.position = position; go.transform.localScale = scale;
             go.transform.rotation = rotation;
@@ -688,7 +694,7 @@ namespace VelocityRivals
                         pad.transform.SetParent(world);pad.transform.SetPositionAndRotation(padPosition+Vector3.up,facing);
                         var trigger=pad.GetComponent<BoxCollider>();trigger.isTrigger=true;trigger.size=new Vector3(4,3,6);
                     }
-                    if(i%8==0 && SaveStore.Current.quality>0)
+                    if(i%Mathf.Max(8,segments/10)==0 && SaveStore.Current.quality>0)
                     {
                         var lamp=new GameObject("Road lighting",typeof(Light));lamp.transform.SetParent(world);
                         lamp.transform.position=middle+Vector3.up*7;
@@ -701,11 +707,11 @@ namespace VelocityRivals
                         Box("Gate left", a + facing * Vector3.left * 9.8f + Vector3.up * 3, new Vector3(.3f, 6, .3f), rail);
                         Box("Gate right", a + facing * Vector3.right * 9.8f + Vector3.up * 3, new Vector3(.3f, 6, .3f), rail);
                     }
-                    if (environment == 1 && (i == 7 || i == 23))
+                    if (environment == 1 && (i == segments / 8 || i == segments * 3 / 8))
                         Box("Skyfall launch ramp", middle + Vector3.up * .45f, new Vector3(7, .5f, 8), road, facing * Quaternion.Euler(-10, 0, 0));
                 }
-                if (environment != 1) Box("Landscape", new Vector3(0, -.9f, 0), new Vector3(440, 1, 400), terrain);
-                else Box("Cloud deck", new Vector3(0, -30, 0), new Vector3(300, 1, 260), terrain);
+                if (environment != 1) Box("Landscape", new Vector3(0, -.9f, 0), new Vector3(700, 1, 660), terrain);
+                else Box("Cloud deck", new Vector3(0, -30, 0), new Vector3(620, 1, 580), terrain);
             }
             else
             {

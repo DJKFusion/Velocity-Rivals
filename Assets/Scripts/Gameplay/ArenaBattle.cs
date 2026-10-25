@@ -32,7 +32,7 @@ namespace VelocityRivals
             for (int i = 0; i < 8; i++)
             {
                 float angle = i * Mathf.PI / 4;
-                Vector3 position = new Vector3(Mathf.Sin(angle) * 18, 1.4f, Mathf.Cos(angle) * 28);
+                Vector3 position = new Vector3(Mathf.Sin(angle) * 18 * CircuitLayout.ArenaExpansion, 1.4f, Mathf.Cos(angle) * 28 * CircuitLayout.ArenaExpansion);
                 var pickup = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 pickup.name = new[] { "Flux Shield", "Overdrive", "Pulse Burst" }[i % 3];
                 pickup.transform.SetParent(transform);

@@ -552,7 +552,7 @@ namespace VelocityRivals
                 string environment = r.environment >= 0 && r.environment < 5 ? GameSession.EnvironmentNames[r.environment] : "Earlier version";
                 string vehicle = r.vehicle >= 0 && r.vehicle < 6 ? GameSession.VehicleNames[r.vehicle] : "All vehicles";
                 vehicle += r.upgradeSignature==0 ? " • STOCK" : $" • E{r.upgradeSignature%4}/H{r.upgradeSignature/4%4}/B{r.upgradeSignature/16%4}";
-                if ((r.mode == "TimeAttack" || r.mode == "Championship" || r.mode == "Elimination") && r.layoutRevision != CircuitLayout.Revision) environment += " (old layout)";
+                if (r.environment >= 0 && r.layoutRevision != CircuitLayout.Revision) environment += " (old layout)";
                 if ((r.mode=="Championship" || r.mode=="Elimination") && r.raceRulesRevision!=RaceCraft.RulesVersion) environment += " (earlier race rules)";
                 text += $"{r.mode} • {environment} • {vehicle}\n{r.finishes} finishes • Best {LapDisplay(r.bestSeconds)} • Score {r.bestScore}\n\n";
             }

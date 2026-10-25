@@ -1,6 +1,6 @@
 # Velocity Rivals — Single Player
 
-Latest update: [release polish and interruption safety](docs/RELEASE-POLISH.md). Active-controller disconnect pause, a frozen resume countdown, optional vibration, validated ghost files, and sorted championship standings build on the [menu/HUD and soundtrack refresh](docs/PRESENTATION-AND-RADIO.md). Source and standalone logic checks pass; Unity and Windows acceptance remain pending.
+Latest update: [expanded maps](docs/EXPANDED-MAPS.md). All five circuits are about 80% longer (0.97–1.16 km per lap), and arenas are 126 × 140 metres. This includes the earlier UI, soundtrack, career/garage, racing and release-polish work in the same 0.6.0 project. Source and 53 standalone checks pass; Windows gameplay/performance verification remains pending.
 
 An original Unity 6 arcade racing and vehicle-sports project for DJKFusion. The current edition plays offline and has no multiplayer menu, room setup or networking component. Multiplayer source is retained behind a disabled assembly constraint for future work.
 

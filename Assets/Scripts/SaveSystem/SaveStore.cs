@@ -163,7 +163,7 @@ namespace VelocityRivals
             if (won && completed) profile.wins++;
             profile.xp += completed ? 150 + (won ? 150 : 0) + Mathf.Clamp(score / 20, 0, 200) : 50;
             profile.garage.Credit(GarageProgress.EventReward(completed,won,score));
-            int revision = mode == "Championship" || mode == "TimeAttack" || mode == "Elimination" ? CircuitLayout.Revision : 0;
+            int revision = environment >= 0 ? CircuitLayout.Revision : 0;
             int setup = mode == "TimeAttack" ? 0 : profile.garage.Signature(vehicle);
             int rules = mode=="Championship" || mode=="Elimination" ? RaceCraft.RulesVersion : 0;
             RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision && r.upgradeSignature == setup && r.raceRulesRevision==rules);

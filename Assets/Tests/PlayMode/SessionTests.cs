@@ -346,13 +346,35 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator ExpandedArenaHasMatchingWallsGoalsAndPlayableSpace()
+        {
+            root=new GameObject("Expanded arena",typeof(GameSession));var session=root.GetComponent<GameSession>();
+            session.StartMatch(GameMode.ArenaClash,3,0,Color.cyan);
+            yield return null;
+            var floor=GameObject.Find("Arena floor").GetComponent<Collider>();
+            Assert.AreEqual(126,floor.bounds.size.x,.1f);Assert.AreEqual(140,floor.bounds.size.z,.1f);
+            Assert.AreEqual(63,GameObject.Find("East wall").transform.position.x,.1f);
+            Assert.IsFalse(session.IsOutsidePlayableArea(new Vector3(55,1,60)));
+            Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(66,1,0)));
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            typeof(GameSession).GetField("countdown",flags).SetValue(session,0f);
+            var core=GameObject.Find("Energy core").GetComponent<Rigidbody>();
+            core.position=new Vector3(0,2,45);core.linearVelocity=Vector3.zero;
+            typeof(GameSession).GetMethod("UpdateArena",flags).Invoke(session,null);
+            Assert.AreEqual(0,session.PlayerScore,"The old goal position is now the field.");
+            core.position=new Vector3(0,2,45*CircuitLayout.ArenaExpansion);
+            typeof(GameSession).GetMethod("UpdateArena",flags).Invoke(session,null);
+            Assert.AreEqual(1,session.PlayerScore,"The expanded goal must score.");
+        }
+
+        [UnityTest]
         public IEnumerator EscapedArenaCoreResetsWithoutScoring()
         {
             root=new GameObject("Core recovery test");var session=root.AddComponent<GameSession>();
             session.StartMatch(GameMode.ArenaClash,3,0,Color.cyan);
             typeof(GameSession).GetField("countdown",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(session,0f);
             var core=GameObject.Find("Energy core").GetComponent<Rigidbody>();
-            foreach(var position in new[]{new Vector3(49,2,0),new Vector3(0,2,60),new Vector3(0,-6,45)})
+            foreach(var position in new[]{new Vector3(49*CircuitLayout.ArenaExpansion,2,0),new Vector3(0,2,60*CircuitLayout.ArenaExpansion),new Vector3(0,-6,45)})
             {
                 core.position=position;core.linearVelocity=Vector3.zero;
                 yield return null;yield return new WaitForFixedUpdate();yield return null;
@@ -436,9 +458,9 @@ namespace VelocityRivals.Tests
                 Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(240, 0, 240)));
                 Assert.IsTrue(session.IsOutsidePlayableArea(session.Circuit[0] + Vector3.down * 5));
                 session.StartMatch(GameMode.FreePlay, environment, 0, Color.cyan);
-                Assert.IsFalse(session.IsOutsidePlayableArea(new Vector3(40, 8, 45)));
-                Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(47, 1, 0)));
-                Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(0, 1, 52)));
+                Assert.IsFalse(session.IsOutsidePlayableArea(new Vector3(40*CircuitLayout.ArenaExpansion, 8, 45*CircuitLayout.ArenaExpansion)));
+                Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(47*CircuitLayout.ArenaExpansion, 1, 0)));
+                Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(0, 1, 52*CircuitLayout.ArenaExpansion)));
                 yield return null;
             }
         }

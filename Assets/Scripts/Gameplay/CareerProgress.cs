@@ -26,17 +26,17 @@ namespace VelocityRivals
     public static class CareerTour
     {
         private static readonly CareerEvent[] events = {
-            new CareerEvent("Neon Debut", "Rookie Cup", GameMode.TimeAttack, 0, 0, 150),
-            new CareerEvent("Desert Contact", "Rookie Cup", GameMode.BoostBattle, 2, 0, 110),
+            new CareerEvent("Neon Debut", "Rookie Cup", GameMode.TimeAttack, 0, 0, 270),
+            new CareerEvent("Desert Contact", "Rookie Cup", GameMode.BoostBattle, 2, 0, 130),
             new CareerEvent("City Championship", "Rookie Cup", GameMode.Championship, 0, 0),
-            new CareerEvent("Above the Clouds", "Challenger Cup", GameMode.TimeAttack, 1, 1, 165),
+            new CareerEvent("Above the Clouds", "Challenger Cup", GameMode.TimeAttack, 1, 1, 297),
             new CareerEvent("Glacier Acrobat", "Challenger Cup", GameMode.StuntRush, 4, 1),
             new CareerEvent("Northern Championship", "Challenger Cup", GameMode.Championship, 4, 1),
-            new CareerEvent("Dome Showdown", "Rival Cup", GameMode.ArenaClash, 3, 1, 120),
-            new CareerEvent("Desert Record", "Rival Cup", GameMode.TimeAttack, 2, 1, 175),
+            new CareerEvent("Dome Showdown", "Rival Cup", GameMode.ArenaClash, 3, 1, 150),
+            new CareerEvent("Desert Record", "Rival Cup", GameMode.TimeAttack, 2, 1, 315),
             new CareerEvent("Sky Championship", "Rival Cup", GameMode.Championship, 1, 1),
-            new CareerEvent("Icebreaker", "Velocity Finals", GameMode.TimeAttack, 4, 2, 190),
-            new CareerEvent("Neon Knockout", "Velocity Finals", GameMode.BoostBattle, 0, 2, 110),
+            new CareerEvent("Icebreaker", "Velocity Finals", GameMode.TimeAttack, 4, 2, 342),
+            new CareerEvent("Neon Knockout", "Velocity Finals", GameMode.BoostBattle, 0, 2, 130),
             new CareerEvent("Velocity Grand Final", "Velocity Finals", GameMode.Championship, 3, 2)
         };
         public static int Count => events.Length;

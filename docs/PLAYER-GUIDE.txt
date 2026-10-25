@@ -97,3 +97,10 @@ pause again during that countdown. The starting grid keeps its original countdow
 Settings > Controller vibration selects Off, Low, Medium or High. Compatible
 gamepads respond to boosting, drifting and hard landings/impacts. Vibration stops
 in menus, pause, resume countdown, on focus loss and when disabled.
+
+LARGER MAPS
+Circuits are now roughly 0.97–1.16 km per lap, with three-lap races unchanged.
+The event preview shows lap length. Arenas now measure 126 × 140 metres.
+Career time-trial gold targets are 270 / 297 / 315 / 342 seconds in tour order.
+Previously earned medals, cars, credits and upgrades stay unlocked. Earlier
+records remain visible as old layouts; new personal ghosts use the larger routes.

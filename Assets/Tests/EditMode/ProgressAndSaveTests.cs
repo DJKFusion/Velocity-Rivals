@@ -168,6 +168,17 @@ namespace VelocityRivals.Tests
         }
 
         [Test]
+        public void ExpandedArenaKeepsEarlierRecordsSeparate()
+        {
+            SaveStore.Current.records.Add(new RaceRecord { mode="ArenaClash",environment=3,vehicle=0,layoutRevision=0,bestSeconds=20,finishes=1 });
+            SaveStore.RecordResult("ArenaClash",true,90,500,3,0);
+            Assert.AreEqual(2,SaveStore.Current.records.Count);
+            Assert.AreEqual(20,SaveStore.Current.records[0].bestSeconds);
+            Assert.AreEqual(CircuitLayout.Revision,SaveStore.Current.records[1].layoutRevision);
+            Assert.AreEqual(90,SaveStore.Current.records[1].bestSeconds);
+        }
+
+        [Test]
         public void NewCircuitRecordsPreserveButDoNotCompeteWithOldLayoutTimes()
         {
             SaveStore.Current.records.Add(new RaceRecord { mode = "TimeAttack", environment = 0, vehicle = 0, bestSeconds = 10, layoutRevision = 0 });

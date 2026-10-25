@@ -14,6 +14,7 @@ namespace VelocityRivals
             if (circuit)
                 foreach (var p in CircuitLayout.Build(environment)) points.Add(new Vector2(p.X, p.Z));
             else points.AddRange(new[] { new Vector2(-45,-50), new Vector2(45,-50), new Vector2(45,50), new Vector2(-45,50) });
+            if (!circuit) for (int i=0;i<points.Count;i++) points[i]*=CircuitLayout.ArenaExpansion;
             SetVerticesDirty();
         }
         protected override void OnPopulateMesh(VertexHelper mesh)

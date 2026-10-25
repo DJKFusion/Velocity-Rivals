@@ -24,10 +24,11 @@ namespace VelocityRivals
             Rect bounds = rectTransform.rect;
             Quad(mesh, bounds.center, bounds.size, new Color(.02f, .04f, .08f, .85f));
             var track = Session.Circuit;
-            float extent = 60;
+            float extent = Session.IsCircuit ? 60 : 60 * CircuitLayout.ArenaExpansion;
             foreach (var point in track) extent = Mathf.Max(extent, Mathf.Max(Mathf.Abs(point.x), Mathf.Abs(point.z)) + 15);
             float scale = Mathf.Min(bounds.width, bounds.height) / (extent * 2);
             Vector2 Map(Vector3 p) => bounds.center + new Vector2(p.x, p.z) * scale;
+            Vector2 ArenaCorner(float x, float z) => Map(new Vector3(x * CircuitLayout.ArenaExpansion, 0, z * CircuitLayout.ArenaExpansion));
             Color route = new Color(.3f, .46f, .55f);
             if (Session.IsCircuit)
             {
@@ -37,8 +38,8 @@ namespace VelocityRivals
             }
             else
             {
-                var a = Map(new Vector3(-45, 0, -50)); var b = Map(new Vector3(45, 0, -50));
-                var c = Map(new Vector3(45, 0, 50)); var d = Map(new Vector3(-45, 0, 50));
+                var a = ArenaCorner(-45,-50); var b = ArenaCorner(45,-50);
+                var c = ArenaCorner(45,50); var d = ArenaCorner(-45,50);
                 Line(mesh, a, b, 3, route); Line(mesh, b, c, 3, route);
                 Line(mesh, c, d, 3, route); Line(mesh, d, a, 3, route);
             }
