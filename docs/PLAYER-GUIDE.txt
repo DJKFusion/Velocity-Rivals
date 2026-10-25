@@ -45,6 +45,20 @@ Arena Clash: push the core into the orange goal; first team to five wins.
 Boost Battle: hit opponents at speed and collect combat power-ups.
 Stunt Rush: jump, rotate and land upright; aim for at least 1,000 points.
 Free Play: untimed practice. Pause to return to the menu.
+Elimination: four cars start. Last place is removed every 45 seconds. Keep passing
+checkpoints in order and survive three cutoffs to win. No fixed lap target.
+The last ten seconds show a cutoff warning; your car is marked in danger if last.
+Eliminated rivals disappear from the track and map. A loss offers retry; winning
+earns event credits, XP and the Last survivor achievement.
+
+SLIPSTREAM AND RIVALS
+In Championship and Elimination, follow an aligned, moving car 5–30 metres ahead.
+Stay within roughly one car width and above 45 km/h to build drafting strength.
+The speed card shows DRAFT while active. Full strength adds up to 10 percent
+unboosted top speed and 8 percent acceleration. Pull out to pass; strength fades.
+Time Attack is solo, with no slipstream. Rival drivers also use slipstream.
+Ion is cautious, Prism uses boost more aggressively, and Comet is balanced.
+Rivals check adjacent lanes before passing and slow for bends and blocked traffic.
 
 PROGRESS
 Events award XP; each 500 XP unlocks another vehicle until all six are available.

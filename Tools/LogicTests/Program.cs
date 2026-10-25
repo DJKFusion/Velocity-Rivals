@@ -19,6 +19,55 @@ static class Program
         try
         {
             if (args.Length == 2 && args[0] == "--relay") { RelayIntegration.Run(args[1]).GetAwaiter().GetResult(); return 0; }
+            Test("elimination cuts last place at exact intervals and declares one survivor", () => {
+                var race=new EliminationRace();double[] progress={10.5,9.9,8.3,7.7};
+                Check(race.EliminateDue(44.99f,progress)==-1 && race.ActiveCount==4);
+                Check(race.EliminateDue(45,progress)==3 && race.ActiveCount==3 && !race.IsActive(3));
+                Check(race.EliminateDue(45,progress)==-1);
+                Check(race.EliminateDue(90,progress)==2 && race.ActiveCount==2);
+                Check(race.EliminateDue(135,progress)==1 && race.Winner==0 && race.ActiveCount==1);
+                Check(race.EliminateDue(1000,progress)==-1);
+            });
+            Test("elimination handles player losses, checkpoint ranking, ties and delayed frames", () => {
+                var race=new EliminationRace();
+                Check(race.EliminateDue(45,new double[]{1.99,2,3,4})==0);
+                var tied=new EliminationRace();double[] progress={0,0,0,0};
+                Check(tied.EliminateDue(135,progress)==3);
+                Check(tied.EliminateDue(135,progress)==2);
+                Check(tied.EliminateDue(135,progress)==1 && tied.Winner==0);
+                Check(tied.EliminateDue(135,progress)==-1);
+            });
+            Test("elimination rejects invalid inputs without losing a driver", () => {
+                Throws<ArgumentOutOfRangeException>(()=>new EliminationRace(1));
+                Throws<ArgumentOutOfRangeException>(()=>new EliminationRace(4,float.NaN));
+                var race=new EliminationRace();
+                Throws<ArgumentException>(()=>race.EliminateDue(45,new double[]{1,2}));
+                Throws<ArgumentException>(()=>race.EliminateDue(45,new double[]{1,double.NaN,2,3}));
+                Throws<ArgumentOutOfRangeException>(()=>race.EliminateDue(-1,new double[4]));
+                Check(race.ActiveCount==4 && race.NextCutoff==45);
+            });
+            Test("drafting requires a moving aligned lead car inside the slipstream corridor", () => {
+                Check(RaceCraft.DraftStrength(12,0,0,1,100)> .99f);
+                Check(RaceCraft.DraftStrength(12,2,0,1,100)<.3f);
+                Check(RaceCraft.DraftStrength(-12,0,0,1,100)==0);
+                Check(RaceCraft.DraftStrength(3,0,0,1,100)==0);
+                Check(RaceCraft.DraftStrength(35,0,0,1,100)==0);
+                Check(RaceCraft.DraftStrength(12,3,0,1,100)==0);
+                Check(RaceCraft.DraftStrength(12,0,3,1,100)==0);
+                Check(RaceCraft.DraftStrength(12,0,0,-1,100)==0);
+                Check(RaceCraft.DraftStrength(12,0,0,1,30)==0);
+                Check(RaceCraft.DraftStrength(float.NaN,0,0,1,100)==0);
+            });
+            Test("rivals choose open passing lanes and avoid blocked lane changes", () => {
+                Check(RaceCraft.ChooseLane(0,30,4,30,-1)==-4);
+                Check(RaceCraft.ChooseLane(0,30,4,30,1)==4);
+                Check(RaceCraft.ChooseLane(0,5,4,6,1)==0);
+                Check(RaceCraft.ChooseLane(-4,30,30,30,1)==-4);
+                Check(RaceCraft.ChooseLane(4,30,25,2,-1)==0);
+                Check(RaceCraft.ChooseLane(4,30,0,2,-1)==4);
+                Check(RaceCraft.CornerSpeed(160,60,1)<RaceCraft.CornerSpeed(160,0,1));
+                Check(RaceCraft.CornerSpeed(160,30,1)<RaceCraft.CornerSpeed(160,30,2));
+            });
             Test("garage purchases spend once and stop at the last car", () => {
                 var garage=new GarageProgress();Check(garage.BuyNextCar(1));Check(garage.credits==0 && garage.purchasedCars==2);
                 Check(!garage.BuyNextCar(2) && garage.credits==0);

@@ -18,6 +18,9 @@ namespace VelocityRivals
         // Rules must use the physics pose: an interpolated Transform can still show
         // the pre-teleport position during the frame in which recovery occurs.
         public Vector3 PhysicsPosition => body != null && !NetworkProxy ? body.position : transform.position;
+        public Quaternion PhysicsRotation => body != null && !NetworkProxy ? body.rotation : transform.rotation;
+        public float DraftStrength { get; private set; }
+        public void SetDraft(float value) { DraftStrength = Mathf.Clamp01(value); }
         public float SpeedKmh => Velocity.magnitude * 3.6f;
         public float BoostAmount { get; private set; } = 1f;
         public void RefillBoost(float amount) { BoostAmount = Mathf.Clamp01(BoostAmount + Mathf.Max(0,amount)); }
@@ -132,6 +135,8 @@ namespace VelocityRivals
             if (!ControlsEnabled) { input = default; jumpQueued = false; }
             float acceleration = Stats != null ? Stats.Acceleration : 24f;
             float maxSpeed = Stats != null ? Stats.MaxSpeed : 38f;
+            acceleration *= 1 + DraftStrength * .08f;
+            maxSpeed *= 1 + DraftStrength * .1f;
             float grip = Stats != null ? Stats.Grip : 8f;
             float steerSpeed = Stats != null ? Stats.Steering : 95f;
             bool wasGrounded = Grounded;

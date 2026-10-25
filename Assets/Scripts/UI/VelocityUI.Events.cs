@@ -5,7 +5,8 @@ namespace VelocityRivals
     public sealed partial class VelocityUI
     {
         static string EventBrief(GameMode mode) => mode == GameMode.Championship ?
-            "THREE ROUNDS • THREE LAPS EACH\nRace three rivals through ordered checkpoints. Places earn 10 / 6 / 4 / 2 points. Highest total wins. Each round has a ten-minute limit." :
+            "THREE ROUNDS • THREE LAPS EACH\nRace three rivals through ordered checkpoints. Places earn 10 / 6 / 4 / 2 points. Use slipstream to set up passes. Each round has a ten-minute limit." :
+            mode == GameMode.Elimination ? "FOUR CARS • LAST SURVIVOR WINS\nEvery 45 seconds, last place is eliminated. Ordered checkpoints determine position. Draft behind rivals, use recharge lanes and escape last place before the cutoff." :
             mode == GameMode.TimeAttack ? "THREE LAPS • STOCK PERFORMANCE\nFollow the yellow checkpoint. Complete three laps within ten minutes to save a time and race your fastest ghost. Workshop upgrades are disabled here." :
             mode == GameMode.ArenaClash ? "FIRST TO FIVE • THREE MINUTES\nYou and your blue teammate face the orange team. Push the white energy core into the orange goal. Highest score wins at time-out." :
             mode == GameMode.BoostBattle ? "FIRST TO FIFTEEN • TWO MINUTES THIRTY\nBoost into rivals to damage their armour. Knockouts score points. Cyan pickups shield you, orange doubles damage, and purple releases a pulse." :
@@ -21,7 +22,7 @@ namespace VelocityRivals
             var map = new GameObject("Course preview",typeof(RectTransform),typeof(CanvasRenderer),typeof(CoursePreview));
             map.transform.SetParent(showcase,false);BoxRect(map.GetComponent<RectTransform>(),24,140,416,240);
             map.GetComponent<CoursePreview>().raycastTarget=false;
-            map.GetComponent<CoursePreview>().Configure(environment,mode==GameMode.Championship||mode==GameMode.TimeAttack);
+            map.GetComponent<CoursePreview>().Configure(environment,mode==GameMode.Championship||mode==GameMode.TimeAttack||mode==GameMode.Elimination);
             FixedText(showcase,"WHITE MARKER  /  START",17,24,390,416,30,cyan);
             FixedText(showcase,"SELECTED CAR\n"+GameSession.VehicleNames[SaveStore.Current.selectedVehicle].ToUpperInvariant(),24,24,440,416,80,Color.white);
         }

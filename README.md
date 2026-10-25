@@ -32,7 +32,7 @@ Pass `-Unity 'C:\path\to\Editor\Unity.exe'` for a different installation, or set
 ## Included single-player content
 
 - **Career Tour:** 12 events, four cups and a Grand Final, with saved bronze/silver/gold medals and replay. Bronze unlocks the next event; finishing the tour unlocks a completion achievement.
-- **Six quick-play modes:** three-round Championship, Arena Clash, Boost Battle, Stunt Rush, Time Attack and Free Play.
+- **Seven quick-play modes:** three-round Championship, Arena Clash, Boost Battle, Stunt Rush, Time Attack, Free Play and Elimination. Circuit rivals choose passing lanes; Championship and Elimination include slipstreaming.
 - **Five themes:** Neon City Circuit, Skyfall Speedway, Desert Velocity, Cyber Dome and Glacier Rush. Layouts are generated; arenas share a common base layout.
 - **Six original cars:** Viper, Bulwark, Phantom, Apex, Nomad and Comet. Earn XP to unlock the garage, with an additional car each 500 XP.
 - **Garage:** a lit rotating car preview, vehicle selection, paint, wheel scale, trail color, decals, spoilers and finishes.

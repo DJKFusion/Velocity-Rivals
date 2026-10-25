@@ -156,6 +156,7 @@ namespace VelocityRivals
             warningText.text=!driving?"":session.WrongWay?"WRONG WAY  •  Follow the yellow checkpoint":session.RaceNotice;
             if(!driving)return;
             speedText.text=session.Player.SpeedKmh.ToString("0");boostText.text="BOOST  "+Mathf.RoundToInt(session.Player.BoostAmount*100)+"%";
+            if(session.Player.DraftStrength>.05f)boostText.text+="  •  DRAFT "+Mathf.RoundToInt(session.Player.DraftStrength*100)+"%";
             boostFill.anchorMax=new Vector2(Mathf.Clamp01(session.Player.BoostAmount),1);
             if(session.IsCircuit)timingText.text=$"LAP  {session.LapTimes.CurrentLap(session.Elapsed):0.00}s    LAST  {LapDisplay(session.LapTimes.LastLap)}    BEST  {LapDisplay(session.LapTimes.BestLap)}";
         }

@@ -5,7 +5,7 @@ This update focuses on an offline Windows game. See [the UI redesign](UPDATE-UI-
 ## What is in the edition
 
 - **Career Tour:** 12 events across Rookie Cup, Challenger Cup, Rival Cup and Velocity Finals. Time trials, combat, stunts, arena sport and four three-round championships lead to the Velocity Grand Final. Bronze unlocks the next event; silver/gold encourage replay. Career medals and completion persist locally. Time/score targets are initial tuning values and need playtesting.
-- **Quick play:** all six existing modes, five environment themes, three AI difficulty settings and six unlockable original cars.
+- **Quick play:** seven modes including timed Elimination, five environment themes, three AI difficulty settings and six unlockable original cars.
 - **Garage:** a lit, rotating showroom using the actual car/cosmetic construction. Vehicle selection, paint, wheels, trail choice, decal, spoiler and finish are saved. Static previews show cosmetic geometry/paint; a boost trail is visible when driving.
 - **Presentation:** twelve original synthwave tracks, themed skies, textured/normal-mapped roads, reflections, headlights, drift smoke, tyre trails, bloom/ACES/color grading, a large countdown, map and race HUD. Actual appearance and performance remain unverified in Unity.
 - **Options:** audio levels, three quality presets, borderless/windowed display, sensitivity, and reduced effects. Reduced effects removes bloom, vignette, impact bursts, smoke, showroom rotation and speed/boost FOV changes.

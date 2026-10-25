@@ -8,6 +8,8 @@
     <Compile Include="../../Assets/Scripts/Gameplay/RaceProgress.cs" Link="RaceProgress.cs" />
     <Compile Include="../../Assets/Scripts/Gameplay/DrivingLesson.cs" Link="DrivingLesson.cs" />
     <Compile Include="../../Assets/Scripts/Gameplay/GarageProgress.cs" Link="GarageProgress.cs" />
+    <Compile Include="../../Assets/Scripts/Gameplay/EliminationRace.cs" Link="EliminationRace.cs" />
+    <Compile Include="../../Assets/Scripts/Gameplay/RaceCraft.cs" Link="RaceCraft.cs" />
     <Compile Include="../../Assets/Scripts/Gameplay/CombatVitals.cs" Link="CombatVitals.cs" />
     <Compile Include="../../Assets/Scripts/Gameplay/LapTiming.cs" Link="LapTiming.cs" />
     <Compile Include="../../Assets/Scripts/Gameplay/GameMode.cs" Link="GameMode.cs" />

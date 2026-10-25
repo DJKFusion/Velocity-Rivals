@@ -1,5 +1,11 @@
 # Implementation and verification ledger
 
+The racing expansion adds quick-play Elimination on five circuits, gradual
+slipstream bonuses in Championship/Elimination, and traffic-aware lane selection
+and corner-speed targets for circuit rivals. Existing career events remain.
+52 standalone checks pass; new Unity integration tests and real race balancing
+remain pending. See [RACING-EXPANSION.md](RACING-EXPANSION.md).
+
 The career/garage expansion adds credits, early car purchases alongside existing
 XP unlocks, three per-car performance upgrade paths, first-improvement medal bonuses,
 transactional purchase saves and reward breakdowns. Time Attack stays stock;

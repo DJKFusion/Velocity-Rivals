@@ -44,7 +44,7 @@ namespace VelocityRivals
             }
             foreach (var car in Session.Vehicles)
             {
-                if (!car || car == Session.Player || !car.enabled) continue;
+                if (!car || car == Session.Player || !car.isActiveAndEnabled) continue;
                 Quad(mesh, Map(car.transform.position), Vector2.one * 7, new Color(1, .4f, .2f));
             }
             if (Session.HasArenaCore) Quad(mesh, Map(Session.ArenaCorePosition), Vector2.one * 9, Color.white);

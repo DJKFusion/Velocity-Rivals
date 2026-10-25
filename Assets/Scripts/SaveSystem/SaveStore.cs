@@ -12,6 +12,7 @@ namespace VelocityRivals
         public int vehicle = -1;
         public int layoutRevision;
         public int upgradeSignature;
+        public int raceRulesRevision;
         public float bestSeconds;
         public int bestScore;
         public int finishes;
@@ -160,10 +161,11 @@ namespace VelocityRivals
             if (won && completed) profile.wins++;
             profile.xp += completed ? 150 + (won ? 150 : 0) + Mathf.Clamp(score / 20, 0, 200) : 50;
             profile.garage.Credit(GarageProgress.EventReward(completed,won,score));
-            int revision = mode == "Championship" || mode == "TimeAttack" ? CircuitLayout.Revision : 0;
+            int revision = mode == "Championship" || mode == "TimeAttack" || mode == "Elimination" ? CircuitLayout.Revision : 0;
             int setup = mode == "TimeAttack" ? 0 : profile.garage.Signature(vehicle);
-            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision && r.upgradeSignature == setup);
-            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle, layoutRevision = revision, upgradeSignature=setup }; profile.records.Add(record); }
+            int rules = mode=="Championship" || mode=="Elimination" ? RaceCraft.RulesVersion : 0;
+            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision && r.upgradeSignature == setup && r.raceRulesRevision==rules);
+            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle, layoutRevision = revision, upgradeSignature=setup, raceRulesRevision=rules }; profile.records.Add(record); }
             if (completed) record.finishes++;
             record.bestScore = Mathf.Max(record.bestScore, score);
             if (completed && seconds > 0 && !float.IsInfinity(seconds) && !float.IsNaN(seconds) && (record.bestSeconds <= 0 || seconds < record.bestSeconds))
@@ -173,6 +175,7 @@ namespace VelocityRivals
             Award("Ten victories", profile.wins >= 10);
             Award("Full garage", profile.UnlockedVehicles == 6);
             Award("Stunt specialist", mode == "StuntRush" && score >= 2000);
+            Award("Last survivor",mode=="Elimination" && completed && won);
             if(persist)Save();
         }
 

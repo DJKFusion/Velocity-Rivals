@@ -114,6 +114,19 @@ namespace VelocityRivals.Tests
         }
 
         [Test]
+        public void EarlierChampionshipRulesKeepTheirRecordsWithoutReplacingNewTimes()
+        {
+            SaveStore.Current.records.Add(new RaceRecord { mode="Championship",environment=0,vehicle=0,layoutRevision=CircuitLayout.Revision,bestSeconds=100,finishes=1 });
+            SaveStore.RecordResult("Championship",true,90,30,0,0);
+            Assert.AreEqual(2,SaveStore.Current.records.Count);
+            Assert.AreEqual(100,SaveStore.Current.records[0].bestSeconds);
+            Assert.AreEqual(RaceCraft.RulesVersion,SaveStore.Current.records[1].raceRulesRevision);
+            SaveStore.RecordResult("Elimination",true,135,3000,0,0);
+            Assert.AreEqual(CircuitLayout.Revision,SaveStore.Current.records[2].layoutRevision);
+            Assert.Contains("Last survivor",SaveStore.Current.achievements);
+        }
+
+        [Test]
         public void TunedRecordsStaySeparateButTimeAttackUsesStockIdentity()
         {
             SaveStore.RecordResult("Championship",true,100,30,0,0);

@@ -120,7 +120,7 @@ namespace VelocityRivals
             if (session.Paused && !panel) PauseMenu();
             if (session.Running && session.Player)
             {
-                string clock = session.CurrentMode == GameMode.FreePlay ? "PRACTICE" : $"{session.RemainingTime:0.0}s REMAINING";
+                string clock = session.CurrentMode == GameMode.FreePlay ? "PRACTICE" : session.CurrentMode==GameMode.Elimination ? $"{session.EliminationRemaining:0.0}s TO CUTOFF" : $"{session.RemainingTime:0.0}s REMAINING";
                 hud.text = $"{session.CurrentMode.ToString().ToUpperInvariant()}   |   {clock}\n" +
                     session.StatusText + "\n" + session.LocationName.ToUpperInvariant();
                 hint.text = "WASD / triggers + left stick: drive   •   Shift / B: boost   •   Space / A: jump   •   Ctrl / X: drift\nR / Y: recover   •   Q/E / LB + stick: air roll   •   Esc / Start: pause";
@@ -315,8 +315,8 @@ namespace VelocityRivals
 
         private void ModeMenu()
         {
-            Page("Choose your event", "Championship • arena sport • combat • stunts • time trial • training");
-            Focus(Cycle("Mode", new[] { "Velocity Championship", "Arena Clash", "Boost Battle", "Stunt Rush", "Time Attack", "Free Play" }, () => (int)selectedMode, value => selectedMode = (GameMode)value));
+            Page("Choose your event", "Championship • arena sport • combat • stunts • time trial • training • elimination");
+            Focus(Cycle("Mode", new[] { "Velocity Championship", "Arena Clash", "Boost Battle", "Stunt Rush", "Time Attack", "Free Play", "Elimination" }, () => (int)selectedMode, value => selectedMode = (GameMode)value));
             Cycle("Environment", GameSession.EnvironmentNames, () => selectedEnvironment, value => { selectedEnvironment = value; ShowCourse(selectedEnvironment,selectedMode); });
             Cycle("AI difficulty", new[] { "Rookie", "Rival", "Elite" }, () => SaveStore.Current.difficulty, value => { SaveStore.Current.difficulty = value; SaveStore.Save(); });
             var vehicles = new List<string>();
@@ -419,6 +419,7 @@ namespace VelocityRivals
             Label(panel, "DRIVE\nW / S accelerate and reverse • A / D steer\nShift boost • Ctrl handbrake • Space jump, press again for an aerial jump\nQ / E roll in the air • R recover your car\nController: triggers + left stick, B boost, X drift, A jump, Y recover.", 24, 205);
             Label(panel, "WIN YOUR EVENT\nChampionship / Time Attack: follow the yellow map gate and complete three laps.\nArena Clash: push the white core into the orange goal. First to five wins.\nBoost Battle: hit opponents at speed; collect shields, overdrive and pulse pickups.\nStunt Rush: jump, rotate and land upright. Reach 1,000 points before time runs out.", 23, 215);
             Label(panel, "Esc / Start pauses. Earn XP to unlock cars in the garage.\nCyan on the map is you, orange is another vehicle, yellow is the next gate.", 23, 85);
+            Label(panel,"RACE CRAFT\nChampionship / Elimination: follow a moving rival 5–30 metres ahead to build slipstream, then pull out to pass.\nElimination removes last place every 45 seconds. Keep passing ordered checkpoints; the last survivor wins.",23,145);
             if (!paused) Button("START PRACTICE", StartDrivingSchool);
             Focus(Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); }));
         }
@@ -515,7 +516,8 @@ namespace VelocityRivals
                 string environment = r.environment >= 0 && r.environment < 5 ? GameSession.EnvironmentNames[r.environment] : "Earlier version";
                 string vehicle = r.vehicle >= 0 && r.vehicle < 6 ? GameSession.VehicleNames[r.vehicle] : "All vehicles";
                 vehicle += r.upgradeSignature==0 ? " • STOCK" : $" • E{r.upgradeSignature%4}/H{r.upgradeSignature/4%4}/B{r.upgradeSignature/16%4}";
-                if ((r.mode == "TimeAttack" || r.mode == "Championship") && r.layoutRevision != CircuitLayout.Revision) environment += " (old layout)";
+                if ((r.mode == "TimeAttack" || r.mode == "Championship" || r.mode == "Elimination") && r.layoutRevision != CircuitLayout.Revision) environment += " (old layout)";
+                if ((r.mode=="Championship" || r.mode=="Elimination") && r.raceRulesRevision!=RaceCraft.RulesVersion) environment += " (earlier race rules)";
                 text += $"{r.mode} • {environment} • {vehicle}\n{r.finishes} finishes • Best {LapDisplay(r.bestSeconds)} • Score {r.bestScore}\n\n";
             }
             Label(panel, string.IsNullOrEmpty(text) ? "Finish your first event to set a record." : text, 22, 340);

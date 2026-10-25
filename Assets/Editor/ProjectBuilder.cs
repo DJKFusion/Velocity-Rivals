@@ -187,7 +187,7 @@ namespace VelocityRivals.Editor
             string instructions = "Velocity Rivals — Single Player " + SinglePlayerBuildGuard.Version + "\r\n\r\nExtract this entire ZIP before playing. Keep the EXE, Data folder and UnityPlayer.dll together.\r\n" +
                 "Launch " + Path.GetFileName(fullPath) + ".\r\n\r\n" +
                 "Start CAREER TOUR for 12 events across four cups. Bronze medals unlock the next event; replay for gold.\r\n" +
-                "PLAY opens six quick-play modes. This edition plays offline and needs no account or relay server.\r\n\r\n" +
+                "PLAY opens seven quick-play modes, including Elimination. This edition plays offline and needs no account or relay server.\r\n\r\n" +
                 "WASD: drive | Shift: boost | Space: jump | Ctrl: drift | Q/E: air roll | R: recover | Esc: pause\r\n" +
                 "Controller: triggers and left stick drive, B boost, A jump, X drift, Y recover, Start pause.\r\n" +
                 "Use HOW TO PLAY for event rules and SETTINGS for music and graphics.\r\n" +

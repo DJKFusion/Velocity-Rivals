@@ -33,6 +33,81 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator EliminationStartsFromMenuWinsAwardsAndRestarts()
+        {
+            root=new GameObject("Elimination menu test",typeof(GameBootstrap));
+            yield return null;yield return null;
+            UnityEngine.UI.Button Find(string prefix)
+            {
+                foreach(var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                    if(button.name.StartsWith(prefix))return button;
+                Assert.Fail("Missing button: "+prefix);return null;
+            }
+            Find("PLAY").onClick.Invoke();yield return null;
+            for(int i=0;i<6;i++)Find("Mode:").onClick.Invoke();
+            Find("START EVENT").onClick.Invoke();yield return null;
+            var session=GameSession.Instance;
+            Assert.AreEqual(GameMode.Elimination,session.CurrentMode);Assert.AreEqual(4,session.Vehicles.Count);Assert.IsTrue(session.IsCircuit);
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            var progress=(RaceProgress)typeof(GameSession).GetField("playerProgress",flags).GetValue(session);
+            progress.Cross(1,true);
+            typeof(GameSession).GetField("countdown",flags).SetValue(session,0f);
+            typeof(GameSession).GetField("elapsed",flags).SetValue(session,135f);
+            typeof(GameSession).GetMethod("UpdateRace",flags).Invoke(session,null);
+            yield return null;
+            Assert.IsTrue(session.Finished);Assert.IsTrue(session.ResultWon);Assert.AreEqual(1,session.ActiveRaceCars);
+            Assert.AreEqual(360,session.ResultCredits);Assert.Contains("Last survivor",SaveStore.Current.achievements);
+            foreach(var car in session.Vehicles)if(car!=session.Player)Assert.IsFalse(car.gameObject.activeSelf);
+            Assert.IsNotNull(Find("RACE AGAIN"));Find("RACE AGAIN").onClick.Invoke();yield return null;
+            Assert.IsFalse(session.Finished);Assert.AreEqual(4,session.ActiveRaceCars);Assert.AreEqual(0,session.Elapsed);
+        }
+
+        [UnityTest]
+        public IEnumerator EliminationPauseFreezesClockAndPlayerLossPaysNoCredits()
+        {
+            root=new GameObject("Elimination loss test",typeof(GameSession));var session=root.GetComponent<GameSession>();
+            session.StartMatch(GameMode.Elimination,0,0,Color.cyan);
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            typeof(GameSession).GetField("countdown",flags).SetValue(session,0f);
+            typeof(GameSession).GetField("elapsed",flags).SetValue(session,44f);
+            session.SetPaused(true);yield return new WaitForSecondsRealtime(.05f);
+            Assert.AreEqual(44,session.Elapsed);Assert.AreEqual(4,session.ActiveRaceCars);
+            session.SetPaused(false);
+            var rivals=(System.Collections.IList)typeof(GameSession).GetField("racers",flags).GetValue(session);
+            foreach(var rival in rivals)((RaceProgress)rival.GetType().GetField("Progress").GetValue(rival)).Cross(1,true);
+            typeof(GameSession).GetField("elapsed",flags).SetValue(session,45f);
+            typeof(GameSession).GetMethod("UpdateRace",flags).Invoke(session,null);
+            Assert.IsTrue(session.GameOver);Assert.AreEqual(0,session.ResultCredits);Assert.AreEqual(500,SaveStore.Current.garage.credits);
+            Assert.AreEqual(0,SaveStore.Current.records[0].finishes);
+            Assert.IsFalse(session.Player.ControlsEnabled);
+        }
+
+        [UnityTest]
+        public IEnumerator SlipstreamBuildsBehindAlignedCarAndDropsWhenLeaderTurnsAway()
+        {
+            root=new GameObject("Slipstream integration",typeof(GameSession));var session=root.GetComponent<GameSession>();
+            session.StartMatch(GameMode.Championship,0,0,Color.cyan);yield return null;
+            var follower=session.Player;var leader=session.Vehicles[1];
+            Vector3 forward=(session.Circuit[1]-session.Circuit[0]).normalized;
+            Quaternion facing=Quaternion.LookRotation(forward);
+            Vector3 start=session.Circuit[0]+Vector3.up*1.2f;
+            follower.Respawn(start,facing);leader.Respawn(start+forward*12,facing);
+            follower.ControlsEnabled=leader.ControlsEnabled=true;
+            typeof(VehicleController).GetProperty("Grounded").SetValue(follower,true);
+            typeof(VehicleController).GetProperty("Grounded").SetValue(leader,true);
+            follower.GetComponent<Rigidbody>().linearVelocity=forward*20;leader.GetComponent<Rigidbody>().linearVelocity=forward*20;
+            Physics.SyncTransforms();
+            var update=typeof(GameSession).GetMethod("UpdateSlipstreams",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+            for(int i=0;i<30;i++)update.Invoke(session,null);
+            Assert.Greater(follower.DraftStrength,0);
+            leader.Respawn(start+forward*12,Quaternion.LookRotation(-forward));
+            for(int i=0;i<200;i++)update.Invoke(session,null);
+            Assert.AreEqual(0,follower.DraftStrength);
+            session.StartMatch(GameMode.TimeAttack,0,0,Color.cyan);update.Invoke(session,null);
+            Assert.AreEqual(0,session.Player.DraftStrength);
+        }
+
+        [UnityTest]
         public IEnumerator DealershipAndWorkshopPurchaseThroughMenusAndSwitchCars()
         {
             SaveStore.Current.garage.Credit(1000);
@@ -386,7 +461,7 @@ namespace VelocityRivals.Tests
             root = new GameObject("Test worlds");
             var session = root.AddComponent<GameSession>();
             for (int environment = 0; environment < 5; environment++)
-                for (int mode = 0; mode < 6; mode++)
+                for (int mode = 0; mode < System.Enum.GetValues(typeof(GameMode)).Length; mode++)
                 {
                     session.StartMatch((GameMode)mode, environment, environment % 6, Color.cyan);
                     yield return null;
