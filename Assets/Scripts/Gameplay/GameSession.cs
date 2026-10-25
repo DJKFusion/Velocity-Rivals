@@ -20,6 +20,7 @@ namespace VelocityRivals
         public float RemainingTime => Mathf.Max(0, duration - elapsed);
         public int PlayerLap => playerProgress == null ? 1 : Mathf.Min(TotalLaps, playerProgress.CompletedLaps + 1);
         public int TotalLaps => 3;
+        public int ChampionshipRound => round + 1;
         public event Action MatchEnded;
         public GameMode CurrentMode => mode;
         public float Elapsed => elapsed;

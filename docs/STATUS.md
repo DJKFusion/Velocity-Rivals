@@ -1,5 +1,12 @@
 # Implementation and verification ledger
 
+The presentation/radio refresh adds home tiles, compact race instruments, result
+reports, playlist audition and twelve replacement arrangements (~18.3 minutes).
+Decoded audio and source checks pass; 52 standalone logic checks pass. New UI
+integration tests are authored but not run here. Unity compilation, screenshots,
+controller navigation and audible Windows playback remain pending. See
+[PRESENTATION-AND-RADIO.md](PRESENTATION-AND-RADIO.md).
+
 The racing expansion adds quick-play Elimination on five circuits, gradual
 slipstream bonuses in Championship/Elimination, and traffic-aware lane selection
 and corner-speed targets for circuit rivals. Existing career events remain.

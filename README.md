@@ -1,6 +1,6 @@
 # Velocity Rivals — Single Player
 
-Latest update: [menu and HUD redesign](docs/UPDATE-UI-RELEASE.md). Widescreen car showcase, scrolling keyboard/controller navigation, separate speed/boost and lap displays, and local Steam depot preparation. See [release-week planning](docs/RELEASE-WEEK.md) for launch requirements and no-upfront-listing-fee options. The new UI still needs its Windows acceptance run.
+Latest update: [menu, HUD and soundtrack refresh](docs/PRESENTATION-AND-RADIO.md). Two-column home tiles, clearer racing instruments and results, and twelve newly arranged songs across ambient, house, breakbeat, drum-and-bass and synth styles. The source checks pass; the new Unity UI tests and Windows presentation review remain pending.
 
 An original Unity 6 arcade racing and vehicle-sports project for DJKFusion. The current edition plays offline and has no multiplayer menu, room setup or networking component. Multiplayer source is retained behind a disabled assembly constraint for future work.
 
@@ -36,7 +36,7 @@ Pass `-Unity 'C:\path\to\Editor\Unity.exe'` for a different installation, or set
 - **Five themes:** Neon City Circuit, Skyfall Speedway, Desert Velocity, Cyber Dome and Glacier Rush. Layouts are generated; arenas share a common base layout.
 - **Six original cars:** Viper, Bulwark, Phantom, Apex, Nomad and Comet. Earn XP to unlock the garage, with an additional car each 500 XP.
 - **Garage:** a lit rotating car preview, vehicle selection, paint, wheel scale, trail color, decals, spoilers and finishes.
-- **Presentation:** twelve original synthwave songs, skies/clouds/stars, road textures/normals, sky reflections, headlights, drift smoke, tyre trails, bloom, ACES and color grading. Graphics quality and reduced-effects options are available.
+- **Presentation:** twelve distinct original electronic arrangements, skies/clouds/stars, road textures/normals, sky reflections, headlights, drift smoke, tyre trails, bloom, ACES and color grading. Graphics quality and reduced-effects options are available.
 - **Progress:** local profile backup, achievements, career medals, per-event/environment/vehicle records and Time Attack ghosts. Existing version-1 profiles migrate to schema 2.
 
 The original car models and generated surface/audio files have been checked with independent tools. The integrated game still requires Unity review; the visual features are not a measured claim of photorealism or 60 FPS.

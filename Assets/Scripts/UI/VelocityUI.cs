@@ -21,7 +21,9 @@ namespace VelocityRivals
         private Text hint;
         private Text title;
         private Text nowPlaying;
+        private Text mapLegend;
         private Text customMusicStatus;
+        private RectTransform soundtrackProgress;
         private Text countdownLabel;
         private int careerSelection;
         private int recordsPage;
@@ -79,12 +81,13 @@ namespace VelocityRivals
             var mapRect = map.rectTransform;
             mapRect.anchorMin = mapRect.anchorMax = mapRect.pivot = Vector2.one;
             mapRect.anchoredPosition = new Vector2(-30, -30);
-            mapRect.sizeDelta = new Vector2(260, 260);
-            var mapCaption = Label(mapPanel.transform, "YOU ▲   •   NEXT GATE ■", 17, 25);
+            mapRect.sizeDelta = new Vector2(220, 220);
+            var mapCaption = Label(mapPanel.transform, "YOU ▲   •   NEXT GATE ■", 15, 55);
+            mapLegend=mapCaption;
             mapCaption.rectTransform.anchorMin = new Vector2(0, 0);
             mapCaption.rectTransform.anchorMax = new Vector2(1, 0);
             mapCaption.rectTransform.pivot = new Vector2(.5f, 1);
-            mapCaption.rectTransform.sizeDelta = new Vector2(0, 30);
+            mapCaption.rectTransform.sizeDelta = new Vector2(30, 55);
             mapPanel.SetActive(false);
             BuildRaceCards();
             countdownLabel = Label(canvas.transform, "", 96, 150);
@@ -107,6 +110,8 @@ namespace VelocityRivals
             mapPanel.SetActive(session.Running && !session.Finished && !session.Paused);
             if (nowPlaying) nowPlaying.text = sound.PlaylistName.ToUpperInvariant() + " PLAYLIST\n" + sound.NowPlaying;
             if (customMusicStatus) customMusicStatus.text = sound.CustomMusicStatus;
+            if (soundtrackProgress) soundtrackProgress.anchorMax=new Vector2(sound.TrackProgress,1);
+            if (Keyboard.current != null && Keyboard.current.nKey.wasPressedThisFrame) sound.NextTrack();
 
             bool escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
             bool back = escape || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
@@ -120,9 +125,9 @@ namespace VelocityRivals
             if (session.Paused && !panel) PauseMenu();
             if (session.Running && session.Player)
             {
+                mapLegend.text=session.LocationName.ToUpperInvariant()+"\nYOU ▲   /   NEXT GATE ■";
                 string clock = session.CurrentMode == GameMode.FreePlay ? "PRACTICE" : session.CurrentMode==GameMode.Elimination ? $"{session.EliminationRemaining:0.0}s TO CUTOFF" : $"{session.RemainingTime:0.0}s REMAINING";
-                hud.text = $"{session.CurrentMode.ToString().ToUpperInvariant()}   |   {clock}\n" +
-                    session.StatusText + "\n" + session.LocationName.ToUpperInvariant();
+                hud.text = clock + "\n" + CompactRaceStatus();
                 hint.text = "WASD / triggers + left stick: drive   •   Shift / B: boost   •   Space / A: jump   •   Ctrl / X: drift\nR / Y: recover   •   Q/E / LB + stick: air roll   •   Esc / Start: pause";
                 if (session.Elapsed < 8 && !session.Finished) hint.text = session.EventObjective + "\nWASD / triggers + stick: drive • Shift / B: boost • Esc / Start: pause";
                 if (session.RecoveringFromBoundary) hint.text = "OUT OF BOUNDS — RETURNED TO SAFETY\nYour checkpoint progress is preserved. The event timer keeps running.";
@@ -136,9 +141,11 @@ namespace VelocityRivals
         private void ClearPanel()
         {
             if (pageRoot) { pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
+            if(sound)sound.EndPlaylistPreview();
+            soundtrackProgress=null;
             title = null; nowPlaying = null; panel = null; pageRoot = null; pageBack = null;
             customMusicStatus = null;
-            showcaseName = null; showcaseStats = null; showcaseProgress = null; pageFade = null;
+            showcaseName = null; showcaseStats = null; showcaseProgress = null; pageFade = null; footerRadio=null;
         }
         private static string LapDisplay(float seconds) => seconds > 0 ? seconds.ToString("0.00") + "s" : "—";
         private void Page(string heading, string subtitle) => BuildPageFrame(heading, subtitle);
@@ -161,18 +168,21 @@ namespace VelocityRivals
         {
             var go = new GameObject(caption, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             go.transform.SetParent(panel, false);
-            go.GetComponent<Image>().color = new Color(.08f, .18f, .24f);
+            go.GetComponent<Image>().color = Color.white;
             go.GetComponent<LayoutElement>().preferredHeight = 62;
             go.GetComponent<LayoutElement>().minHeight = 62;
             var button = go.GetComponent<Button>();
             var colors = button.colors;
-            colors.normalColor = Color.white; colors.highlightedColor = new Color(0.4f, 1, 1);
-            colors.selectedColor = new Color(0.4f, 1, 1); colors.pressedColor = new Color(0.2f, 0.65f, 0.8f);
+            colors.normalColor = new Color(.055f,.095f,.14f); colors.highlightedColor = new Color(.08f,.28f,.35f);
+            colors.selectedColor = new Color(.08f,.28f,.35f); colors.pressedColor = new Color(.12f,.4f,.46f);
+            colors.disabledColor = new Color(.04f,.055f,.075f); colors.fadeDuration=.12f;
             button.colors = colors;
-            var text = Label(go.transform, caption, 25, 0);
+            var text = Label(go.transform, caption, 22, 0);text.fontStyle=FontStyle.Bold;
             Stretch(text.rectTransform, 12);
             text.rectTransform.offsetMin = new Vector2(24, 8); text.rectTransform.offsetMax = new Vector2(-38, -8);
             text.alignment = TextAnchor.MiddleLeft;
+            var edge=Plate("Button edge",go.transform,new Color(.2f,.38f,.48f,.5f));
+            edge.anchorMin=new Vector2(0,1);edge.anchorMax=Vector2.one;edge.offsetMin=new Vector2(0,-1);edge.offsetMax=Vector2.zero;
             var accent = Plate("Focus accent", go.transform, cyan);
             accent.anchorMin = Vector2.zero; accent.anchorMax = new Vector2(0,1); accent.offsetMin = Vector2.zero; accent.offsetMax = new Vector2(4,0);
             var focus = go.AddComponent<MenuFocusReveal>(); focus.Accent = accent.GetComponent<Image>(); focus.Accent.enabled = false;
@@ -208,17 +218,33 @@ namespace VelocityRivals
             Page("Velocity Rivals", $"SINGLE PLAYER • LEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP\n{SaveStore.Current.career.TotalMedals}/{CareerTour.Count * 3} career medal points");
             panel.GetComponent<VerticalLayoutGroup>().spacing = 8;
             MakeHomeLayout();
-            Focus(Button("CAREER TOUR", () => { careerSelection = SaveStore.Current.career.NextEvent; CareerMenu(); }));
-            Button("PLAY", ModeMenu);
-            Button(SaveStore.Current.trainingComplete ? "DRIVING SCHOOL • COMPLETE" : "DRIVING SCHOOL", StartDrivingSchool);
-            Button("GARAGE", Garage);
-            Button("RECORDS & ACHIEVEMENTS", Records);
-            Button("SETTINGS", () => Settings(false));
-            Button("HOW TO PLAY", () => HowToPlay(false));
-            Button("CREDITS", Credits);
-            Button("QUIT", ConfirmQuit);
+            Focus(HomeTile("CAREER TOUR","12 EVENTS / 4 CUPS", () => { careerSelection = SaveStore.Current.career.NextEvent; CareerMenu(); }, true));
+            HomeTile("PLAY","7 MODES / 5 WORLDS", ModeMenu);
+            HomeTile("GARAGE","CARS / PAINT / UPGRADES", Garage);
+            HomeTile("RECORDS & ACHIEVEMENTS","YOUR PERSONAL BESTS", Records);
+            HomeTile("DRIVING SCHOOL",SaveStore.Current.trainingComplete ? "TRAINING COMPLETE" : "LEARN EVERY CONTROL", StartDrivingSchool);
+            HomeTile("SOUNDTRACK","12 TRACKS / YOUR MUSIC", () => Soundtrack(false));
+            HomeTile("SETTINGS","DISPLAY / AUDIO / CAMERA", () => Settings(false));
+            HomeTile("HOW TO PLAY","CONTROLS / EVENT RULES", () => HowToPlay(false));
+            HomeTile("CREDITS","THE GAME / THE MUSIC", Credits);
+            HomeTile("QUIT","SAVE AND EXIT", ConfirmQuit);
             if (!string.IsNullOrEmpty(SaveStore.LastError)) Label(panel, SaveStore.LastError, 18, 70);
             pageBack = ConfirmQuit;
+        }
+
+        private Button HomeTile(string caption,string detail,Action action,bool primary=false)
+        {
+            var button=Button(caption,action);
+            var label=button.GetComponentInChildren<Text>();
+            label.fontSize=caption.Length>20?18:23;
+            label.rectTransform.offsetMin=new Vector2(22,42);label.rectTransform.offsetMax=new Vector2(-20,-12);
+            var subtitle=FixedText(button.transform,detail,13,22,76,280,24,new Color(.58f,.75f,.83f));
+            if(primary)
+            {
+                var colors=button.colors;colors.normalColor=new Color(.04f,.2f,.26f);button.colors=colors;
+                subtitle.color=cyan;
+            }
+            return button;
         }
 
         private void ConfirmQuit()
@@ -397,10 +423,15 @@ namespace VelocityRivals
 
         private void Soundtrack(bool paused)
         {
-            Page("Soundtrack", "Electronic / synthwave • music changes automatically between menus and events");
+            Page("Soundtrack", "VELOCITY RADIO • ambient / house / breakbeat / drum & bass / synthwave");
             nowPlaying = Label(panel, "", 32, 120);
-            Label(panel, $"{sound.MenuTrackCount} menu tracks • {sound.RaceTrackCount} race tracks\nEach playlist shuffles without repeating a track until the cycle ends.", 24, 100);
+            var progressTrack=Plate("Track playback progress",panel,new Color(.1f,.18f,.24f));
+            progressTrack.gameObject.AddComponent<LayoutElement>().preferredHeight=6;
+            soundtrackProgress=Plate("Track elapsed",progressTrack,cyan);Stretch(soundtrackProgress,0);
+            Label(panel, $"{sound.MenuTrackCount} menu tracks • {sound.RaceTrackCount} race tracks\nEach playlist shuffles without repeating a track until the cycle ends. Press N to skip.", 24, 100);
             Focus(Button("NEXT TRACK", () => sound.NextTrack()));
+            Button("PREVIEW MENU PLAYLIST",()=>sound.PreviewPlaylist(false));
+            Button("PREVIEW RACE PLAYLIST",()=>sound.PreviewPlaylist(true));
             Button("OPEN CUSTOM MUSIC FOLDER",sound.OpenCustomMusicFolder);
             Button("RELOAD CUSTOM MUSIC",sound.ReloadCustomMusic);
             Label(panel,"Add OGG, WAV or MP3 songs to the Menu or Race folders.\nChoose RELOAD CUSTOM MUSIC to mix them into the soundtrack.\nUp to 30 songs per playlist, 30 MB each.",22,115);
@@ -465,6 +496,7 @@ namespace VelocityRivals
             showingResults = true;
             sound.Finish();
             Page(session.IsTraining ? "Training complete" : session.GameOver ? "GAME OVER" : session.FirstTourCompletion ? "Tour complete" : "Event complete", session.ResultText);
+            BuildResultShowcase();
             string reward = session.IsTraining ? "DRIVING SCHOOL COMPLETED" : session.CanAdvanceChampionship ? "Points recorded — XP awarded after the final round" : "+" + session.ResultXp + " XP";
             Label(panel, $"{reward}\nLEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP • {SaveStore.Current.UnlockedVehicles}/6 CARS", 28, 95);
             if(!session.IsTraining && !session.CanAdvanceChampionship)
@@ -529,7 +561,7 @@ namespace VelocityRivals
         private void Credits()
         {
             Page("Credits", $"VELOCITY RIVALS {Application.version} • Original game project for DJKFusion");
-            Label(panel, "Original vehicles, environments and electronic soundtrack.\nMidnight Grid • Skyline Dreams • Solar Drift\nNeon Pursuit • Afterburn • Hyperdrive\nChrome Horizon • Ion Storm • Final Overdrive\n\nBuilt with Unity and the Universal Render Pipeline.\nVehicle models created with Blender.\n\nGame project for DJKFusion.", 25, 350);
+            Label(panel, "Original vehicles, environments and electronic soundtrack.\nMidnight Grid • Skyline Dreams • Solar Drift\nNeon Pursuit • Afterburn • Hyperdrive\nChrome Horizon • Ion Storm • Final Overdrive\nElectric Afterglow • Nightshift Run • Apex Signal\n\nBuilt with Unity and the Universal Render Pipeline.\nVehicle models created with Blender.\n\nGame project for DJKFusion.", 25, 350);
             Focus(Button("BACK", MainMenu));
         }
     }

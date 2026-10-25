@@ -504,6 +504,37 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator HomeTilesFitAndRadioPreviewRestoresMenuPlaylist()
+        {
+            root=new GameObject("Presentation regression",typeof(GameBootstrap));
+            yield return null;yield return null;
+            Canvas.ForceUpdateCanvases();
+            var tiles=GameObject.Find("Home event tiles");Assert.IsNotNull(tiles);
+            var scroll=tiles.GetComponentInParent<UnityEngine.UI.ScrollRect>();
+            var buttons=tiles.GetComponentsInChildren<UnityEngine.UI.Button>();Assert.AreEqual(10,buttons.Length);
+            foreach(var button in buttons)
+            {
+                var bounds=RectTransformUtility.CalculateRelativeRectTransformBounds(scroll.viewport,button.transform);
+                Assert.GreaterOrEqual(bounds.min.x,scroll.viewport.rect.xMin-1,button.name);
+                Assert.LessOrEqual(bounds.max.x,scroll.viewport.rect.xMax+1,button.name);
+                Assert.GreaterOrEqual(bounds.min.y,scroll.viewport.rect.yMin-1,button.name);
+                Assert.LessOrEqual(bounds.max.y,scroll.viewport.rect.yMax+1,button.name);
+            }
+            UnityEngine.UI.Button Find(string name)
+            {
+                foreach(var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                    if(button.name==name)return button;
+                Assert.Fail("Missing button: "+name);return null;
+            }
+            Find("SOUNDTRACK").onClick.Invoke();yield return null;
+            Find("PREVIEW RACE PLAYLIST").onClick.Invoke();yield return null;yield return null;
+            Assert.AreEqual("Race",SoundDirector.Instance.PlaylistName);
+            Assert.IsFalse(GameSession.Instance.Running);
+            Find("BACK").onClick.Invoke();yield return null;yield return null;
+            Assert.AreEqual("Menu",SoundDirector.Instance.PlaylistName);
+        }
+
+        [UnityTest]
         public IEnumerator MainMenuStartsAnEventThroughItsButtons()
         {
             root = new GameObject("Test bootstrap");
@@ -678,6 +709,12 @@ namespace VelocityRivals.Tests
                 if (button.name == "RESUME") { button.onClick.Invoke(); break; }
             yield return null; yield return null;
             Assert.IsTrue(hud.activeInHierarchy);
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            typeof(GameSession).GetField("elapsed",flags).SetValue(session,9f);
+            yield return null;
+            Assert.IsNull(GameObject.Find("Driving hints card"),"Opening help should leave the road clear after eight seconds.");
+            Assert.IsNotNull(GameObject.Find("Race information card"));
+            Assert.IsNotNull(GameObject.Find("Boost segment 11"));
             Assert.IsFalse(session.Paused);
         }
 

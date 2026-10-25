@@ -81,3 +81,10 @@ Back up this folder before moving PCs or changing save files.
 If the game fails, retain Player.log from the same folder and note the version,
 event, environment, selected car and what happened immediately beforehand.
 An on-screen save error means your latest progress may not be on disk.
+
+PRESENTATION AND RADIO
+The home menu has two columns of tiles, including SOUNDTRACK. Preview Menu or Race
+playlists there; leaving the page restores the normal playlist. N skips a song.
+The race HUD shows large position/speed instruments and twelve boost segments.
+Control hints hide after the opening eight seconds; pause and select HOW TO PLAY
+for the full controls. Boundary recovery and Driving School still show guidance.

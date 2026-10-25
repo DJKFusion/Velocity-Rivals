@@ -13,6 +13,7 @@ namespace VelocityRivals
         private AudioClip fallback;
         private int active;
         private bool raceMusic;
+        private bool? previewPlaylist;
         private float fade = 1, fadeDuration = 1.5f, outgoingGain, startedAt, duck = 1;
         private AudioSource effects;
         private AudioClip click;
@@ -22,6 +23,9 @@ namespace VelocityRivals
         public static SoundDirector Instance { get; private set; }
         public string NowPlaying => music[active] && music[active].clip ? music[active].clip.name : "";
         public string PlaylistName => raceMusic ? "Race" : "Menu";
+        public float TrackProgress => music[active] && music[active].clip ? Mathf.Clamp01(music[active].time / music[active].clip.length) : 0;
+        public void PreviewPlaylist(bool racing) { previewPlaylist = racing; }
+        public void EndPlaylistPreview() { previewPlaylist = null; }
         public int MenuTrackCount => menuTracks.Length;
         public int RaceTrackCount => raceTracks.Length;
 
@@ -70,7 +74,7 @@ namespace VelocityRivals
         private void Update()
         {
             var session = GameSession.Instance;
-            bool racing = session != null && session.Running && !session.Finished;
+            bool racing = previewPlaylist ?? (session != null && session.Running && !session.Finished);
             if (racing != raceMusic) { raceMusic = racing; AdvanceTrack(); }
             duck = Mathf.MoveTowards(duck, session != null && session.Paused ? .4f : 1, Time.unscaledDeltaTime * 2);
             fade = Mathf.Clamp01(fade + Time.unscaledDeltaTime / fadeDuration);

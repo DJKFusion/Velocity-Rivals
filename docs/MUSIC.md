@@ -2,24 +2,26 @@
 
 ## The included soundtrack
 
-Twelve original electronic/synthwave tracks are included, totaling about 15.7 minutes:
+Twelve original electronic arrangements are included, totaling about 18.3 minutes. Each has a different groove, lead instrument and motif; these replace the previous arrangements in the same project.
 
-| Track | Used in | Tempo | Length |
-| --- | --- | --- | --- |
-| Midnight Grid | Menus | 100 BPM | 57.6 seconds |
-| Neon Pursuit | Events | 128 BPM | 45 seconds |
-| Afterburn | Events | 140 BPM | 41.1 seconds |
-| Skyline Dreams | Menus | 96 BPM | 100 seconds |
-| Solar Drift | Menus | 88 BPM | 109.1 seconds |
-| Hyperdrive | Events | 150 BPM | 76.8 seconds |
-| Chrome Horizon | Events | 124 BPM | 92.9 seconds |
-| Ion Storm | Events | 138 BPM | 83.5 seconds |
-| Final Overdrive | Events | 144 BPM | 80 seconds |
-| Electric Afterglow | Menus | 104 BPM | 92.3 seconds |
-| Nightshift Run | Events | 132 BPM | 87.3 seconds |
-| Apex Signal | Events | 148 BPM | 77.8 seconds |
+| Track | Playlist | Style / lead | Tempo | Length |
+| --- | --- | --- | --- | --- |
+| Midnight Grid | Menu | halftime / glass | 92 BPM | 104.3s |
+| Skyline Dreams | Menu | ambient / bell | 78 BPM | 98.5s |
+| Solar Drift | Menu | garage / keys | 112 BPM | 85.7s |
+| Electric Afterglow | Menu | downtempo / soft | 100 BPM | 96.0s |
+| Neon Pursuit | Race | outrun / brass | 126 BPM | 91.4s |
+| Afterburn | Race | breakbeat / acid | 140 BPM | 82.3s |
+| Hyperdrive | Race | dnb / pulse | 172 BPM | 89.3s |
+| Chrome Horizon | Race | house / keys | 122 BPM | 94.4s |
+| Ion Storm | Race | industrial / metal | 136 BPM | 84.7s |
+| Final Overdrive | Race | trance / saw | 146 BPM | 92.1s |
+| Nightshift Run | Race | electro / pluck | 130 BPM | 88.6s |
+| Apex Signal | Race | bigbeat / fifth | 150 BPM | 89.6s |
 
-The game selects the menu or race playlist automatically, crossfades between tracks, shuffles each playlist without consecutive repeats when it has multiple tracks, and lowers music during pause. In-game **Settings → Soundtrack** shows the current song and offers **Next Track**. Music volume is saved in your profile. These integrations still require an audible test in Unity and the Windows player.
+Open **Soundtrack** from the home menu or Settings. Preview either playlist without starting an event, see playback progress, or select **Next Track**. Press **N** to skip during menus or driving. Leaving Soundtrack restores the appropriate menu/race playlist. A brief now-playing card appears while driving; the menu footer also names the track.
+
+Playlists shuffle without repeating until their cycle ends, crossfade, and duck during pause. Custom music support and saved volume controls remain available. The new arrangements passed decoded-file signal checks; listening balance and Unity playback still require a Windows test.
 
 ## Add songs in the built game — no rebuild
 

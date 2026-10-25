@@ -10,7 +10,11 @@ namespace VelocityRivals
         CanvasGroup pageFade;
         float pageOpened;
         Text showcaseName, showcaseStats, showcaseProgress, speedText, boostText, timingText, warningText;
-        RectTransform boostFill;
+        Text positionText, positionCaption, eventCaption, radioText, footerRadio;
+        GameObject radioCard;
+        string lastRadioTrack;
+        float radioChangedAt;
+        readonly Image[] boostSegments = new Image[12];
         GameObject raceInfoCard, speedCard, timingCard, hintCard;
         VehicleStats displayedStats;
         int displayedVehicle = -1;
@@ -42,10 +46,10 @@ namespace VelocityRivals
             pageFade=root.GetComponent<CanvasGroup>();pageOpened=Time.unscaledTime;
             pageFade.alpha=SaveStore.Current.reducedEffects?1:0;
             var topLine=Plate("Accent line",pageRoot,cyan);BoxRect(topLine,0,0,1660,3);
-            FixedText(pageRoot,"V / R     VELOCITY RIVALS",19,48,18,800,28,cyan);
-            var edition=FixedText(pageRoot,"SINGLE PLAYER  /  "+Application.version,18,1100,18,510,28,new Color(.55f,.68f,.77f));
+            FixedText(pageRoot,"V / R     MOTORSPORT DIVISION",17,48,18,800,28,cyan);
+            var edition=FixedText(pageRoot,SaveStore.Current.garage.credits.ToString("N0")+" CR    /    DRIVER LEVEL "+SaveStore.Current.Level,18,1100,18,510,28,new Color(.55f,.68f,.77f));
             edition.alignment=TextAnchor.MiddleRight;
-            title=FixedText(pageRoot,heading.ToUpperInvariant(),46,48,58,1540,66,Color.white);
+            title=FixedText(pageRoot,heading.ToUpperInvariant(),46,48,58,1540,66,Color.white);title.fontStyle=FontStyle.Bold;
             int lines=0;foreach(string line in subtitle.Split('\n')) lines+=Mathf.Max(1,Mathf.CeilToInt(line.Length/105f));
             float subHeight=Mathf.Clamp(lines*29,55,190);
             FixedText(pageRoot,subtitle,23,50,128,1540,subHeight,new Color(.7f,.8f,.87f));
@@ -78,37 +82,46 @@ namespace VelocityRivals
             showcase.anchorMin=Vector2.zero;showcase.anchorMax=Vector2.one;
             showcase.offsetMin=new Vector2(1148,48);showcase.offsetMax=new Vector2(-48,-bodyTop);
             BuildShowcase(false);
-            FixedText(pageRoot,"NAVIGATE  arrows / D-pad     SELECT  Enter / A     BACK  Esc / B     SCROLL  mouse wheel",16,48,885,1500,24,new Color(.5f,.65f,.73f));
+            FixedText(pageRoot,"NAVIGATE  arrows / D-pad     SELECT  Enter / A     BACK  Esc / B",15,48,885,1000,24,new Color(.5f,.65f,.73f));
+            footerRadio=FixedText(pageRoot,"",14,1050,881,560,30,new Color(.5f,.75f,.8f));
+            footerRadio.alignment=TextAnchor.MiddleRight;
         }
         void BuildShowcase(bool wide)
         {
             foreach(Transform child in showcase) { child.gameObject.SetActive(false);Destroy(child.gameObject); }
-            float width=wide?1016:464;
+            float width=pageRoot.rect.width+showcase.offsetMax.x-showcase.offsetMin.x;
             float height=pageRoot.rect.height+showcase.offsetMax.y-showcase.offsetMin.y;
             float previewHeight=wide?Mathf.Max(220,height-230):Mathf.Clamp(height-355,140,235);
             FixedText(showcase,"VELOCITY MOTORWORKS  /  YOUR GARAGE",wide?18:15,24,14,width-48,30,cyan);
-            showcaseName=FixedText(showcase,"",38,24,48,width-48,56,Color.white);
+            showcaseName=FixedText(showcase,"",38,24,48,width-48,56,Color.white);showcaseName.fontStyle=FontStyle.Bold;
             var preview=new GameObject("Vehicle showroom",typeof(RectTransform),typeof(RawImage),typeof(GaragePreview));preview.transform.SetParent(showcase,false);
             var rect=preview.GetComponent<RectTransform>();BoxRect(rect,12,110,width-24,previewHeight);
             preview.GetComponent<RawImage>().raycastTarget=false;
             float below=120+previewHeight;
-            showcaseStats=FixedText(showcase,"",wide?19:21,24,below,wide?450:width-48,72,new Color(.7f,.82f,.9f));
-            showcaseProgress=FixedText(showcase,"",wide?18:22,wide?510:24,wide?below:below+83,wide?width-534:width-48,wide?100:140,Color.white);
+            showcaseStats=FixedText(showcase,"",wide?19:21,24,below,wide?width*.49f-30:width-48,72,new Color(.7f,.82f,.9f));
+            showcaseProgress=FixedText(showcase,"",wide?18:22,wide?width*.51f:24,wide?below:below+83,wide?width*.49f-24:width-48,wide?100:140,Color.white);
             RefreshShowcase();
         }
         void MakeHomeLayout()
         {
-            var logo = Resources.Load<Texture2D>("Branding/VelocityRivalsLogo");
-            if (logo)
+            menuScroll.GetComponent<RectTransform>().offsetMax=new Vector2(-940,menuScroll.GetComponent<RectTransform>().offsetMax.y);
+            showcase.offsetMin=new Vector2(744,48);BuildShowcase(true);
+            var logo=Resources.Load<Texture2D>("Branding/VelocityRivalsLogo");
+            if(logo)
             {
-                var mark = new GameObject("Velocity Rivals logo",typeof(RectTransform),typeof(RawImage));
-                mark.transform.SetParent(pageRoot,false);
-                BoxRect(mark.GetComponent<RectTransform>(),1280,40,150,150);
+                var mark=new GameObject("Velocity Rivals logo",typeof(RectTransform),typeof(RawImage));mark.transform.SetParent(showcase,false);
+                BoxRect(mark.GetComponent<RectTransform>(),754,20,84,84);
                 mark.GetComponent<RawImage>().texture=logo;mark.GetComponent<RawImage>().raycastTarget=false;
             }
-            menuScroll.GetComponent<RectTransform>().offsetMax=new Vector2(-1120,menuScroll.GetComponent<RectTransform>().offsetMax.y);
-            showcase.offsetMin=new Vector2(596,48);BuildShowcase(true);
+            var tiles=new GameObject("Home event tiles",typeof(RectTransform),typeof(GridLayoutGroup));
+            tiles.transform.SetParent(panel,false);
+            panel=tiles.GetComponent<RectTransform>();
+            var grid=tiles.GetComponent<GridLayoutGroup>();
+            grid.cellSize=new Vector2(316,112);grid.spacing=new Vector2(12,12);
+            grid.constraint=GridLayoutGroup.Constraint.FixedColumnCount;grid.constraintCount=2;
+            grid.padding=new RectOffset(4,4,4,4);
         }
+
         void RefreshShowcase()
         {
             if(!showcaseName)return;
@@ -124,41 +137,99 @@ namespace VelocityRivals
                 (p.UnlockedVehicles<6?$"NEXT CAR: {p.UnlockedVehicles*500-p.xp} XP or visit dealership":"FULL GARAGE UNLOCKED")+
                 "\n"+(p.career.Complete?"TOUR COMPLETE — chase every gold":"NEXT: "+CareerTour.Get(p.career.NextEvent).Name);
         }
+        void BuildResultShowcase()
+        {
+            foreach(Transform child in showcase){child.gameObject.SetActive(false);Destroy(child.gameObject);}
+            showcaseName=showcaseStats=showcaseProgress=null;
+            Color accent=session.GameOver?new Color(1,.55f,.3f):new Color(1,.8f,.32f);
+            FixedText(showcase,"RACE CONTROL  /  EVENT REPORT",15,24,18,416,30,accent);
+            string outcome=session.IsTraining?"READY TO RACE":session.GameOver?"TRY AGAIN":session.CanAdvanceChampionship?"ROUND COMPLETE":session.ResultWon?"VICTORY":"FINISH RECORDED";
+            var headline=FixedText(showcase,outcome,36,24,65,416,100,Color.white);headline.fontStyle=FontStyle.Bold;
+            var line=Plate("Result divider",showcase,accent);BoxRect(line,24,185,416,3);
+            string reward=session.IsTraining?"DRIVING SCHOOL COMPLETE":session.CanAdvanceChampionship?"POINTS RECORDED":$"+{session.ResultCredits:N0} CR    /    +{session.ResultXp} XP";
+            FixedText(showcase,reward,25,24,210,416,85,accent);
+            string detail=session.LastCareerMedal>0?"CAREER MEDAL  /  "+CareerTour.MedalName(session.LastCareerMedal).ToUpperInvariant():session.GameOver?"Reset. Refocus. Take the next start.":"Build your garage. Chase your next best.";
+            FixedText(showcase,detail,21,24,315,416,80,new Color(.7f,.82f,.9f));
+            FixedText(showcase,$"WALLET  {SaveStore.Current.garage.credits:N0} CR\nTOUR  {SaveStore.Current.career.TotalMedals} / 36 MEDAL POINTS",19,24,425,416,75,Color.white);
+        }
         void BuildRaceCards()
         {
-            var info=Plate("Race information card",canvas.transform,new Color(.015f,.025f,.04f,.82f));
-            BoxRect(info,28,25,720,175);raceInfoCard=info.gameObject;
-            hud.transform.SetParent(info,false);BoxRect(hud.rectTransform,20,12,680,150);hud.fontSize=24;hud.alignment=TextAnchor.UpperLeft;
-            var speed=Plate("Speed and boost card",canvas.transform,new Color(.015f,.025f,.04f,.88f));
+            var info=Plate("Race information card",canvas.transform,new Color(.018f,.03f,.055f,.9f));
+            BoxRect(info,28,25,570,154);raceInfoCard=info.gameObject;
+            var stripe=Plate("Race accent",info,cyan);BoxRect(stripe,0,0,4,154);
+            positionCaption=FixedText(info,"POSITION",13,20,12,116,24,cyan);
+            positionText=FixedText(info,"01",62,18,35,116,80,Color.white);positionText.fontStyle=FontStyle.Bold;
+            var divider=Plate("Race divider",info,new Color(.2f,.35f,.43f));BoxRect(divider,144,20,1,110);
+            eventCaption=FixedText(info,"",17,166,14,386,28,cyan);
+            hud.transform.SetParent(info,false);BoxRect(hud.rectTransform,166,48,380,95);hud.fontSize=20;hud.alignment=TextAnchor.UpperLeft;hud.resizeTextForBestFit=true;hud.resizeTextMinSize=16;hud.resizeTextMaxSize=20;
+            var speed=Plate("Speed and boost card",canvas.transform,new Color(.018f,.03f,.055f,.9f));
             speed.anchorMin=speed.anchorMax=new Vector2(1,0);speed.pivot=new Vector2(1,0);
-            speed.anchoredPosition=new Vector2(-28,105);speed.sizeDelta=new Vector2(340,190);speedCard=speed.gameObject;
-            speedText=FixedText(speed,"0",70,22,8,200,88,Color.white);
-            FixedText(speed,"KM/H",19,230,53,90,30,new Color(.65f,.8f,.88f));
-            boostText=FixedText(speed,"BOOST",20,22,105,290,35,cyan);
-            var track=Plate("Boost track",speed,new Color(.1f,.17f,.22f));BoxRect(track,22,151,296,10);
-            boostFill=Plate("Boost level",track,cyan);boostFill.anchorMin=Vector2.zero;boostFill.anchorMax=Vector2.one;boostFill.offsetMin=boostFill.offsetMax=Vector2.zero;
-            var timing=Plate("Lap timing card",canvas.transform,new Color(.015f,.025f,.04f,.82f));BoxRect(timing,28,210,940,44);timingCard=timing.gameObject;
-            timingText=FixedText(timing,"",23,16,0,910,44,Color.white);
-            var help=Plate("Driving hints card",canvas.transform,new Color(.015f,.025f,.04f,.8f));
-            help.anchorMin=Vector2.zero;help.anchorMax=new Vector2(1,0);help.pivot=new Vector2(.5f,0);help.anchoredPosition=new Vector2(0,15);help.sizeDelta=new Vector2(-56,75);
-            hint.transform.SetParent(help,false);Stretch(hint.rectTransform,6);hintCard=help.gameObject;
-            warningText=Label(canvas.transform,"",28,55);warningText.rectTransform.anchorMin=warningText.rectTransform.anchorMax=new Vector2(.5f,.8f);
-            warningText.rectTransform.sizeDelta=new Vector2(1000,55);warningText.color=new Color(1,.65f,.2f);
-            raceInfoCard.SetActive(false);speedCard.SetActive(false);timingCard.SetActive(false);hintCard.SetActive(false);
+            speed.anchoredPosition=new Vector2(-28,32);speed.sizeDelta=new Vector2(340,210);speedCard=speed.gameObject;
+            var speedAccent=Plate("Speed accent",speed,cyan);BoxRect(speedAccent,0,0,340,3);
+            speedText=FixedText(speed,"0",84,20,7,220,100,Color.white);speedText.fontStyle=FontStyle.Bold;
+            FixedText(speed,"KM/H",16,250,64,70,30,new Color(.65f,.8f,.88f));
+            boostText=FixedText(speed,"BOOST",17,22,112,296,48,cyan);
+            for(int i=0;i<boostSegments.Length;i++)
+            {
+                var segment=Plate("Boost segment "+i,speed,cyan);BoxRect(segment,22+i*25,172,21,12);
+                boostSegments[i]=segment.GetComponent<Image>();
+            }
+            var timing=Plate("Lap timing card",canvas.transform,new Color(.018f,.03f,.055f,.85f));BoxRect(timing,28,190,570,62);timingCard=timing.gameObject;
+            timingText=FixedText(timing,"",18,18,5,536,52,Color.white);
+            var help=Plate("Driving hints card",canvas.transform,new Color(.018f,.03f,.055f,.88f));
+            help.anchorMin=help.anchorMax=new Vector2(.5f,0);help.pivot=new Vector2(.5f,0);help.anchoredPosition=new Vector2(-60,28);help.sizeDelta=new Vector2(1030,80);
+            hint.transform.SetParent(help,false);Stretch(hint.rectTransform,10);hint.fontSize=18;hintCard=help.gameObject;
+            warningText=Label(canvas.transform,"",30,60);warningText.rectTransform.anchorMin=warningText.rectTransform.anchorMax=new Vector2(.5f,.76f);
+            warningText.rectTransform.sizeDelta=new Vector2(1000,70);warningText.color=new Color(1,.72f,.3f);warningText.fontStyle=FontStyle.Bold;
+            var shadow=warningText.gameObject.AddComponent<Shadow>();shadow.effectColor=new Color(0,0,0,.85f);shadow.effectDistance=new Vector2(2,-2);
+            var radio=Plate("Now playing toast",canvas.transform,new Color(.018f,.03f,.055f,.92f));
+            radio.anchorMin=radio.anchorMax=new Vector2(0,0);radio.pivot=Vector2.zero;radio.anchoredPosition=new Vector2(28,28);radio.sizeDelta=new Vector2(460,85);
+            radioText=FixedText(radio,"",17,18,8,424,68,new Color(.65f,.83f,.9f));radioCard=radio.gameObject;
+            raceInfoCard.SetActive(false);speedCard.SetActive(false);timingCard.SetActive(false);hintCard.SetActive(false);radioCard.SetActive(false);
         }
         void RefreshPresentation()
         {
             if(pageFade)pageFade.alpha=SaveStore.Current.reducedEffects?1:Mathf.Clamp01((Time.unscaledTime-pageOpened)/.16f);
             RefreshShowcase();
+            if(footerRadio && sound)footerRadio.text="ON AIR  /  "+sound.NowPlaying+"   [N]";
             bool driving=session.Running&&!session.Paused&&!session.Finished&&session.Player;
             raceInfoCard.SetActive(driving);speedCard.SetActive(driving);
-            timingCard.SetActive(driving&&session.IsCircuit);hintCard.SetActive(driving);
+            bool helpVisible=driving&&(session.Elapsed<8||session.RecoveringFromBoundary||session.IsTraining);
+            timingCard.SetActive(driving&&session.IsCircuit);hintCard.SetActive(helpVisible);
+            if(helpVisible)radioChangedAt=Time.unscaledTime;
+            if(sound && lastRadioTrack!=sound.NowPlaying){lastRadioTrack=sound.NowPlaying;radioChangedAt=Time.unscaledTime;}
+            radioCard.SetActive(driving&&!helpVisible&&Time.unscaledTime-radioChangedAt<7);
+            if(radioCard.activeSelf)radioText.text="ON AIR  /  "+sound.PlaylistName.ToUpperInvariant()+"    [N] SKIP\n"+lastRadioTrack;
             warningText.text=!driving?"":session.WrongWay?"WRONG WAY  •  Follow the yellow checkpoint":session.RaceNotice;
             if(!driving)return;
-            speedText.text=session.Player.SpeedKmh.ToString("0");boostText.text="BOOST  "+Mathf.RoundToInt(session.Player.BoostAmount*100)+"%";
-            if(session.Player.DraftStrength>.05f)boostText.text+="  •  DRAFT "+Mathf.RoundToInt(session.Player.DraftStrength*100)+"%";
-            boostFill.anchorMax=new Vector2(Mathf.Clamp01(session.Player.BoostAmount),1);
-            if(session.IsCircuit)timingText.text=$"LAP  {session.LapTimes.CurrentLap(session.Elapsed):0.00}s    LAST  {LapDisplay(session.LapTimes.LastLap)}    BEST  {LapDisplay(session.LapTimes.BestLap)}";
+            eventCaption.text=ModeTitle(session.CurrentMode);
+            bool race=session.CurrentMode==GameMode.Championship||session.CurrentMode==GameMode.Elimination;
+            positionCaption.text=race?"POSITION":session.CurrentMode==GameMode.TimeAttack?"LAP":"SCORE";
+            positionText.text=race?session.RacePosition.ToString("00"):session.CurrentMode==GameMode.TimeAttack?session.PlayerLap.ToString("00"):session.PlayerScore.ToString();
+            positionText.resizeTextForBestFit=true;positionText.resizeTextMinSize=26;positionText.resizeTextMaxSize=62;
+            positionText.color=session.CurrentMode==GameMode.Elimination&&session.RacePosition==session.ActiveRaceCars&&session.EliminationRemaining<=10?new Color(1,.4f,.25f):Color.white;
+            speedText.text=session.Player.SpeedKmh.ToString("0");
+            float boost=Mathf.Clamp01(session.Player.BoostAmount);
+            boostText.text="BOOST  "+Mathf.RoundToInt(boost*100)+"%";
+            if(session.Player.DraftStrength>.05f)boostText.text+="\nSLIPSTREAM  +"+Mathf.RoundToInt(session.Player.DraftStrength*10)+"% SPEED";
+            for(int i=0;i<boostSegments.Length;i++)boostSegments[i].color=boost>i/(float)boostSegments.Length?cyan:new Color(.12f,.2f,.26f);
+            if(session.IsCircuit)timingText.text=$"CURRENT LAP  {session.LapTimes.CurrentLap(session.Elapsed):0.00}s\nLAST  {LapDisplay(session.LapTimes.LastLap)}     BEST  {LapDisplay(session.LapTimes.BestLap)}";
         }
+        string CompactRaceStatus()
+        {
+            if(session.CountdownRemaining>0)return "GET READY";
+            if(session.IsTraining)return "DRIVING SCHOOL  /  STEP "+Mathf.Min(4,session.Lesson.Step+1)+" OF 4";
+            switch(session.CurrentMode)
+            {
+                case GameMode.Championship: return $"ROUND {session.ChampionshipRound}/3  •  LAP {session.PlayerLap}/3\nGATE {session.NextCheckpoint}/{session.Circuit.Count}";
+                case GameMode.TimeAttack: return $"LAP {session.PlayerLap}/3  •  PERSONAL GHOST\nGATE {session.NextCheckpoint}/{session.Circuit.Count}";
+                case GameMode.Elimination: return $"{session.ActiveRaceCars} CARS REMAIN\nGATE {session.NextCheckpoint}/{session.Circuit.Count}";
+                case GameMode.ArenaClash: return $"BLUE {session.PlayerScore}  —  {session.RivalScore} ORANGE\nFIRST TO FIVE";
+                case GameMode.BoostBattle: return $"RIVALS {session.RivalScore}  •  FIRST TO 15\n{session.CombatStatus}";
+                case GameMode.StuntRush: return "TARGET 1,000  •  LAND TO SCORE";
+                default: return "EXPLORE  •  PRACTISE  •  DRIVE";
+            }
+        }
+        static string ModeTitle(GameMode mode) => mode==GameMode.TimeAttack?"TIME ATTACK":mode==GameMode.ArenaClash?"ARENA CLASH":mode==GameMode.BoostBattle?"BOOST BATTLE":mode==GameMode.StuntRush?"STUNT RUSH":mode==GameMode.FreePlay?"FREE PLAY":mode.ToString().ToUpperInvariant();
     }
 }
