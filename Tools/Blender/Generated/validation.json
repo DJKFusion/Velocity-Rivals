@@ -9,9 +9,9 @@
     {
       "file": "Viper.fbx",
       "source": {
-        "meshes": 75,
-        "vertices": 9226,
-        "polygons": 8714,
+        "meshes": 93,
+        "vertices": 10234,
+        "polygons": 9686,
         "dimensions": [
           2.0898,
           3.8075,
@@ -19,24 +19,24 @@
         ]
       },
       "roundtrip": {
-        "meshes": 75,
-        "vertices": 9226,
-        "polygons": 8714,
+        "meshes": 93,
+        "vertices": 10234,
+        "polygons": 9686,
         "dimensions": [
           2.0898,
           3.8075,
           1.21583
         ]
       },
-      "bytes": 535212,
+      "bytes": 614780,
       "passed": true
     },
     {
       "file": "Bulwark.fbx",
       "source": {
-        "meshes": 78,
-        "vertices": 9307,
-        "polygons": 8804,
+        "meshes": 96,
+        "vertices": 10315,
+        "polygons": 9776,
         "dimensions": [
           2.409,
           3.98,
@@ -44,24 +44,24 @@
         ]
       },
       "roundtrip": {
-        "meshes": 78,
-        "vertices": 9307,
-        "polygons": 8804,
+        "meshes": 96,
+        "vertices": 10315,
+        "polygons": 9776,
         "dimensions": [
           2.409,
           3.98,
           1.36
         ]
       },
-      "bytes": 544092,
+      "bytes": 623356,
       "passed": true
     },
     {
       "file": "Phantom.fbx",
       "source": {
-        "meshes": 74,
-        "vertices": 9227,
-        "polygons": 8700,
+        "meshes": 92,
+        "vertices": 10235,
+        "polygons": 9672,
         "dimensions": [
           1.884,
           3.563,
@@ -69,24 +69,24 @@
         ]
       },
       "roundtrip": {
-        "meshes": 74,
-        "vertices": 9227,
-        "polygons": 8700,
+        "meshes": 92,
+        "vertices": 10235,
+        "polygons": 9672,
         "dimensions": [
           1.884,
           3.563,
           1.17583
         ]
       },
-      "bytes": 532588,
+      "bytes": 612236,
       "passed": true
     },
     {
       "file": "Apex.fbx",
       "source": {
-        "meshes": 79,
-        "vertices": 9470,
-        "polygons": 8954,
+        "meshes": 97,
+        "vertices": 10478,
+        "polygons": 9926,
         "dimensions": [
           2.181,
           4.1075,
@@ -94,24 +94,24 @@
         ]
       },
       "roundtrip": {
-        "meshes": 79,
-        "vertices": 9470,
-        "polygons": 8954,
+        "meshes": 97,
+        "vertices": 10478,
+        "polygons": 9926,
         "dimensions": [
           2.181,
           4.1075,
           1.21583
         ]
       },
-      "bytes": 554124,
+      "bytes": 633676,
       "passed": true
     },
     {
       "file": "Nomad.fbx",
       "source": {
-        "meshes": 76,
-        "vertices": 9321,
-        "polygons": 8784,
+        "meshes": 94,
+        "vertices": 10329,
+        "polygons": 9756,
         "dimensions": [
           2.2128,
           3.8575,
@@ -119,41 +119,41 @@
         ]
       },
       "roundtrip": {
-        "meshes": 76,
-        "vertices": 9321,
-        "polygons": 8784,
+        "meshes": 94,
+        "vertices": 10329,
+        "polygons": 9756,
         "dimensions": [
           2.2128,
           3.8575,
           1.41
         ]
       },
-      "bytes": 540364,
+      "bytes": 619980,
       "passed": true
     },
     {
       "file": "Comet.fbx",
       "source": {
-        "meshes": 76,
-        "vertices": 9471,
-        "polygons": 8912,
+        "meshes": 96,
+        "vertices": 11667,
+        "polygons": 11020,
         "dimensions": [
           1.982,
           4.1575,
-          1.585
+          1.20583
         ]
       },
       "roundtrip": {
-        "meshes": 76,
-        "vertices": 9471,
-        "polygons": 8912,
+        "meshes": 96,
+        "vertices": 11667,
+        "polygons": 11020,
         "dimensions": [
           1.982,
           4.1575,
-          1.585
+          1.20583
         ]
       },
-      "bytes": 547276,
+      "bytes": 670988,
       "passed": true
     },
     {

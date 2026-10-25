@@ -257,8 +257,8 @@ namespace VelocityRivals
             }
             if (paintMaterial != null)
             {
-                paintMaterial.SetFloat("_Smoothness", finish == 0 ? .65f : .15f);
-                paintMaterial.SetFloat("_Metallic", finish == 2 ? .9f : .35f);
+                paintMaterial.SetFloat("_Smoothness", finish == 1 ? .22f : finish == 2 ? .82f : .76f);
+                paintMaterial.SetFloat("_Metallic", finish == 2 ? .8f : .45f);
             }
         }
 
@@ -302,6 +302,9 @@ namespace VelocityRivals
             var alloy = MakeMaterial(new Color(.45f, .5f, .6f));
             alloy.SetFloat("_Metallic", .9f); alloy.SetFloat("_Smoothness", .75f);
             var tail = MakeMaterial(new Color(1, .015f, .025f), true);
+            var headlights = MakeMaterial(new Color(.78f,.9f,1),true);
+            var caliper = MakeMaterial(new Color(.65f,.035f,.02f));
+            caliper.SetFloat("_Metallic",.35f);caliper.SetFloat("_Smoothness",.45f);
             paintMaterial.SetFloat("_Metallic", .65f); paintMaterial.SetFloat("_Smoothness", .8f);
             string[] modelNames = { "Viper", "Bulwark", "Phantom", "Apex", "Nomad", "Comet" };
             int style = Stats != null ? System.Array.IndexOf(modelNames, Stats.DisplayName) : 0;
@@ -315,8 +318,10 @@ namespace VelocityRivals
                 foreach (var renderer in visual.GetComponentsInChildren<Renderer>())
                 {
                     string part = renderer.name;
-                    Material material = part.StartsWith("Body") ? paintMaterial : part.StartsWith("Glass") ? glass :
-                        part.StartsWith("Tail") ? tail : part.StartsWith("Trim") || part.StartsWith("WheelHub") ? glow :
+                    Material material = part.StartsWith("BrakeCaliper") ? caliper : part.StartsWith("Alloy") ? alloy :
+                        part.StartsWith("Trim_Headlight") || part.StartsWith("Trim_RallyLight") ? headlights :
+                        part.StartsWith("Body") ? paintMaterial : part.StartsWith("Glass") ? glass :
+                        part.StartsWith("Tail") ? tail : part.StartsWith("WheelHub") ? alloy : part.StartsWith("Trim") ? glow :
                         part.StartsWith("WheelRim") || part.StartsWith("WheelSpoke") || part.StartsWith("BrakeDisc") ? alloy : trimMaterial;
                     var materials = renderer.sharedMaterials;
                     for (int i = 0; i < materials.Length; i++) materials[i] = material;

@@ -85,15 +85,15 @@ namespace VelocityRivals
             foreach(Transform child in showcase) { child.gameObject.SetActive(false);Destroy(child.gameObject); }
             float width=wide?1016:464;
             float height=pageRoot.rect.height+showcase.offsetMax.y-showcase.offsetMin.y;
-            float previewHeight=Mathf.Clamp(height-355,140,wide?310:235);
-            FixedText(showcase,"YOUR GARAGE",18,24,14,width-48,30,cyan);
+            float previewHeight=wide?Mathf.Max(220,height-230):Mathf.Clamp(height-355,140,235);
+            FixedText(showcase,"VELOCITY MOTORWORKS  /  YOUR GARAGE",wide?18:15,24,14,width-48,30,cyan);
             showcaseName=FixedText(showcase,"",38,24,48,width-48,56,Color.white);
             var preview=new GameObject("Vehicle showroom",typeof(RectTransform),typeof(RawImage),typeof(GaragePreview));preview.transform.SetParent(showcase,false);
             var rect=preview.GetComponent<RectTransform>();BoxRect(rect,12,110,width-24,previewHeight);
             preview.GetComponent<RawImage>().raycastTarget=false;
             float below=120+previewHeight;
-            showcaseStats=FixedText(showcase,"",21,24,below,width-48,72,new Color(.7f,.82f,.9f));
-            showcaseProgress=FixedText(showcase,"",22,24,below+83,width-48,140,Color.white);
+            showcaseStats=FixedText(showcase,"",wide?19:21,24,below,wide?450:width-48,72,new Color(.7f,.82f,.9f));
+            showcaseProgress=FixedText(showcase,"",wide?18:22,wide?510:24,wide?below:below+83,wide?width-534:width-48,wide?100:140,Color.white);
             RefreshShowcase();
         }
         void MakeHomeLayout()

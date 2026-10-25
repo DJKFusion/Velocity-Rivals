@@ -22,6 +22,7 @@ namespace VelocityRivals
         {
             var concrete = Surface("District concrete", theme == 2 ? new Color(.52f,.38f,.25f) : new Color(.21f,.26f,.31f), .15f);
             var roof = Surface("District roof", theme == 4 ? new Color(.8f,.9f,.96f) : new Color(.08f,.13f,.19f), .35f);
+            var foliage = Surface("Alpine foliage",new Color(.065f,.16f,.15f));
             int placed = 0;
             for (int x = -150; x <= 150; x += 30)
                 for (int z = -150; z <= 150; z += 30)
@@ -33,12 +34,7 @@ namespace VelocityRivals
                     {
                         if ((seed / 30) % 4 != 0)
                         {
-                            for (int level = 0; level < 3; level++)
-                            {
-                                float size = 20 - level * 4, height = 6 + seed % 7;
-                                Box(centre + Vector3.up * (height * (.5f + level)), new Vector3(size, height, size),
-                                    theme == 4 && level == 2 ? roof : rock, Quaternion.Euler(0, seed % 35, 0));
-                            }
+                            NaturalFormation(centre,seed,theme,rock,roof,dark,foliage);
                         }
                         else Outpost(centre, theme, concrete, roof, neon, glass);
                     }
@@ -136,7 +132,29 @@ namespace VelocityRivals
         }
         void Tower(Vector3 p,float height,Material glass,Material baseMaterial,Material neon,Material windows)
         {
+            int style=Mathf.Abs(Mathf.RoundToInt(p.x/30*13+p.z/30*7))%3;
             Box(p+Vector3.up*2,new Vector3(24,4,24),baseMaterial);
+            if(style==1)
+            {
+                Shape(PrimitiveType.Cylinder,p+Vector3.up*(height*.5f+4),new Vector3(18,height*.5f,18),Quaternion.identity,glass);
+                for(int floor=8;floor<height+4;floor+=4)
+                    Shape(PrimitiveType.Cylinder,p+Vector3.up*floor,new Vector3(18.3f,.12f,18.3f),Quaternion.identity,floor%8==0?windows:baseMaterial);
+                Shape(PrimitiveType.Cylinder,p+Vector3.up*(height+4),new Vector3(19,.3f,19),Quaternion.identity,neon);
+                return;
+            }
+            if(style==2)
+            {
+                for(int tier=0;tier<3;tier++)
+                {
+                    float width=21-tier*4;
+                    Box(p+Vector3.up*(4+height*(tier+.5f)/3),new Vector3(width,height/3,width),glass);
+                    Box(p+Vector3.up*(4+height*(tier+1)/3),new Vector3(width+.3f,.3f,width+.3f),neon);
+                    for(int column=-1;column<=1;column++)
+                        foreach(int side in new[]{-1,1})
+                            Box(p+new Vector3(column*width*.3f,4+height*(tier+.5f)/3,side*(width*.5f+.06f)),new Vector3(.25f,height/3,.12f),windows);
+                }
+                return;
+            }
             Box(p+Vector3.up*(4+height*.5f),new Vector3(16,height,17),glass);
             Box(p+Vector3.up*(height+4.5f),new Vector3(18,1,19),baseMaterial);
             Box(p+Vector3.up*(height+5.1f),new Vector3(18,.18f,19),neon);

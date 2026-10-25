@@ -102,6 +102,7 @@ def wheel(x, y, radius, rubber, alloy, trim):
         spoke=box("WheelSpoke_"+side+end,(outer_x,y+math.sin(angle)*radius*.31,radius+math.cos(angle)*radius*.31),(.045,.045,radius*.64),alloy,.012)
         spoke.rotation_euler.x=-angle
     cylinder("WheelHub_" + side + end, (outer_x,y,radius), radius * 0.17, 0.055, trim, vertices=24)
+    box("BrakeCaliper_"+side+end,(x,y-radius*.42,radius),(.10,radius*.22,radius*.62),material("CaliperRed",(.65,.025,.015),.35,.3),.025)
 
 
 def loft(name, rings, bottom, mat, smooth=2):
@@ -161,6 +162,10 @@ def car(name, kind, color):
     loft("Body_Roof",[(-.045*l,roof_w*.38,r+.86),(.03*l,roof_w*.39,r+.89),(.10*l,roof_w*.37,r+.86)],r+.78,paint,1)
     for side in [-1,1]:
         box("Carbon_SideSkirt",(side*w*.48,0,r*.55),(.10,l*.5,.10),exhaust,.025)
+        box("Carbon_DoorSeam",(side*w*.443,.18,r+.36),(.018,l*.35,.018),exhaust,.004)
+        box("Alloy_DoorHandle",(side*w*.446,.12,r+.39),(.035,.18,.035),alloy,.012)
+        for slat in range(5):
+            box("Carbon_RearDeckVent",(side*w*.22,.90+slat*.07,r+.36),(.24,.025,.018),exhaust,.004)
         mirror=box("Body_Mirror",(side*w*.53,-l*.12,r+.63),(.22,.24,.10),paint,.04)
         box("Carbon_MirrorMount",(side*w*.46,-l*.12,r+.55),(.24,.07,.12),exhaust,.02)
         box("Glass_Mirror",(side*w*.54,-l*.09,r+.64),(.18,.025,.07),glass,.01)
@@ -204,11 +209,13 @@ def car(name, kind, color):
         for x in [-0.4,0,0.4]:
             cylinder("Trim_RallyLight",(x,-l*0.47,r+0.43),0.095,0.06,trim,"Y")
         box("Body_RearRollBar",(0,0.65,r+0.94),(1.30,0.10,0.10),alloy)
-    else: # Comet: paired long rocket nacelles and single vertical tail.
+    else: # Comet: low twin buttresses with integrated turbine outlets and a rear aero bridge.
         for x in [-0.56,0.56]:
-            cylinder("Body_RocketPod",(x,0.75,r+0.55),0.23,1.55,paint,"Y")
-            cylinder("Trim_RocketMouth",(x,1.56,r+0.55),0.15,0.06,trim,"Y")
-        box("Body_TailFin",(0,1.25,r+0.88),(0.075,0.65,0.75),paint)
+            shell=loft("Body_RearButtress",[(.25,.13,r+.58),(.65,.18,r+.50),(1.2,.17,r+.40),(1.75,.12,r+.30)],r+.15,paint,2)
+            shell.location.x=x
+            cylinder("Carbon_TurbineOutlet",(x,1.8,r+.23),.13,.13,exhaust,"Y",32)
+            cylinder("Trim_TurbineCore",(x,1.88,r+.23),.07,.02,trim,"Y",24)
+        box("Body_AeroBridge",(0,1.5,r+.56),(w*.9,.25,.065),paint,.025)
     bpy.ops.object.select_all(action="SELECT")
 
 
