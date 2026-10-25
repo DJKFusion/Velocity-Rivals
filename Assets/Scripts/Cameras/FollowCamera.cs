@@ -9,6 +9,7 @@ namespace VelocityRivals
         public VehicleController Target;
         Camera view;
         Vector3 velocity;
+        VehicleController previousTarget;
         void Awake()
         {
             view = GetComponent<Camera>();
@@ -24,8 +25,12 @@ namespace VelocityRivals
             Vector3 focus = Target.transform.position + Vector3.up * 1.1f;
             if (Physics.Linecast(focus, desired, out var hit, ~0, QueryTriggerInteraction.Ignore) && !hit.collider.transform.IsChildOf(Target.transform))
                 desired = hit.point + hit.normal * .4f;
-            transform.position = Vector3.SmoothDamp(transform.position, desired, ref velocity, .13f, float.PositiveInfinity, Time.deltaTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(focus + forward * 3f - transform.position), Time.deltaTime * 10f);
+            bool snap = Target != previousTarget || Vector3.Distance(transform.position, desired) > 35;
+            if (snap) { velocity = Vector3.zero; transform.position = desired; }
+            else transform.position = Vector3.SmoothDamp(transform.position, desired, ref velocity, .13f, float.PositiveInfinity, Time.deltaTime);
+            var rotation = Quaternion.LookRotation(focus + forward * 3f - transform.position);
+            transform.rotation = snap ? rotation : Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 10f);
+            previousTarget = Target;
             float targetFov = SaveStore.Current.reducedEffects ? 65 : 65f + speed * 15f + (Target.IsBoosting ? 5f : 0f);
             view.fieldOfView = Mathf.Lerp(view.fieldOfView, targetFov, Time.deltaTime * 5f);
         }

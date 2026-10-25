@@ -102,6 +102,7 @@ namespace VelocityRivals
             if (!session) return;
             RefreshPresentation();
             countdownLabel.text = session.Running && !session.Paused && !session.Finished && session.CountdownRemaining > 0 ? Mathf.CeilToInt(session.CountdownRemaining).ToString() : "";
+            if (session.ActionEnabled && session.Elapsed < .7f) countdownLabel.text = "GO!";
             mapPanel.SetActive(session.Running && !session.Finished && !session.Paused);
             if (nowPlaying) nowPlaying.text = sound.PlaylistName.ToUpperInvariant() + " PLAYLIST\n" + sound.NowPlaying;
 
@@ -123,6 +124,7 @@ namespace VelocityRivals
                 hint.text = "WASD / triggers + left stick: drive   •   Shift / B: boost   •   Space / A: jump   •   Ctrl / X: drift\nR / Y: recover   •   Q/E / LB + stick: air roll   •   Esc / Start: pause";
                 if (session.Elapsed < 8 && !session.Finished) hint.text = session.EventObjective + "\nWASD / triggers + stick: drive • Shift / B: boost • Esc / Start: pause";
                 if (session.RecoveringFromBoundary) hint.text = "OUT OF BOUNDS — RETURNED TO SAFETY\nYour checkpoint progress is preserved. The event timer keeps running.";
+                else if (session.IsTraining) hint.text = session.Lesson.Instruction;
             }
             else { hud.text = ""; hint.text = ""; }
         }
@@ -204,6 +206,7 @@ namespace VelocityRivals
             MakeHomeLayout();
             Focus(Button("CAREER TOUR", () => { careerSelection = SaveStore.Current.career.NextEvent; CareerMenu(); }));
             Button("PLAY", ModeMenu);
+            Button(SaveStore.Current.trainingComplete ? "DRIVING SCHOOL • COMPLETE" : "DRIVING SCHOOL", StartDrivingSchool);
             Button("GARAGE", Garage);
             Button("RECORDS & ACHIEVEMENTS", Records);
             Button("SETTINGS", () => Settings(false));
@@ -253,9 +256,10 @@ namespace VelocityRivals
             Focus(Button("START CAREER EVENT", StartCareer));
             if (careerSelection > 0) Button("PREVIOUS EVENT", () => { careerSelection--; CareerMenu(); });
             if (careerSelection < progress.NextEvent) Button("NEXT EVENT", () => { careerSelection++; CareerMenu(); });
-            Button("GARAGE", Garage);
+            Button("GARAGE", () => Garage(CareerMenu));
             Button("TOUR PROGRESS", TourProgress);
             Button("MAIN MENU", MainMenu);
+            ShowCourse(entry.Environment,entry.Mode);
         }
 
         private void TourProgress()
@@ -309,14 +313,18 @@ namespace VelocityRivals
         {
             Page("Choose your event", "Championship • arena sport • combat • stunts • time trial • training");
             Focus(Cycle("Mode", new[] { "Velocity Championship", "Arena Clash", "Boost Battle", "Stunt Rush", "Time Attack", "Free Play" }, () => (int)selectedMode, value => selectedMode = (GameMode)value));
-            Cycle("Environment", GameSession.EnvironmentNames, () => selectedEnvironment, value => selectedEnvironment = value);
+            Cycle("Environment", GameSession.EnvironmentNames, () => selectedEnvironment, value => { selectedEnvironment = value; ShowCourse(selectedEnvironment,selectedMode); });
             Cycle("AI difficulty", new[] { "Rookie", "Rival", "Elite" }, () => SaveStore.Current.difficulty, value => { SaveStore.Current.difficulty = value; SaveStore.Save(); });
             var vehicles = new List<string>();
             for (int i = 0; i < SaveStore.Current.UnlockedVehicles; i++) vehicles.Add(GameSession.VehicleNames[i]);
-            Cycle("Vehicle", vehicles, () => SaveStore.Current.selectedVehicle, value => { SaveStore.Current.selectedVehicle = value; SaveStore.Save(); });
-            Label(panel, "Championship: ordered checkpoints, three laps.\nArena: move the core into the scoring zone. Battle: boost into opponents.\nStunts: jump, rotate and land. Time Attack: beat your record.", 23, 145);
+            Cycle("Vehicle", vehicles, () => SaveStore.Current.selectedVehicle, value => { SaveStore.Current.selectedVehicle = value; SaveStore.Save(); ShowCourse(selectedEnvironment,selectedMode); });
+            var briefing = Label(panel,EventBrief(selectedMode),23,170);
+            // Keep the briefing live when cycling the mode without rebuilding focus or the selected button.
+            var modeButton = panel.GetChild(0).GetComponent<UnityEngine.UI.Button>();
+            modeButton.onClick.AddListener(() => { briefing.text=EventBrief(selectedMode);ShowCourse(selectedEnvironment,selectedMode); });
             Button("START EVENT", StartMatch);
             Button("BACK", MainMenu);
+            ShowCourse(selectedEnvironment,selectedMode);
         }
 
         private void StartMatch()
@@ -329,7 +337,8 @@ namespace VelocityRivals
             if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
         }
 
-        private void Garage()
+        private void Garage() => Garage(MainMenu);
+        private void Garage(Action returnTo)
         {
             var p = SaveStore.Current;
             Page("Garage", p.UnlockedVehicles == 6 ? "ALL SIX VEHICLES UNLOCKED\nCustomise your car for your next event." : $"{p.UnlockedVehicles}/6 vehicles unlocked • Next unlock at {p.UnlockedVehicles * 500} XP\nSelections apply to your vehicle on the next event.");
@@ -343,7 +352,8 @@ namespace VelocityRivals
             Cycle("Decal", new[] { "Clean", "Twin stripes", "Race panel" }, () => p.decal, value => { p.decal = value; SaveStore.Save(); });
             Cycle("Spoiler", new[] { "Low profile", "Racing wing", "Aero fin" }, () => p.spoiler, value => { p.spoiler = value; SaveStore.Save(); });
             Cycle("Finish", new[] { "Gloss", "Matte", "Metallic" }, () => p.finish, value => { p.finish = value; SaveStore.Save(); });
-            Button("BACK", MainMenu);
+            Button("BACK", returnTo);
+            pageBack = returnTo;
         }
 
         private void Settings(bool paused)
@@ -396,7 +406,7 @@ namespace VelocityRivals
             Label(panel, "DRIVE\nW / S accelerate and reverse • A / D steer\nShift boost • Ctrl handbrake • Space jump, press again for an aerial jump\nQ / E roll in the air • R recover your car\nController: triggers + left stick, B boost, X drift, A jump, Y recover.", 24, 205);
             Label(panel, "WIN YOUR EVENT\nChampionship / Time Attack: follow the yellow map gate and complete three laps.\nArena Clash: push the white core into the orange goal. First to five wins.\nBoost Battle: hit opponents at speed; collect shields, overdrive and pulse pickups.\nStunt Rush: jump, rotate and land upright. Reach 1,000 points before time runs out.", 23, 215);
             Label(panel, "Esc / Start pauses. Earn XP to unlock cars in the garage.\nCyan on the map is you, orange is another vehicle, yellow is the next gate.", 23, 85);
-            if (!paused) Button("START PRACTICE", () => { selectedMode = GameMode.FreePlay; selectedEnvironment = 3; StartMatch(); });
+            if (!paused) Button("START PRACTICE", StartDrivingSchool);
             Focus(Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); }));
         }
 
@@ -440,12 +450,17 @@ namespace VelocityRivals
             if (showingResults) return;
             showingResults = true;
             sound.Finish();
-            Page(session.GameOver ? "GAME OVER" : session.FirstTourCompletion ? "Tour complete" : "Event complete", session.ResultText);
-            string reward = session.CanAdvanceChampionship ? "Points recorded — XP awarded after the final round" : "+" + session.ResultXp + " XP";
+            Page(session.IsTraining ? "Training complete" : session.GameOver ? "GAME OVER" : session.FirstTourCompletion ? "Tour complete" : "Event complete", session.ResultText);
+            string reward = session.IsTraining ? "DRIVING SCHOOL COMPLETED" : session.CanAdvanceChampionship ? "Points recorded — XP awarded after the final round" : "+" + session.ResultXp + " XP";
             Label(panel, $"{reward}\nLEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP • {SaveStore.Current.UnlockedVehicles}/6 CARS", 28, 95);
             if (!string.IsNullOrEmpty(session.UnlockedCarNames)) Label(panel, "NEW CAR UNLOCKED: " + session.UnlockedCarNames, 26, 55);
             if (!string.IsNullOrEmpty(SaveStore.LastError)) Label(panel, SaveStore.LastError, 18, 70);
-            if (session.CanAdvanceChampionship)
+            if (session.IsTraining)
+            {
+                Focus(Button("START CAREER", () => { careerSelection=SaveStore.Current.career.NextEvent;CareerMenu(); }));
+                Button("REPEAT TRAINING",StartDrivingSchool);
+            }
+            else if (session.CanAdvanceChampionship)
             {
                 Focus(Button("NEXT CHAMPIONSHIP ROUND", () => {
                     ClearPanel(); showingResults = false; session.AdvanceChampionship();

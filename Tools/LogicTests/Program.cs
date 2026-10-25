@@ -19,6 +19,32 @@ static class Program
         try
         {
             if (args.Length == 2 && args[0] == "--relay") { RelayIntegration.Run(args[1]).GetAwaiter().GetResult(); return 0; }
+            Test("driving school requires ordered actions and an upright landing", () => {
+                var lesson=new DrivingLesson();
+                for(int i=0;i<22;i++)lesson.Tick(.1f,30,false,true,true,false);
+                Check(lesson.Step==1);
+                while(lesson.Step==1)lesson.Tick(.1f,30,true,true,true,false);
+                Check(lesson.Step==2);
+                for(int i=0;i<5;i++)lesson.Tick(.1f,0,false,false,true,false);
+                Check(lesson.Step==2); // Airborne without a prior grounded sample does not qualify.
+                lesson.Tick(.1f,0,false,true,true,false);
+                for(int i=0;i<4;i++)lesson.Tick(.1f,0,false,false,true,false);
+                lesson.Tick(.1f,0,false,true,false,false);Check(lesson.Step==2);
+                lesson.Tick(.1f,0,false,true,true,false);Check(lesson.Step==2);
+                for(int i=0;i<4;i++)lesson.Tick(.1f,0,false,false,true,false);
+                lesson.Tick(.1f,0,false,true,true,false);Check(lesson.Step==3);
+                lesson.Tick(.1f,0,false,true,true,true);Check(lesson.Complete);
+                lesson.Tick(.1f,100,true,true,true,true);Check(lesson.Step==4);
+            });
+            Test("driving school cannot complete by waiting or a frame time spike", () => {
+                var lesson=new DrivingLesson();
+                for(int i=0;i<100;i++)lesson.Tick(.1f,0,true,true,true,true);
+                Check(lesson.Step==0);
+                lesson.Tick(100,100,true,true,true,true);Check(lesson.Step==0);
+                lesson.Tick(float.NaN,100,true,true,true,true);
+                lesson.Tick(float.PositiveInfinity,100,true,true,true,true);
+                lesson.Tick(-1,100,true,true,true,true);Check(lesson.Step==0);
+            });
             Test("finish gate and skipped checkpoint cannot award lap", () => {
                 var p = new RaceProgress(32, 3);
                 Check(!p.Cross(0, true) && !p.Cross(4, true) && p.CompletedLaps == 0);

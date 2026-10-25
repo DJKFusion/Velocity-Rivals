@@ -33,6 +33,52 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator DrivingSchoolCompletesSavesAndOffersCareer()
+        {
+            root = new GameObject("Driving school test"); root.AddComponent<GameBootstrap>();
+            yield return null; yield return null;
+            UnityEngine.UI.Button school = null;
+            foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                if (button.name == "DRIVING SCHOOL") school=button;
+            Assert.IsNotNull(school);school.onClick.Invoke();yield return null;
+            var session=GameSession.Instance;
+            Assert.IsTrue(session.IsTraining);
+            var lesson=session.Lesson;
+            for(int i=0;i<22;i++)lesson.Tick(.1f,30,false,true,true,false);
+            for(int i=0;i<12;i++)lesson.Tick(.1f,30,true,true,true,false);
+            lesson.Tick(.1f,0,false,true,true,false);
+            for(int i=0;i<4;i++)lesson.Tick(.1f,0,false,false,true,false);
+            lesson.Tick(.1f,0,false,true,true,false);
+            lesson.Tick(.1f,0,false,true,true,true);
+            typeof(GameSession).GetField("countdown",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(session,0f);
+            yield return null;yield return null;
+            Assert.IsTrue(session.Finished);Assert.IsTrue(SaveStore.Current.trainingComplete);
+            SaveStore.Reload();Assert.IsTrue(SaveStore.Current.trainingComplete);
+            UnityEngine.UI.Button career=null;
+            foreach(var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                if(button.name=="START CAREER")career=button;
+            Assert.IsNotNull(career);career.onClick.Invoke();yield return null;yield return null;
+            Assert.IsNotNull(Object.FindFirstObjectByType<CoursePreview>());
+            Assert.IsFalse(session.Running);
+        }
+
+        [UnityTest]
+        public IEnumerator EscapedArenaCoreResetsWithoutScoring()
+        {
+            root=new GameObject("Core recovery test");var session=root.AddComponent<GameSession>();
+            session.StartMatch(GameMode.ArenaClash,3,0,Color.cyan);
+            typeof(GameSession).GetField("countdown",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(session,0f);
+            var core=GameObject.Find("Energy core").GetComponent<Rigidbody>();
+            foreach(var position in new[]{new Vector3(49,2,0),new Vector3(0,2,60),new Vector3(0,-6,45)})
+            {
+                core.position=position;core.linearVelocity=Vector3.zero;
+                yield return null;yield return new WaitForFixedUpdate();yield return null;
+                Assert.Less(core.position.magnitude,10);
+                Assert.AreEqual(0,session.PlayerScore);Assert.AreEqual(0,session.RivalScore);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator SinglePlayerMenuHasCareerAndNoNetworkComponentOrButton()
         {
             root = new GameObject("Single player menu test"); root.AddComponent<GameBootstrap>();

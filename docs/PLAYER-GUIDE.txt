@@ -5,11 +5,17 @@ Extract the entire game ZIP. Keep VelocityRivals.exe, UnityPlayer.dll and the
 VelocityRivals_Data folder together, then launch VelocityRivals.exe.
 No account or online server is needed to play.
 
-Choose HOW TO PLAY, then START PRACTICE to learn the controls in Cyber Dome.
+Choose DRIVING SCHOOL to practise speed, boost, jumping and recovery in Cyber Dome.
+Complete the four actions to save your training completion and enter the career.
+PLAY offers unrestricted Free Play as well as timed and competitive events.
+Event selection shows the course outline, start marker and selected car.
 CAREER TOUR contains 12 events across four cups. Bronze opens the next event.
 TOUR PROGRESS displays your earned medals and locked events. Replay for gold.
 Championships have three rounds; use NEXT CHAMPIONSHIP ROUND after each result.
 Complete the tour to reach the finale. All gold medals earn another achievement.
+Failed events offer TRY AGAIN. A career bronze medal counts as event completion.
+Leaving the track returns your car to safety without skipping checkpoints; the
+event clock keeps running. R / Y also recovers you if stuck or facing the wrong way.
 
 CONTROLS
 Keyboard: W/S accelerate/reverse, A/D steer, Shift boost, Ctrl handbrake,

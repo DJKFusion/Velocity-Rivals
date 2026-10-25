@@ -1,5 +1,12 @@
 # Implementation and verification ledger
 
+Latest work remains in 0.6.0: guided Driving School, live event/course briefings,
+career-to-garage return navigation, corrected bronze/game-over presentation,
+arena core boundary recovery, camera snapping after relocation, lap notices,
+five central circuit landmarks, corner chevrons and Windows logo assignment.
+43 standalone checks pass. These additions still require Unity runtime validation;
+see [COMPLETION-WORK.md](COMPLETION-WORK.md) for scope and remaining release gates.
+
 Status meanings: **verified here** means a named tool ran successfully in the cloud; **implemented / Unity untested** means source/assets exist but Editor behavior is not established; **unfinished** means the feature is absent or substantially incomplete. None of the gameplay rows below are production-complete. Version 0.6.0 targets Windows single player; networking source is archived behind a disabled assembly and is not part of the default player. See [SINGLE-PLAYER-RELEASE.md](SINGLE-PLAYER-RELEASE.md).
 
 | Area | Status | Concrete implementation / remaining work |

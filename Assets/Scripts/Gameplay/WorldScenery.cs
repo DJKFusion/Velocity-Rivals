@@ -55,6 +55,23 @@ namespace VelocityRivals
                 {
                     Vector3 a = route[i], b = route[(i + 1) % route.Count];
                     Quaternion facing = Quaternion.LookRotation(b-a);
+                    if (i % 3 == 0)
+                    {
+                        Vector3 ahead=route[(i+4)%route.Count]-b;
+                        float bend=Vector3.SignedAngle(b-a,ahead,Vector3.up);
+                        if(Mathf.Abs(bend)>12)
+                        {
+                            float turn=Mathf.Sign(bend);
+                            Vector3 board=a+facing*new Vector3(-turn*10.8f,3.6f,0);
+                            Box(board,new Vector3(2.8f,1.8f,.2f),dark,facing);
+                            for(int arrow=0;arrow<2;arrow++)
+                                foreach(int half in new[]{-1,1})
+                                {
+                                    Vector3 offset=new Vector3((arrow-.5f)*1.15f,half*.25f,-.13f);
+                                    Box(board+facing*offset,new Vector3(.85f,.16f,.08f),neon,facing*Quaternion.Euler(0,0,-turn*half*40));
+                                }
+                        }
+                    }
                     for (int dash = 0; dash < 2; dash++)
                         Box(Vector3.Lerp(a,b,.25f+dash*.5f)+Vector3.up*.025f,new Vector3(.12f,.025f,2),paint,facing);
                     for (int side = -1; side <= 1; side += 2)

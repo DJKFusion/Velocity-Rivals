@@ -27,9 +27,14 @@ namespace VelocityRivals
         public int CareerEventIndex { get; private set; } = -1;
         public int LastCareerMedal { get; private set; }
         public bool ResultWon { get; private set; }
-        public bool GameOver => Finished && !CanAdvanceChampionship && !ResultWon;
+        public bool GameOver => Finished && !CanAdvanceChampionship && !ResultWon && LastCareerMedal == 0;
+        public DrivingLesson Lesson { get; private set; }
+        public bool IsTraining => Lesson != null;
         public bool RecoveringFromBoundary => boundaryNotice > 0;
         private float boundaryNotice;
+        private float lapNotice;
+        public string RaceNotice => lapNotice > 0 ? (PlayerLap == TotalLaps ? "FINAL LAP" : "LAP " + PlayerLap + " / " + TotalLaps) :
+            racing && RemainingTime <= 60 ? "FINAL MINUTE — FINISH THE RACE" : "";
         public int ResultXp { get; private set; }
         public string UnlockedCarNames { get; private set; } = "";
         public bool FirstTourCompletion { get; private set; }
@@ -94,6 +99,7 @@ namespace VelocityRivals
         {
             if (careerEvent >= 0 && !SaveStore.Current.career.IsUnlocked(careerEvent)) throw new InvalidOperationException("Complete the earlier career events first.");
             CareerEventIndex = careerEvent;
+            Lesson = null;
             LastCareerMedal = 0;
             NetworkControlled = networkControlled;
             mode = newMode;
@@ -122,6 +128,7 @@ namespace VelocityRivals
             elapsed = collisionCooldown = goalCooldown = 0;
             wrongWaySeconds = 0;
             boundaryNotice = 0;
+            lapNotice = 0;
             LapTimes = new LapTiming();
             countdown = 3;
             countdownBeat = 4;
@@ -170,7 +177,16 @@ namespace VelocityRivals
             }
         }
 
-        public void RestartMatch() => StartMatch(mode, initialEnvironment, selectedVehicle, paint, false, CareerEventIndex);
+        public void StartTraining(int vehicle, Color color)
+        {
+            StartMatch(GameMode.FreePlay, 3, vehicle, color);
+            Lesson = new DrivingLesson();
+        }
+        public void RestartMatch()
+        {
+            if (IsTraining) StartTraining(selectedVehicle, paint);
+            else StartMatch(mode, initialEnvironment, selectedVehicle, paint, false, CareerEventIndex);
+        }
         public void AdvanceChampionship()
         {
             if (!CanAdvanceChampionship) return;
@@ -180,6 +196,7 @@ namespace VelocityRivals
         }
         public void ReturnToMenu()
         {
+            Lesson = null;
             CareerEventIndex = -1;
             NetworkControlled = false;
             Running = Finished = Paused = false;
@@ -246,7 +263,9 @@ namespace VelocityRivals
             }
             elapsed += Time.deltaTime;
             boundaryNotice = Mathf.Max(0, boundaryNotice - Time.deltaTime);
-            if (racing && ((Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame) || (Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame)))
+            lapNotice = Mathf.Max(0, lapNotice - Time.deltaTime);
+            bool manualRecovery = (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame) || (Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame);
+            if (racing && manualRecovery)
                 Recover(Player, playerProgress.NextCheckpoint);
             collisionCooldown = Mathf.Max(0, collisionCooldown - Time.deltaTime);
             goalCooldown = Mathf.Max(0, goalCooldown - Time.deltaTime);
@@ -259,6 +278,20 @@ namespace VelocityRivals
                 Recover(Player, racing ? playerProgress.NextCheckpoint : 0);
             if (racing) UpdateRace();
             else UpdateArena();
+            if (Lesson != null)
+            {
+                Lesson.Tick(Time.deltaTime, Player.SpeedKmh, Player.IsBoosting, Player.Grounded,
+                    Vector3.Dot(Player.transform.up, Vector3.up) > .8f, manualRecovery);
+                if (Lesson.Complete)
+                {
+                    Finished = ResultWon = true;
+                    ResultText = "DRIVING SCHOOL COMPLETE\nYou have practised driving, boost, landing and recovery. Your first career event is ready.";
+                    SaveStore.Current.trainingComplete = true;
+                    SaveStore.Save();
+                    StopCarsForResults();
+                    MatchEnded?.Invoke();
+                }
+            }
             if (Finished) return;
             UpdateAI();
             if (ghost != null) ghost.Tick(elapsed);
@@ -266,7 +299,9 @@ namespace VelocityRivals
 
         private void UpdateRace()
         {
+            int completedBefore = playerProgress.CompletedLaps;
             TryCheckpoint(Player.transform.position, previousPlayer, playerProgress);
+            if (playerProgress.CompletedLaps > completedBefore && !playerProgress.Complete) lapNotice = 3;
             LapTimes.CompleteLap(playerProgress.CompletedLaps, elapsed);
             previousPlayer = Player.transform.position;
             int gateIndex = playerProgress.NextCheckpoint;
@@ -353,7 +388,7 @@ namespace VelocityRivals
         {
             if (mode == GameMode.ArenaClash)
             {
-                if (core != null && goalCooldown <= 0 && core.position.y < 6 && Mathf.Abs(core.position.x) < 10 && Mathf.Abs(core.position.z) > 41)
+                if (core != null && goalCooldown <= 0 && core.position.y >= 0 && core.position.y < 6 && Mathf.Abs(core.position.x) < 10 && Mathf.Abs(core.position.z) > 41 && Mathf.Abs(core.position.z) < 50)
                 {
                     if (core.position.z > 0) playerScore++; else rivalScore++;
                     SoundDirector.Instance?.Cue(GameCue.Goal);
@@ -363,7 +398,8 @@ namespace VelocityRivals
                     Player.Respawn(new Vector3(0, 1.5f, -18), Quaternion.identity);
                     for (int i = 0; i < racers.Count; i++) racers[i].Car.Respawn(new Vector3((i - 1) * 12, 1.5f, 18), Quaternion.Euler(0, 180, 0));
                 }
-                if (core != null && (core.position.y < -5 || core.position.sqrMagnitude > 15000)) { core.position = new Vector3(0, 3, 0); core.linearVelocity = Vector3.zero; }
+                if (core != null && (core.position.y < -4 || Mathf.Abs(core.position.x) > 46 || Mathf.Abs(core.position.z) > 51))
+                { core.position = new Vector3(0, 3, 0); core.linearVelocity = Vector3.zero; core.angularVelocity = Vector3.zero; goalCooldown = 1; }
                 StatusText = "ARENA CLASH · BLUE " + playerScore + " — " + rivalScore + " ORANGE\nPush the energy core into the orange goal · First to 5";
                 if (playerScore >= 5 || rivalScore >= 5 || elapsed >= duration) EndScoreMode("ARENA CLASH");
             }

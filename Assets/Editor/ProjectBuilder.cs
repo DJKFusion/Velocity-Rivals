@@ -160,6 +160,14 @@ namespace VelocityRivals.Editor
             if (!File.Exists(EntryScene)) throw new FileNotFoundException("The game entry scene is missing.", EntryScene);
             ConfigureRendering();
             string output = Environment.GetEnvironmentVariable("VELOCITY_BUILD_PATH");
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/Branding/VelocityRivalsLogo.png");
+            if (icon)
+            {
+                int[] sizes = PlayerSettings.GetIconSizesForTargetGroup(BuildTargetGroup.Standalone);
+                var icons = new Texture2D[sizes.Length];
+                for (int i = 0; i < icons.Length; i++) icons[i] = icon;
+                PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Standalone, icons);
+            }
             SinglePlayerBuildGuard.Validate();
             if (string.IsNullOrEmpty(output)) output = "Builds/SinglePlayer/Windows/VelocityRivals.exe";
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)));

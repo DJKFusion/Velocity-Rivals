@@ -153,7 +153,7 @@ namespace VelocityRivals
             bool driving=session.Running&&!session.Paused&&!session.Finished&&session.Player;
             raceInfoCard.SetActive(driving);speedCard.SetActive(driving);
             timingCard.SetActive(driving&&session.IsCircuit);hintCard.SetActive(driving);
-            warningText.text=driving&&session.WrongWay?"WRONG WAY  •  Follow the yellow checkpoint":"";
+            warningText.text=!driving?"":session.WrongWay?"WRONG WAY  •  Follow the yellow checkpoint":session.RaceNotice;
             if(!driving)return;
             speedText.text=session.Player.SpeedKmh.ToString("0");boostText.text="BOOST  "+Mathf.RoundToInt(session.Player.BoostAmount*100)+"%";
             boostFill.anchorMax=new Vector2(Mathf.Clamp01(session.Player.BoostAmount),1);

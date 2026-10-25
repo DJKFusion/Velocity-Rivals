@@ -54,12 +54,7 @@ namespace VelocityRivals
             // A central landmark gives the inner field a purpose instead of leaving an empty oval.
             if (ClearFootprint(Vector3.zero, 24, route, racing))
             {
-                if (theme == 2 || theme == 4) Outpost(Vector3.zero, theme, concrete, roof, neon, glass);
-                else
-                {
-                    Tower(Vector3.zero, theme == 0 ? 72 : 42, glass, dark, neon, warm);
-                    Box(Vector3.up * (theme == 0 ? 78 : 48), new Vector3(2, 12, 2), neon);
-                }
+                BuildLandmark(theme, concrete, glass, neon, roof, rock);
             }
             if (racing)
             {

@@ -23,6 +23,7 @@ namespace VelocityRivals
         public CareerProgress career = new CareerProgress();
         public bool fullscreen = true;
         public bool reducedEffects;
+        public bool trainingComplete;
         public int xp;
         public int wins;
         public int events;
