@@ -9,6 +9,7 @@ namespace VelocityRivals
     {
         public VehicleStats Stats;
         public bool IsPlayer;
+        public int LastInputDeviceId { get; private set; }
         public bool ControlsEnabled = true;
         public bool NetworkProxy { get; private set; }
         public bool AllowLocalRecovery = true;
@@ -62,6 +63,7 @@ namespace VelocityRivals
             if (paintMaterial == null) BuildVisuals(Color.cyan);
             foreach (var wheel in wheels) if (wheel != null && !wheelScales.ContainsKey(wheel)) wheelScales[wheel] = wheel.localScale;
             if (IsPlayer && engine == null) CreateEngineAudio();
+            if (IsPlayer && Gamepad.current != null) LastInputDeviceId = Gamepad.current.deviceId;
         }
 
         void Awake()
@@ -112,6 +114,9 @@ namespace VelocityRivals
         {
             if (IsPlayer && ControlsEnabled && Time.timeScale > 0)
             {
+                foreach (var action in controls.actions)
+                    if (action.activeControl != null && Mathf.Abs(action.ReadValue<float>()) > .1f)
+                        LastInputDeviceId = action.activeControl.device.deviceId;
                 float airRollInput = rollAxis.ReadValue<float>();
                 SetInput(new DriveInput { Throttle = throttle.ReadValue<float>(), Steering = Mathf.Clamp((Mathf.Abs(airRollInput) > .1f ? airRollInput : steering.ReadValue<float>()) * SaveStore.Current.steeringSensitivity, -1, 1),
                     Brake = brake.IsPressed(), Boost = boost.IsPressed(), Jump = jump.IsPressed(), AirRoll = roll.IsPressed() || Mathf.Abs(airRollInput) > .1f });

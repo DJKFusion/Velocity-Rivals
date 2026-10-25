@@ -33,6 +33,60 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator ResumeFreezesClockAndPreservesStoppedDrivers()
+        {
+            root=new GameObject("Pause safety",typeof(GameSession));var session=root.GetComponent<GameSession>();
+            session.StartMatch(GameMode.Championship,0,0,Color.cyan);
+            yield return null;
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            typeof(GameSession).GetField("countdown",flags).SetValue(session,0f);
+            session.Player.ControlsEnabled=true;
+            var stopped=session.Vehicles[1];stopped.ControlsEnabled=false;
+            session.SetPaused(true);float elapsed=session.Elapsed;
+            session.ResumeSafely();
+            Assert.IsFalse(session.Paused);Assert.Greater(session.ResumeRemaining,0);
+            Assert.IsFalse(session.ActionEnabled);Assert.AreEqual(0,Time.timeScale);
+            yield return new WaitForSecondsRealtime(.05f);
+            Assert.AreEqual(elapsed,session.Elapsed);Assert.IsFalse(stopped.ControlsEnabled);
+            session.SetPaused(true,"Interrupted again");
+            Assert.AreEqual(0,session.ResumeRemaining);Assert.AreEqual("Interrupted again",session.PauseReason);
+            session.ResumeSafely();
+            typeof(GameSession).GetField("<ResumeRemaining>k__BackingField",flags).SetValue(session,.0000001f);
+            yield return null;yield return null;
+            Assert.AreEqual(1,Time.timeScale);Assert.IsTrue(session.Player.ControlsEnabled);
+            Assert.IsFalse(stopped.ControlsEnabled);
+            session.SetPaused(true);session.ResumeSafely();session.ReturnToMenu();
+            Assert.AreEqual(1,Time.timeScale);Assert.AreEqual(0,session.ResumeRemaining);
+        }
+
+        [UnityTest]
+        public IEnumerator ActiveControllerDisconnectPausesAndFeedbackStops()
+        {
+            var pad=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Gamepad>();
+            pad.MakeCurrent();
+            try
+            {
+                root=new GameObject("Controller safety",typeof(GameSession),typeof(PlayerFeedback));
+                var session=root.GetComponent<GameSession>();session.StartMatch(GameMode.FreePlay,0,0,Color.cyan);
+                yield return null;yield return null;
+                var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+                typeof(GameSession).GetField("countdown",flags).SetValue(session,0f);
+                session.Player.ControlsEnabled=true;
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(pad,new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.East));
+                yield return null;yield return null;
+                Assert.AreEqual(pad.deviceId,session.Player.LastInputDeviceId);
+                var feedback=root.GetComponent<PlayerFeedback>();Assert.Greater(feedback.LowMotor,0);
+                UnityEngine.InputSystem.InputSystem.RemoveDevice(pad);
+                Assert.IsTrue(session.Paused);Assert.IsTrue(session.PauseReason.Contains("disconnected"));
+                yield return null;
+                Assert.AreEqual(0,feedback.LowMotor);Assert.AreEqual(0,feedback.HighMotor);
+                Assert.IsFalse(session.Player.ControlsEnabled);
+                session.SetPaused(false);Assert.IsFalse(session.Paused);
+            }
+            finally { if(pad.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(pad); }
+        }
+
+        [UnityTest]
         public IEnumerator EliminationStartsFromMenuWinsAwardsAndRestarts()
         {
             root=new GameObject("Elimination menu test",typeof(GameBootstrap));

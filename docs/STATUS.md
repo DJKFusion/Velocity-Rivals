@@ -1,5 +1,12 @@
 # Implementation and verification ledger
 
+The release-polish pass fixes pause restoration for stopped rivals, pauses on active
+controller loss, adds a frozen three-second resume countdown and optional rumble,
+validates local ghost data, and shows sorted championship standings. Source checks
+and 52 standalone checks pass. New Unity interruption/replay/controller tests are
+authored but unrun here; hardware feedback and Windows acceptance remain pending.
+See [RELEASE-POLISH.md](RELEASE-POLISH.md).
+
 The presentation/radio refresh adds home tiles, compact race instruments, result
 reports, playlist audition and twelve replacement arrangements (~18.3 minutes).
 Decoded audio and source checks pass; 52 standalone logic checks pass. New UI
@@ -34,7 +41,7 @@ Status meanings: **verified here** means a named tool ran successfully in the cl
 | Project/scene/prefab/stat references | Verified here, Unity import untested | Entry scene, six prefabs, six stats assets; static GUID reference checks pass |
 | Original generated art | Verified here | Six FBX vehicles + two props round-tripped through Blender with mesh/vertex/bounds assertions; contact sheet inspected |
 | Driving | Implemented / Unity untested | Acceleration, reverse, speed steering, traction, drift, boost, ray suspension, jumps, dodge, air steering, recovery; tuning and wall transitions unverified |
-| Input and camera | Implemented / Unity untested | Keyboard and controller Input System bindings, follow/FOV, obstacle line test; no rebinding screen or haptics |
+| Input and camera | Implemented / Unity untested | Keyboard and controller Input System bindings, follow/FOV, obstacle line test; optional haptics and active-device disconnect pause implemented; no rebinding screen |
 | Race rules | Pure logic verified here; Unity untested | Ordered checkpoints, laps, finish guards, current/last/best lap timing; live map/next gate marker and wrong-way warning implemented; geometric crossing and actual race driving still need tests |
 | Career tour | Logic verified here; Unity untested | Twelve events across four cups, ordered unlocks, bronze/silver/gold medals, replay, saved progress and completion ending; medal targets and full progression need playtesting |
 | Championship and AI | Implemented / Unity untested | Three-round points and standings, three AI opponents, waypoint targets, corner slowing, limited avoidance/recovery, three difficulty settings; not proven to complete races reliably |
@@ -46,7 +53,7 @@ Status meanings: **verified here** means a named tool ran successfully in the cl
 | Worlds | Implemented / Unity untested | Five authored circuit layouts, named districts, inner/outer buildings, tunnels, bridge supports, terrain formations and enclosed stadium architecture; production architecture, shortcut balance, ambience and smoothly rideable walls unfinished |
 | Garage | Implemented partially / Unity untested | Saved paint/finish, wheel scale, trail colour, stripe/spoiler variants; lit rotating preview of the actual selected car with matching cosmetics; texture decal library and wheel mesh swaps unfinished |
 | Menus | Implemented / Unity untested | Main, mode, garage, records, settings, soundtrack, controls guide, pause, results, credits and career tour; local events pause on focus loss; text-only animated title, no loading cinematic |
-| Audio | Files verified here; playback Unity untested | Nine original stereo synthwave tracks, menu/event shuffle playlists, crossfades, pause ducking, custom-song import menus; synthesized engine/UI/gameplay cues; production sound design/crowd ambience unfinished |
+| Audio | Files verified here; playback Unity untested | Twelve original stereo electronic arrangements, menu/event shuffle playlists, crossfades, pause ducking, custom-song import menus; synthesized engine/UI/gameplay cues; production sound design/crowd ambience unfinished |
 | Rendering | Implemented / Unity untested | Sculpted cars, grouped wheels, batching, URP/bloom/ACES/color grading, themed sky/clouds/stars, road textures/normals, sky reflections, headlights, skid trails and smoke; shader compilation, target hardware profiling, final art/LODs unfinished |
 | Progression | Implemented / Unity untested | XP, levels, six unlockable vehicles, basic achievements, per-mode/track/car records, legacy save migration, backup profile; cloud/platform saves unfinished |
 | Multiplayer | Excluded from this edition | No network component or menu in the default game; archived source is constrained by the absent VELOCITY_MULTIPLAYER define. No server, relay, account or Internet connection is required to play |

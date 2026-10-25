@@ -88,3 +88,12 @@ playlists there; leaving the page restores the normal playlist. N skips a song.
 The race HUD shows large position/speed instruments and twelve boost segments.
 Control hints hide after the opening eight seconds; pause and select HOW TO PLAY
 for the full controls. Boundary recovery and Driving School still show guidance.
+
+PAUSE AND CONTROLLER FEEDBACK
+Disconnecting the controller you were driving with pauses the game. Reconnect it
+or use the keyboard, then select RESUME. After the race has started, resuming
+gives a three-second countdown with the race clock and physics frozen. You can
+pause again during that countdown. The starting grid keeps its original countdown.
+Settings > Controller vibration selects Off, Low, Medium or High. Compatible
+gamepads respond to boosting, drifting and hard landings/impacts. Vibration stops
+in menus, pause, resume countdown, on focus loss and when disabled.

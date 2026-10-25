@@ -105,7 +105,9 @@ namespace VelocityRivals
         {
             if (!session) return;
             RefreshPresentation();
+            countdownLabel.fontSize=session.ResumeRemaining>0?54:96;
             countdownLabel.text = session.Running && !session.Paused && !session.Finished && session.CountdownRemaining > 0 ? Mathf.CeilToInt(session.CountdownRemaining).ToString() : "";
+            if (session.ResumeRemaining > 0) countdownLabel.text="RESUME IN\n"+Mathf.CeilToInt(session.ResumeRemaining);
             if (session.ActionEnabled && session.Elapsed < .7f) countdownLabel.text = "GO!";
             mapPanel.SetActive(session.Running && !session.Finished && !session.Paused);
             if (nowPlaying) nowPlaying.text = sound.PlaylistName.ToUpperInvariant() + " PLAYLIST\n" + sound.NowPlaying;
@@ -222,7 +224,8 @@ namespace VelocityRivals
             HomeTile("PLAY","7 MODES / 5 WORLDS", ModeMenu);
             HomeTile("GARAGE","CARS / PAINT / UPGRADES", Garage);
             HomeTile("RECORDS & ACHIEVEMENTS","YOUR PERSONAL BESTS", Records);
-            HomeTile("DRIVING SCHOOL",SaveStore.Current.trainingComplete ? "TRAINING COMPLETE" : "LEARN EVERY CONTROL", StartDrivingSchool);
+            var training=HomeTile("DRIVING SCHOOL",SaveStore.Current.trainingComplete ? "TRAINING COMPLETE" : "NEW DRIVER? START HERE", StartDrivingSchool);
+            if(!SaveStore.Current.trainingComplete && SaveStore.Current.events==0)Focus(training);
             HomeTile("SOUNDTRACK","12 TRACKS / YOUR MUSIC", () => Soundtrack(false));
             HomeTile("SETTINGS","DISPLAY / AUDIO / CAMERA", () => Settings(false));
             HomeTile("HOW TO PLAY","CONTROLS / EVENT RULES", () => HowToPlay(false));
@@ -400,6 +403,7 @@ namespace VelocityRivals
             Button("DISPLAY & EFFECTS", () => DisplaySettings(paused));
             Cycle("Steering sensitivity", new[] { "50%", "75%", "100%", "125%", "150%" }, () => Mathf.RoundToInt((p.steeringSensitivity - .5f) * 4), value => { p.steeringSensitivity = .5f + value * .25f; SaveStore.Save(); });
             Cycle("Camera sensitivity", new[] { "50%", "75%", "100%", "125%", "150%" }, () => Mathf.RoundToInt((p.cameraSensitivity - .5f) * 4), value => { p.cameraSensitivity = .5f + value * .25f; SaveStore.Save(); });
+            Cycle("Controller vibration", new[] { "Off", "Low", "Medium", "High" }, () => Mathf.RoundToInt(p.vibration * 3), value => { p.vibration=value/3f; SaveStore.Save(); });
             Cycle("Camera vertical", new[] { "Normal", "Inverted" }, () => p.invertCameraY ? 1 : 0, value => { p.invertCameraY = value == 1; SaveStore.Save(); });
             Label(panel, "Keyboard: WASD drive, Shift boost, Space jump, Ctrl drift, Q/E roll, R recover.\nGamepad: RT/LT drive, stick steer, A jump, B boost, X drift, Y recover.\nEsc / Start pauses. Full controls are under HOW TO PLAY.", 22, 140);
             Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); });
@@ -472,8 +476,8 @@ namespace VelocityRivals
 
         private void PauseMenu()
         {
-            session.SetPaused(true);
-            Page("Paused", "Take a breather. Your event is paused.");
+            if (!session.Paused) session.SetPaused(true);
+            Page("Paused", session.PauseReason);
             Focus(Button("RESUME", Resume));
             Button("RESTART EVENT", () => ConfirmAbandon(true));
             Button("SETTINGS", () => Settings(true));
@@ -489,7 +493,7 @@ namespace VelocityRivals
             pageBack = Resume;
             Button(restart ? "RESTART NOW" : "LEAVE EVENT", restart ? (Action)RestartCurrent : MainMenu);
         }
-        private void Resume() { ClearPanel(); session.SetPaused(false); if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null); }
+        private void Resume() { ClearPanel(); session.ResumeSafely(); if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null); }
         private void OnMatchEnded()
         {
             if (showingResults) return;

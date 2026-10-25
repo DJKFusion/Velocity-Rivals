@@ -23,6 +23,7 @@ namespace VelocityRivals
             }
             gameObject.AddComponent<GameSession>();
             gameObject.AddComponent<VelocityUI>();
+            gameObject.AddComponent<PlayerFeedback>();
             var volume = new GameObject("Global post processing").AddComponent<Volume>();
             volume.transform.SetParent(transform);
             volume.isGlobal = true;

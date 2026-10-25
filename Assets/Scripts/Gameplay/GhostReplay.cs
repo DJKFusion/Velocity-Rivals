@@ -25,7 +25,7 @@ namespace VelocityRivals
                 if (File.Exists(file) && new FileInfo(file).Length < 8 * 1024 * 1024)
                 {
                     previous = JsonUtility.FromJson<Run>(File.ReadAllText(file));
-                    if (previous == null || previous.Frames == null || previous.Frames.Count < 2) previous = null;
+                    if (!ValidRun(previous)) previous = null;
                 }
             }
             catch (Exception e) { Debug.LogWarning("Ghost unavailable: " + e.Message); previous = null; }
@@ -68,8 +68,8 @@ namespace VelocityRivals
         }
         public void Complete(float duration)
         {
-            if (previous != null && previous.Duration <= duration) return;
             recording.Duration = duration;
+            if (!ValidRun(recording) || (previous != null && previous.Duration <= duration)) return;
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(file));
@@ -80,6 +80,23 @@ namespace VelocityRivals
             }
             catch (Exception e) { Debug.LogWarning("Ghost save failed: " + e.Message); }
         }
+        public static bool ValidRun(Run run)
+        {
+            if (run == null || !Finite(run.Duration) || run.Duration <= 0 || run.Duration > 1200 ||
+                run.Frames == null || run.Frames.Count < 2 || run.Frames.Count > 12000) return false;
+            float last = -1;
+            foreach (var frame in run.Frames)
+            {
+                if (!Finite(frame.Time) || frame.Time < 0 || frame.Time <= last || frame.Time > run.Duration ||
+                    !Finite(frame.Position.x) || !Finite(frame.Position.y) || !Finite(frame.Position.z) || frame.Position.sqrMagnitude > 100000000 ||
+                    !Finite(frame.Rotation.x) || !Finite(frame.Rotation.y) || !Finite(frame.Rotation.z) || !Finite(frame.Rotation.w)) return false;
+                float norm = frame.Rotation.x * frame.Rotation.x + frame.Rotation.y * frame.Rotation.y + frame.Rotation.z * frame.Rotation.z + frame.Rotation.w * frame.Rotation.w;
+                if (Mathf.Abs(norm - 1) > .05f) return false;
+                last = frame.Time;
+            }
+            return true;
+        }
+        static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
         private void OnDestroy() { if (material != null) Destroy(material); }
     }
 }

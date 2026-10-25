@@ -1,6 +1,6 @@
 # Single-player edition — 0.6.0 candidate
 
-This update focuses on an offline Windows game. See [the UI redesign](UPDATE-UI-RELEASE.md) for 0.6 and [structured worlds](UPDATE-STRUCTURED-WORLDS.md) for 0.5. It adds a 12-event career with a defined ending and excludes multiplayer from the default player assembly. It is **not yet a verified finished release**: this cloud workspace has no Unity Editor/license or Windows player, so compilation, shader rendering, gameplay QA and an executable build have not run here.
+This update focuses on an offline Windows game. The latest [release-polish pass](RELEASE-POLISH.md) adds interruption safety, optional controller feedback, replay validation and clearer championship results. See [the UI redesign](UPDATE-UI-RELEASE.md) for 0.6 and [structured worlds](UPDATE-STRUCTURED-WORLDS.md) for 0.5. It adds a 12-event career with a defined ending and excludes multiplayer from the default player assembly. It is **not yet a verified finished release**: this cloud workspace has no Unity Editor/license or Windows player, so compilation, shader rendering, gameplay QA and an executable build have not run here.
 
 ## What is in the edition
 
@@ -51,4 +51,4 @@ Upload the **built game ZIP** only after these checks. The GitHub source ZIP is 
 
 ## Verification performed here
 
-41 standalone C# checks pass, including six career checks and four authored-layout checks. The runner retains networking regression checks for preserved source, but that code is excluded from the default Unity player. Static C# syntax, Unity metadata/reference checks, audio-file validation and source ZIP checks pass. New Unity tests cover legacy save migration, track/car records, unfinished runs, career persistence, shader imports, assembly exclusion and career-menu flow; those tests are authored but unrun here.
+52 standalone C# checks pass, including six career checks and four authored-layout checks. The runner retains networking regression checks for preserved source, but that code is excluded from the default Unity player. Static C# syntax, Unity metadata/reference checks, audio-file validation and source ZIP checks pass. New Unity tests cover legacy save migration, track/car records, unfinished runs, career persistence, shader imports, assembly exclusion and career-menu flow; those tests are authored but unrun here.

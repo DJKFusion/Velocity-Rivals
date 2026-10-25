@@ -146,6 +146,22 @@ namespace VelocityRivals
             string outcome=session.IsTraining?"READY TO RACE":session.GameOver?"TRY AGAIN":session.CanAdvanceChampionship?"ROUND COMPLETE":session.ResultWon?"VICTORY":"FINISH RECORDED";
             var headline=FixedText(showcase,outcome,36,24,65,416,100,Color.white);headline.fontStyle=FontStyle.Bold;
             var line=Plate("Result divider",showcase,accent);BoxRect(line,24,185,416,3);
+            if(session.CurrentMode==GameMode.Championship && !session.GameOver)
+            {
+                int[] order={0,1,2,3};
+                System.Array.Sort(order,(a,b)=>{int byPoints=session.ChampionshipPoints(b).CompareTo(session.ChampionshipPoints(a));return byPoints!=0?byPoints:a.CompareTo(b);});
+                string[] names={"YOU","ION","PRISM","COMET"};
+                for(int i=0;i<order.Length;i++)
+                {
+                    int driver=order[i];
+                    var row=Plate("Championship standing "+i,showcase,driver==0?new Color(.04f,.2f,.26f):new Color(.04f,.07f,.1f));
+                    BoxRect(row,24,210+i*57,416,49);
+                    FixedText(row,(i+1).ToString("00")+"   "+names[driver],22,12,0,260,49,driver==0?cyan:Color.white);
+                    var points=FixedText(row,session.ChampionshipPoints(driver)+" PTS",22,270,0,130,49,Color.white);points.alignment=TextAnchor.MiddleRight;
+                }
+                FixedText(showcase,session.CanAdvanceChampionship?"NEXT ROUND  /  "+(session.ChampionshipRound+1)+" OF 3":"FINAL CHAMPIONSHIP STANDINGS",17,24,452,416,40,accent);
+                return;
+            }
             string reward=session.IsTraining?"DRIVING SCHOOL COMPLETE":session.CanAdvanceChampionship?"POINTS RECORDED":$"+{session.ResultCredits:N0} CR    /    +{session.ResultXp} XP";
             FixedText(showcase,reward,25,24,210,416,85,accent);
             string detail=session.LastCareerMedal>0?"CAREER MEDAL  /  "+CareerTour.MedalName(session.LastCareerMedal).ToUpperInvariant():session.GameOver?"Reset. Refocus. Take the next start.":"Build your garage. Chase your next best.";

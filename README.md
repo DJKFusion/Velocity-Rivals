@@ -1,6 +1,6 @@
 # Velocity Rivals — Single Player
 
-Latest update: [menu, HUD and soundtrack refresh](docs/PRESENTATION-AND-RADIO.md). Two-column home tiles, clearer racing instruments and results, and twelve newly arranged songs across ambient, house, breakbeat, drum-and-bass and synth styles. The source checks pass; the new Unity UI tests and Windows presentation review remain pending.
+Latest update: [release polish and interruption safety](docs/RELEASE-POLISH.md). Active-controller disconnect pause, a frozen resume countdown, optional vibration, validated ghost files, and sorted championship standings build on the [menu/HUD and soundtrack refresh](docs/PRESENTATION-AND-RADIO.md). Source and standalone logic checks pass; Unity and Windows acceptance remain pending.
 
 An original Unity 6 arcade racing and vehicle-sports project for DJKFusion. The current edition plays offline and has no multiplayer menu, room setup or networking component. Multiplayer source is retained behind a disabled assembly constraint for future work.
 

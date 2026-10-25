@@ -53,7 +53,7 @@ namespace VelocityRivals
             "Practise driving, boosting and jumping. Recover with R / Y; pause to leave.";
         public int PlayerScore => playerScore;
         public int RivalScore => rivalScore;
-        public bool ActionEnabled => Running && !Paused && !Finished && countdown <= 0;
+        public bool ActionEnabled => Running && !Paused && !Finished && ResumeRemaining <= 0 && countdown <= 0;
         public string CombatStatus => battle != null ? battle.PlayerStatus : "";
         public bool IsCircuit => racing;
         public IReadOnlyList<Vector3> Circuit => track;
@@ -130,6 +130,7 @@ namespace VelocityRivals
             Cleanup();
             Time.timeScale = 1;
             Paused = Finished = ResultWon = false;
+            ResetInterruptions();
             ResultXp = 0; UnlockedCarNames = ""; FirstTourCompletion = false;
             ResultCredits = MedalCredits = 0;
             Running = true;
@@ -211,21 +212,35 @@ namespace VelocityRivals
             CareerEventIndex = -1;
             NetworkControlled = false;
             Running = Finished = Paused = false;
+            ResetInterruptions();
             Time.timeScale = 1;
             Cleanup();
             StatusText = "Choose a mode to begin.";
         }
-        public void SetPaused(bool value)
+        public void SetPaused(bool value, string reason = "Your event is paused.")
         {
             if (!Running || Finished || NetworkControlled) return;
-            Paused = value;
-            Time.timeScale = value ? 0 : 1;
-            foreach (var car in cars) if (car != null) car.ControlsEnabled = !value && countdown <= 0 && car.enabled;
+            if (value)
+            {
+                PauseReason = reason;
+                if (Paused) return;
+                if (ResumeRemaining <= 0)
+                {
+                    pausedDrivers.Clear();
+                    foreach (var car in cars) if (car && car.ControlsEnabled) pausedDrivers.Add(car);
+                }
+                Paused = true; ResumeRemaining = 0; Time.timeScale = 0;
+                foreach (var car in cars) if (car) { car.ControlsEnabled = false; car.SetInput(default); }
+            }
+            else if (Paused || ResumeRemaining > 0)
+            {
+                Paused = false; ResumeRemaining = 0; Time.timeScale = 1; RestorePausedDrivers();
+            }
         }
 
         private void OnApplicationFocus(bool focused)
         {
-            if (!focused && !Application.isBatchMode && !NetworkControlled && Running && !Finished) SetPaused(true);
+            if (!focused && !Application.isBatchMode && !NetworkControlled && Running && !Finished) SetPaused(true, "The game lost focus. Choose RESUME when you are ready.");
         }
 
         private VehicleController SpawnCar(int index, Vector3 position, Quaternion rotation, Color color, bool player)
@@ -271,13 +286,14 @@ namespace VelocityRivals
         private void Update()
         {
             if (!Running || Paused || Finished || Player == null || NetworkControlled) return;
+            if (TickResume()) return;
             if (countdown > 0)
             {
                 countdown -= Time.deltaTime;
                 int beat = Mathf.CeilToInt(Mathf.Max(0, countdown));
                 if (beat != countdownBeat) { countdownBeat = beat; SoundDirector.Instance?.Cue(beat == 0 ? GameCue.Go : GameCue.Countdown); }
                 StatusText = "READY — " + Mathf.CeilToInt(Mathf.Max(.01f, countdown));
-                if (countdown <= 0) foreach (var car in cars) car.ControlsEnabled = true;
+                if (countdown <= 0) foreach (var car in cars) if (car) car.ControlsEnabled = EligibleDriver(car);
                 return;
             }
             elapsed += Time.deltaTime;
