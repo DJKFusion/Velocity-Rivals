@@ -18,7 +18,7 @@ namespace VelocityRivals
             showcaseName = showcaseStats = showcaseProgress = null;
             FixedText(showcase,"EVENT BRIEFING",18,24,16,416,30,cyan);
             FixedText(showcase,GameSession.EnvironmentNames[environment].ToUpperInvariant(),27,24,52,416,84,Color.white);
-            var map = new GameObject("Course preview",typeof(RectTransform),typeof(CoursePreview));
+            var map = new GameObject("Course preview",typeof(RectTransform),typeof(CanvasRenderer),typeof(CoursePreview));
             map.transform.SetParent(showcase,false);BoxRect(map.GetComponent<RectTransform>(),24,140,416,240);
             map.GetComponent<CoursePreview>().raycastTarget=false;
             map.GetComponent<CoursePreview>().Configure(environment,mode==GameMode.Championship||mode==GameMode.TimeAttack);

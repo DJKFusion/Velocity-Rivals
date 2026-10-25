@@ -35,7 +35,7 @@ namespace VelocityRivals
         void BuildPageFrame(string heading,string subtitle)
         {
             ClearPanel();
-            var root=new GameObject(heading,typeof(RectTransform),typeof(MenuBackdrop),typeof(CanvasGroup),typeof(RectMask2D));
+            var root=new GameObject(heading,typeof(RectTransform),typeof(CanvasRenderer),typeof(MenuBackdrop),typeof(CanvasGroup),typeof(RectMask2D));
             root.transform.SetParent(canvas.transform,false);pageRoot=root.GetComponent<RectTransform>();
             pageRoot.anchorMin=pageRoot.anchorMax=pageRoot.pivot=new Vector2(.5f,.5f);pageRoot.sizeDelta=new Vector2(1660,920);
             root.GetComponent<MenuBackdrop>().raycastTarget=true;

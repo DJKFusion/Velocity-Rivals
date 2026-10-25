@@ -33,6 +33,33 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator CustomGraphicsProvideRenderersAndCoursePreviewSurvivesClipping()
+        {
+            root = new GameObject("Custom graphics regression", typeof(Canvas));
+            root.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+            var mask = new GameObject("Clipped area", typeof(RectTransform), typeof(UnityEngine.UI.RectMask2D));
+            mask.transform.SetParent(root.transform, false);
+            mask.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 500);
+            foreach (var type in new[] { typeof(CoursePreview), typeof(MenuBackdrop), typeof(RaceMap) })
+            {
+                // Deliberately omit CanvasRenderer: the component dependency must supply it.
+                var graphic = new GameObject(type.Name, typeof(RectTransform));
+                graphic.transform.SetParent(mask.transform, false);
+                graphic.AddComponent(type);
+                graphic.GetComponent<RectTransform>().sizeDelta = new Vector2(400, 240);
+                Assert.IsNotNull(graphic.GetComponent<CanvasRenderer>(), type.Name);
+                if (graphic.TryGetComponent<CoursePreview>(out var preview)) preview.Configure(0, true);
+            }
+            Canvas.ForceUpdateCanvases();
+            yield return null;
+            var course = root.GetComponentInChildren<CoursePreview>();
+            course.Configure(3, false);
+            Canvas.ForceUpdateCanvases();
+            yield return null;
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
         public IEnumerator DrivingSchoolCompletesSavesAndOffersCareer()
         {
             root = new GameObject("Driving school test"); root.AddComponent<GameBootstrap>();

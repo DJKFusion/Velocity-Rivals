@@ -44,6 +44,14 @@ The owner subsequently confirmed that the corrected 0.4 build script succeeded a
 
 ## Latest supplied Unity evidence
 
+The latest supplied PlayMode.log (25 October) reaches the test runner and exits
+with code 2 after repeated MissingComponentException messages: the new Course
+preview has no CanvasRenderer when RectMask2D performs clipping. CoursePreview
+now declares that dependency and its construction explicitly includes the renderer.
+The other custom graphics also declare the dependency, and menu construction adds
+it explicitly. A regression test creates all custom graphics under a clipping mask
+and forces canvas updates. Source checks pass; the corrected Unity run is pending.
+
 The 24 October Windows PlayMode report ran 11 tests: one imported-vehicle check passed; ten failed on the same invalid scenery rotation. Both box helpers have been corrected to use explicit identity rotations. The updated suite adds a focused scenery regression; a later successful build/launch was reported by the owner, without a new XML report. See [TESTING.md](TESTING.md).
 
 ## Known issues and risks to resolve in Unity

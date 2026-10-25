@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace VelocityRivals
 {
+    [RequireComponent(typeof(CanvasRenderer))]
     public sealed class CoursePreview : MaskableGraphic
     {
         readonly List<Vector2> points = new List<Vector2>();

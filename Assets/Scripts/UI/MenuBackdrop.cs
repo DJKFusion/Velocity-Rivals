@@ -4,6 +4,7 @@ using UnityEngine.UI;
 namespace VelocityRivals
 {
     /// <summary>Resolution-independent graphic; no external image or shader dependency.</summary>
+    [RequireComponent(typeof(CanvasRenderer))]
     public sealed class MenuBackdrop : MaskableGraphic
     {
         protected override void OnPopulateMesh(VertexHelper mesh)

@@ -4,6 +4,7 @@ using UnityEngine.UI;
 namespace VelocityRivals
 {
     /// <summary>A lightweight top-down HUD map; no extra camera or render texture.</summary>
+    [RequireComponent(typeof(CanvasRenderer))]
     public sealed class RaceMap : MaskableGraphic
     {
         public GameSession Session;
