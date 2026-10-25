@@ -27,6 +27,9 @@ namespace VelocityRivals
         public int CareerEventIndex { get; private set; } = -1;
         public int LastCareerMedal { get; private set; }
         public bool ResultWon { get; private set; }
+        public bool GameOver => Finished && !CanAdvanceChampionship && !ResultWon;
+        public bool RecoveringFromBoundary => boundaryNotice > 0;
+        private float boundaryNotice;
         public int ResultXp { get; private set; }
         public string UnlockedCarNames { get; private set; } = "";
         public bool FirstTourCompletion { get; private set; }
@@ -118,6 +121,7 @@ namespace VelocityRivals
             Running = true;
             elapsed = collisionCooldown = goalCooldown = 0;
             wrongWaySeconds = 0;
+            boundaryNotice = 0;
             LapTimes = new LapTiming();
             countdown = 3;
             countdownBeat = 4;
@@ -241,11 +245,17 @@ namespace VelocityRivals
                 return;
             }
             elapsed += Time.deltaTime;
+            boundaryNotice = Mathf.Max(0, boundaryNotice - Time.deltaTime);
             if (racing && ((Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame) || (Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame)))
                 Recover(Player, playerProgress.NextCheckpoint);
             collisionCooldown = Mathf.Max(0, collisionCooldown - Time.deltaTime);
             goalCooldown = Mathf.Max(0, goalCooldown - Time.deltaTime);
-            if (Player.NeedsRecovery || Player.transform.position.y < -12 || Player.transform.position.sqrMagnitude > 300 * 300)
+            if (IsOutsidePlayableArea(Player.transform.position))
+            {
+                Recover(Player, racing ? playerProgress.NextCheckpoint : 0);
+                boundaryNotice = 2.5f;
+            }
+            else if (Player.NeedsRecovery)
                 Recover(Player, racing ? playerProgress.NextCheckpoint : 0);
             if (racing) UpdateRace();
             else UpdateArena();
@@ -461,7 +471,7 @@ namespace VelocityRivals
                 racer.Car.SetInput(new DriveInput { Throttle = racer.Car.SpeedKmh > targetSpeed ? .1f : 1, Steering = Mathf.Clamp(steer, -1, 1),
                     Brake = racer.Car.SpeedKmh > targetSpeed + 12, Boost = straightAhead && racer.Car.SpeedKmh < targetSpeed && racer.Car.BoostAmount > .5f && local.z > 5 });
                 racer.Stuck = racer.Car.SpeedKmh < 4 ? racer.Stuck + Time.deltaTime : 0;
-                if (racer.Stuck > 4 || racer.Car.transform.position.y < -8 || Vector3.Dot(racer.Car.transform.up, Vector3.up) < -.5f)
+                if (racer.Stuck > 4 || IsOutsidePlayableArea(racer.Car.transform.position) || Vector3.Dot(racer.Car.transform.up, Vector3.up) < -.5f)
                 {
                     Recover(racer.Car, racing ? racer.Progress.NextCheckpoint : 0);
                     racer.Previous = racer.Car.transform.position;
@@ -469,6 +479,21 @@ namespace VelocityRivals
                 }
             }
         }
+        public bool IsOutsidePlayableArea(Vector3 position)
+        {
+            if (position.y < -4 || position.y > 60) return true;
+            if (!racing) return Mathf.Abs(position.x) > 46 || Mathf.Abs(position.z) > 51;
+            // Measure against segments, not checkpoint centres: corners and legitimate jumps stay valid.
+            position.y = 0;
+            for (int i = 0; i < track.Count; i++)
+            {
+                Vector3 a = track[i], segment = track[(i + 1) % track.Count] - a;
+                float t = Mathf.Clamp01(Vector3.Dot(position - a, segment) / Mathf.Max(.001f, segment.sqrMagnitude));
+                if ((position - (a + segment * t)).sqrMagnitude <= 16 * 16) return false;
+            }
+            return true;
+        }
+
         private void Recover(VehicleController car, int checkpoint)
         {
             if (racing)
@@ -557,8 +582,15 @@ namespace VelocityRivals
                     Box("Track segment " + i, middle - Vector3.up * .3f, new Vector3(20, .6f, length), road, facing);
                     foreach (float side in new[] { -1f, 1f })
                     {
-                        Box("Barrier", middle + facing * Vector3.right * side * 10.3f + Vector3.up * .65f, new Vector3(.5f, 1.3f, length), architecture, facing);
-                        Box("Light ribbon", middle + facing * Vector3.right * side * 10.3f + Vector3.up * 1.35f, new Vector3(.55f, .12f, length), rail, facing);
+                        Vector3 edge = middle + facing * Vector3.right * side * 10.3f;
+                        Box("Barrier", edge + Vector3.up * 1.2f, new Vector3(.7f, 2.4f, length), architecture, facing);
+                        Box("Light ribbon", edge + Vector3.up * 2.45f, new Vector3(.75f, .12f, length), rail, facing);
+                        // Framed safety fence: continuous collision backing prevents jumping between rails.
+                        var fence = Box("Safety fence", edge + Vector3.up * 4.2f, new Vector3(.7f, 3.6f, length), architecture, facing);
+                        fence.GetComponent<Renderer>().enabled = false;
+                        Box("Fence post", edge + Vector3.up * 4.2f, new Vector3(.2f, 3.6f, .2f), architecture, facing);
+                        foreach (float height in new[] { 3.3f, 4.6f, 6f })
+                            Box("Fence rail", edge + Vector3.up * height, new Vector3(.15f, .12f, length), architecture, facing);
                     }
                     // Checkpoints are logical planes; the HUD marks the next one without striping every road segment.
                     if (i % 4 == 0)

@@ -122,6 +122,7 @@ namespace VelocityRivals
                     session.StatusText + "\n" + session.LocationName.ToUpperInvariant();
                 hint.text = "WASD / triggers + left stick: drive   •   Shift / B: boost   •   Space / A: jump   •   Ctrl / X: drift\nR / Y: recover   •   Q/E / LB + stick: air roll   •   Esc / Start: pause";
                 if (session.Elapsed < 8 && !session.Finished) hint.text = session.EventObjective + "\nWASD / triggers + stick: drive • Shift / B: boost • Esc / Start: pause";
+                if (session.RecoveringFromBoundary) hint.text = "OUT OF BOUNDS — RETURNED TO SAFETY\nYour checkpoint progress is preserved. The event timer keeps running.";
             }
             else { hud.text = ""; hint.text = ""; }
         }
@@ -439,7 +440,7 @@ namespace VelocityRivals
             if (showingResults) return;
             showingResults = true;
             sound.Finish();
-            Page(session.FirstTourCompletion ? "Tour complete" : "Event complete", session.ResultText);
+            Page(session.GameOver ? "GAME OVER" : session.FirstTourCompletion ? "Tour complete" : "Event complete", session.ResultText);
             string reward = session.CanAdvanceChampionship ? "Points recorded — XP awarded after the final round" : "+" + session.ResultXp + " XP";
             Label(panel, $"{reward}\nLEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP • {SaveStore.Current.UnlockedVehicles}/6 CARS", 28, 95);
             if (!string.IsNullOrEmpty(session.UnlockedCarNames)) Label(panel, "NEW CAR UNLOCKED: " + session.UnlockedCarNames, 26, 55);
@@ -453,6 +454,12 @@ namespace VelocityRivals
                     if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
                 }));
                 Button("RESTART CHAMPIONSHIP", RestartCurrent);
+            }
+            else if (session.GameOver)
+            {
+                Label(panel, "Try again — your previously earned medals and unlocked cars are safe.", 24, 80);
+                Focus(Button("TRY AGAIN", RestartCurrent));
+                if (session.CareerEventIndex >= 0) Button("CAREER TOUR", CareerMenu);
             }
             else if (session.CareerEventIndex >= 0)
             {

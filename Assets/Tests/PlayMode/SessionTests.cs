@@ -56,6 +56,58 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator EscapedCarReturnsWithoutAdvancingCheckpointAndFailureOffersRetry()
+        {
+            root = new GameObject("Boundary and game over test"); root.AddComponent<GameBootstrap>();
+            yield return null; yield return null;
+            var session = GameSession.Instance;
+            session.StartMatch(GameMode.TimeAttack, 0, 0, Color.cyan);
+            typeof(GameSession).GetField("countdown", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(session, 0f);
+            int checkpoint = session.NextCheckpoint;
+            session.Player.Respawn(new Vector3(240, 1, 240), Quaternion.identity);
+            yield return null; yield return new WaitForFixedUpdate(); yield return null;
+            Assert.IsFalse(session.IsOutsidePlayableArea(session.Player.transform.position));
+            Assert.IsTrue(session.RecoveringFromBoundary);
+            Assert.AreEqual(checkpoint, session.NextCheckpoint);
+            Assert.IsFalse(session.Finished);
+            typeof(GameSession).GetField("elapsed", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(session, 601f);
+            yield return null; yield return null;
+            Assert.IsTrue(session.GameOver);
+            Assert.IsFalse(session.Player.ControlsEnabled);
+            bool heading = false;
+            foreach (var label in Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None))
+                heading |= label.text == "GAME OVER";
+            Assert.IsTrue(heading);
+            UnityEngine.UI.Button retry = null;
+            foreach (var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                if (button.name == "TRY AGAIN") retry = button;
+            Assert.IsNotNull(retry);
+            retry.onClick.Invoke(); yield return null;
+            Assert.IsFalse(session.Finished);
+            Assert.AreEqual(1, session.PlayerLap);
+        }
+
+        [UnityTest]
+        public IEnumerator BoundariesCoverAllThemesAndAllowRoadJumps()
+        {
+            root = new GameObject("All boundary test");
+            var session = root.AddComponent<GameSession>();
+            for (int environment = 0; environment < 5; environment++)
+            {
+                session.StartMatch(GameMode.TimeAttack, environment, 0, Color.cyan);
+                foreach (var point in session.Circuit)
+                    Assert.IsFalse(session.IsOutsidePlayableArea(point + Vector3.up * 8), "Legal jump rejected");
+                Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(240, 0, 240)));
+                Assert.IsTrue(session.IsOutsidePlayableArea(session.Circuit[0] + Vector3.down * 5));
+                session.StartMatch(GameMode.FreePlay, environment, 0, Color.cyan);
+                Assert.IsFalse(session.IsOutsidePlayableArea(new Vector3(40, 8, 45)));
+                Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(47, 1, 0)));
+                Assert.IsTrue(session.IsOutsidePlayableArea(new Vector3(0, 1, 52)));
+                yield return null;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator SpawnsVehicleAndPauseMenuStateReturnsCleanly()
         {
             root = new GameObject("Test session");
