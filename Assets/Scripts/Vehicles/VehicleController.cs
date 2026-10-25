@@ -15,6 +15,9 @@ namespace VelocityRivals
         private Vector3 networkVelocity;
         private bool networkBoost;
         public Vector3 Velocity => NetworkProxy ? networkVelocity : body == null ? Vector3.zero : body.linearVelocity;
+        // Rules must use the physics pose: an interpolated Transform can still show
+        // the pre-teleport position during the frame in which recovery occurs.
+        public Vector3 PhysicsPosition => body != null && !NetworkProxy ? body.position : transform.position;
         public float SpeedKmh => Velocity.magnitude * 3.6f;
         public float BoostAmount { get; private set; } = 1f;
         public bool Grounded { get; private set; }

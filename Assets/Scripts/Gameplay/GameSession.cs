@@ -143,7 +143,7 @@ namespace VelocityRivals
             Quaternion facing = racing ? Quaternion.LookRotation(track[1] - track[0]) : Quaternion.identity;
             Player = SpawnCar(selectedVehicle, start, facing, paint, true);
             Player.AllowLocalRecovery = !racing;
-            previousPlayer = Player.transform.position;
+            previousPlayer = Player.PhysicsPosition;
             playerProgress = racing ? new RaceProgress(track.Count, TotalLaps) : null;
             if (!NetworkControlled && (mode == GameMode.Championship || mode == GameMode.ArenaClash || mode == GameMode.BoostBattle))
             {
@@ -269,7 +269,7 @@ namespace VelocityRivals
                 Recover(Player, playerProgress.NextCheckpoint);
             collisionCooldown = Mathf.Max(0, collisionCooldown - Time.deltaTime);
             goalCooldown = Mathf.Max(0, goalCooldown - Time.deltaTime);
-            if (IsOutsidePlayableArea(Player.transform.position))
+            if (IsOutsidePlayableArea(Player.PhysicsPosition))
             {
                 Recover(Player, racing ? playerProgress.NextCheckpoint : 0);
                 boundaryNotice = 2.5f;
@@ -300,10 +300,10 @@ namespace VelocityRivals
         private void UpdateRace()
         {
             int completedBefore = playerProgress.CompletedLaps;
-            TryCheckpoint(Player.transform.position, previousPlayer, playerProgress);
+            TryCheckpoint(Player.PhysicsPosition, previousPlayer, playerProgress);
             if (playerProgress.CompletedLaps > completedBefore && !playerProgress.Complete) lapNotice = 3;
             LapTimes.CompleteLap(playerProgress.CompletedLaps, elapsed);
-            previousPlayer = Player.transform.position;
+            previousPlayer = Player.PhysicsPosition;
             int gateIndex = playerProgress.NextCheckpoint;
             Vector3 trackForward = (track[gateIndex] - track[(gateIndex + track.Count - 1) % track.Count]).normalized;
             Vector3 velocity = Player.GetComponent<Rigidbody>().linearVelocity;
@@ -312,8 +312,9 @@ namespace VelocityRivals
             foreach (var racer in racers)
             {
                 if (racer.Progress.Complete) continue;
-                TryCheckpoint(racer.Car.transform.position, racer.Previous, racer.Progress);
-                racer.Previous = racer.Car.transform.position;
+                if (IsOutsidePlayableArea(racer.Car.PhysicsPosition)) Recover(racer.Car, racer.Progress.NextCheckpoint);
+                else TryCheckpoint(racer.Car.PhysicsPosition, racer.Previous, racer.Progress);
+                racer.Previous = racer.Car.PhysicsPosition;
                 if (racer.Progress.Complete)
                 {
                     racer.FinishTime = elapsed;
@@ -324,7 +325,7 @@ namespace VelocityRivals
             int place = 1;
             foreach (var racer in racers)
                 if (racer.Progress.Progress > playerProgress.Progress || (racer.Progress.Progress == playerProgress.Progress &&
-                    Vector3.Distance(racer.Car.transform.position, track[playerProgress.NextCheckpoint]) < Vector3.Distance(Player.transform.position, track[playerProgress.NextCheckpoint]))) place++;
+                    Vector3.Distance(racer.Car.PhysicsPosition, track[playerProgress.NextCheckpoint]) < Vector3.Distance(Player.PhysicsPosition, track[playerProgress.NextCheckpoint]))) place++;
             StatusText = (mode == GameMode.Championship ? "CHAMPIONSHIP · ROUND " + (round + 1) + "/3 · PLACE " + place + "/4" : "TIME ATTACK · PERSONAL GHOST") +
                 "\nLAP " + PlayerLap + "/" + TotalLaps + " · CHECKPOINT " + playerProgress.NextCheckpoint + "/" + track.Count + " · " + elapsed.ToString("0.00") + "s";
             if (playerProgress.Complete)
@@ -507,10 +508,10 @@ namespace VelocityRivals
                 racer.Car.SetInput(new DriveInput { Throttle = racer.Car.SpeedKmh > targetSpeed ? .1f : 1, Steering = Mathf.Clamp(steer, -1, 1),
                     Brake = racer.Car.SpeedKmh > targetSpeed + 12, Boost = straightAhead && racer.Car.SpeedKmh < targetSpeed && racer.Car.BoostAmount > .5f && local.z > 5 });
                 racer.Stuck = racer.Car.SpeedKmh < 4 ? racer.Stuck + Time.deltaTime : 0;
-                if (racer.Stuck > 4 || IsOutsidePlayableArea(racer.Car.transform.position) || Vector3.Dot(racer.Car.transform.up, Vector3.up) < -.5f)
+                if (racer.Stuck > 4 || IsOutsidePlayableArea(racer.Car.PhysicsPosition) || Vector3.Dot(racer.Car.transform.up, Vector3.up) < -.5f)
                 {
                     Recover(racer.Car, racing ? racer.Progress.NextCheckpoint : 0);
-                    racer.Previous = racer.Car.transform.position;
+                    racer.Previous = racer.Car.PhysicsPosition;
                     racer.Stuck = 0;
                 }
             }

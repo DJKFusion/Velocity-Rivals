@@ -44,6 +44,15 @@ The owner subsequently confirmed that the corrected 0.4 build script succeeded a
 
 ## Latest supplied Unity evidence
 
+The subsequent 25 October PlayMode XML reports 20 passed and one failed out of
+21 tests. The missing UI renderer and package import exceptions are absent from
+that log. Recovery incorrectly advanced the next checkpoint from 1 to 2 in
+EscapedCarReturnsWithoutAdvancingCheckpointAndFailureOffersRetry. Checkpoint and
+boundary rules now read Rigidbody.position through PhysicsPosition instead of
+the interpolated display Transform, which can retain the pre-recovery pose.
+The regression keeps the checkpoint assertion and checks several subsequent
+physics frames as well. Corrected Unity execution remains pending.
+
 The latest supplied PlayMode.log (25 October) reaches the test runner and exits
 with code 2 after repeated MissingComponentException messages: the new Course
 preview has no CanvasRenderer when RectMask2D performs clipping. CoursePreview

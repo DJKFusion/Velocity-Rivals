@@ -138,10 +138,17 @@ namespace VelocityRivals.Tests
             typeof(GameSession).GetField("countdown", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(session, 0f);
             int checkpoint = session.NextCheckpoint;
             session.Player.Respawn(new Vector3(240, 1, 240), Quaternion.identity);
+            Assert.AreEqual(new Vector3(240, 1, 240), session.Player.PhysicsPosition,
+                "Rules must observe a teleport immediately, without waiting for render interpolation.");
             yield return null; yield return new WaitForFixedUpdate(); yield return null;
             Assert.IsFalse(session.IsOutsidePlayableArea(session.Player.transform.position));
             Assert.IsTrue(session.RecoveringFromBoundary);
             Assert.AreEqual(checkpoint, session.NextCheckpoint);
+            for (int frame = 0; frame < 3; frame++)
+            {
+                yield return new WaitForFixedUpdate(); yield return null;
+                Assert.AreEqual(checkpoint, session.NextCheckpoint, "Interpolation after recovery must not cross a gate.");
+            }
             Assert.IsFalse(session.Finished);
             typeof(GameSession).GetField("elapsed", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(session, 601f);
             yield return null; yield return null;
