@@ -36,7 +36,7 @@ Pass `-Unity 'C:\path\to\Editor\Unity.exe'` for a different installation, or set
 - **Five themes:** Neon City Circuit, Skyfall Speedway, Desert Velocity, Cyber Dome and Glacier Rush. Layouts are generated; arenas share a common base layout.
 - **Six original cars:** Viper, Bulwark, Phantom, Apex, Nomad and Comet. Earn XP to unlock the garage, with an additional car each 500 XP.
 - **Garage:** a lit rotating car preview, vehicle selection, paint, wheel scale, trail color, decals, spoilers and finishes.
-- **Presentation:** nine original synthwave songs, skies/clouds/stars, road textures/normals, sky reflections, headlights, drift smoke, tyre trails, bloom, ACES and color grading. Graphics quality and reduced-effects options are available.
+- **Presentation:** twelve original synthwave songs, skies/clouds/stars, road textures/normals, sky reflections, headlights, drift smoke, tyre trails, bloom, ACES and color grading. Graphics quality and reduced-effects options are available.
 - **Progress:** local profile backup, achievements, career medals, per-event/environment/vehicle records and Time Attack ghosts. Existing version-1 profiles migrate to schema 2.
 
 The original car models and generated surface/audio files have been checked with independent tools. The integrated game still requires Unity review; the visual features are not a measured claim of photorealism or 60 FPS.
@@ -59,7 +59,7 @@ Start in **Free Play → Cyber Dome** to learn the car. Career time/score target
 
 ## Music and saves
 
-Nine songs provide about 11.4 minutes of original synthwave. **Settings → Soundtrack** shows the current song and allows skipping or volume adjustment. To import your own songs, stop Play Mode and choose **Velocity Rivals → Music → Import Menu Track / Import Race Track**, then select an MP3, WAV or OGG. Restart Play Mode to refresh the playlist and rebuild the EXE to include new music. [Music guide](docs/MUSIC.md).
+Twelve songs provide about 15.7 minutes of original synthwave. In **Settings → Soundtrack**, choose **Open Custom Music Folder**, put OGG/WAV/MP3 songs into **Menu** or **Race**, then **Reload Custom Music**. No rebuild is required for personal songs. To bundle songs for distribution, import them through **Velocity Rivals → Music → Import Menu Track / Import Race Track** in Unity and rebuild. [Music guide](docs/MUSIC.md).
 
 Profiles and ghosts normally live in `%USERPROFILE%\AppData\LocalLow\DJKFusion\Velocity Rivals`. Keep backups before manually editing saves. Version-1 records with no track/car identity remain visible as earlier-version records; they are not assigned an invented track.
 

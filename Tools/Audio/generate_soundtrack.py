@@ -115,6 +115,18 @@ def compose(name, playlist, bpm, roots, seed, intensity, bars=24, style=0):
 if __name__ == '__main__':
     import sys
     report = ROOT / 'Tools/Audio/validation.json'
+    if '--extra' in sys.argv:
+        tracks = json.loads(report.read_text())['tracks']
+        additions = [
+            compose('04 - Electric Afterglow', 'Menu', 104, (48, 43, 46, 41), 1010, .65, 40, 5),
+            compose('07 - Nightshift Run', 'Race', 132, (43, 46, 41, 48), 1111, 1.05, 48, 6),
+            compose('08 - Apex Signal', 'Race', 148, (46, 41, 44, 39), 1212, 1.15, 48, 7),
+        ]
+        names = {t['track'] for t in additions}
+        tracks = [t for t in tracks if t['track'] not in names] + additions
+        report.write_text(json.dumps({'generator': 'Original additive synthesis; no external samples', 'tracks': tracks}, indent=2) + '\n')
+        print(json.dumps(additions, indent=2))
+        raise SystemExit(0)
     tracks = json.loads(report.read_text())['tracks'][:3] if '--expand' in sys.argv else [
         compose('01 - Midnight Grid', 'Menu', 100, (45, 41, 48, 43), 101, .65),
         compose('01 - Neon Pursuit', 'Race', 128, (45, 48, 43, 41), 202, 1),
@@ -127,6 +139,9 @@ if __name__ == '__main__':
         compose('04 - Chrome Horizon', 'Race', 124, (47, 50, 45, 43), 707, .95, 48, 2),
         compose('05 - Ion Storm', 'Race', 138, (40, 43, 47, 38), 808, 1.1, 48, 3),
         compose('06 - Final Overdrive', 'Race', 144, (45, 41, 43, 48), 909, 1.2, 48, 4),
+        compose('04 - Electric Afterglow', 'Menu', 104, (48, 43, 46, 41), 1010, .65, 40, 5),
+        compose('07 - Nightshift Run', 'Race', 132, (43, 46, 41, 48), 1111, 1.05, 48, 6),
+        compose('08 - Apex Signal', 'Race', 148, (46, 41, 44, 39), 1212, 1.15, 48, 7),
     ])
     report.write_text(json.dumps({'generator': 'Original additive synthesis; no external samples', 'tracks': tracks}, indent=2) + '\n')
     print(json.dumps(tracks, indent=2))

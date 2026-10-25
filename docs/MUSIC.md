@@ -2,7 +2,7 @@
 
 ## The included soundtrack
 
-Nine original electronic/synthwave tracks are included, totaling about 11.4 minutes:
+Twelve original electronic/synthwave tracks are included, totaling about 15.7 minutes:
 
 | Track | Used in | Tempo | Length |
 | --- | --- | --- | --- |
@@ -15,10 +15,31 @@ Nine original electronic/synthwave tracks are included, totaling about 11.4 minu
 | Chrome Horizon | Events | 124 BPM | 92.9 seconds |
 | Ion Storm | Events | 138 BPM | 83.5 seconds |
 | Final Overdrive | Events | 144 BPM | 80 seconds |
+| Electric Afterglow | Menus | 104 BPM | 92.3 seconds |
+| Nightshift Run | Events | 132 BPM | 87.3 seconds |
+| Apex Signal | Events | 148 BPM | 77.8 seconds |
 
 The game selects the menu or race playlist automatically, crossfades between tracks, shuffles each playlist without consecutive repeats when it has multiple tracks, and lowers music during pause. In-game **Settings → Soundtrack** shows the current song and offers **Next Track**. Music volume is saved in your profile. These integrations still require an audible test in Unity and the Windows player.
 
-## Add your own song — no coding
+## Add songs in the built game — no rebuild
+
+1. Open **Settings → Soundtrack → Open Custom Music Folder**.
+2. Put OGG, WAV or MP3 files in its **Menu** or **Race** subfolder.
+3. Return to the game and choose **Reload Custom Music**. Songs mix with the supplied soundtrack.
+
+The normal Windows location is `%USERPROFILE%\AppData\LocalLow\DJKFusion\Velocity Rivals\CustomMusic`.
+Files are loaded at launch too. Each playlist accepts up to 30 custom songs, up to
+30 MB per file. Unsupported or unreadable songs are skipped and the soundtrack
+page reports how many loaded. Remove a song from the folder and reload to remove
+it from the playlist. Personal songs are local to that computer; they are not
+automatically included in builds you distribute.
+
+The implementation and developer comments are in
+`Assets/Scripts/Audio/SoundDirector.CustomMusic.cs`. `CustomMusicFolder` determines
+the location; `ReloadCustomMusic()` reloads the playlists. UnityWebRequest loads
+local file URLs only; this feature does not download music from websites.
+
+## Bundle your own songs in the project
 
 1. Open the updated project in Unity and stop Play Mode.
 2. Choose **Velocity Rivals → Music → Import Race Track** (or **Import Menu Track**).
@@ -33,7 +54,7 @@ To use only your music, remove the supplied tracks from the playlists **in Unity
 
 ## Include music in the downloadable game
 
-After adding songs, use **Velocity Rivals → Build Windows ZIP**. Imported music is bundled automatically. Copying songs beside an already-built EXE does not add them; rebuild after changing the playlist. Use songs you own or have permission to distribute when sharing a build.
+After importing songs in Unity, use **Velocity Rivals → Build Windows ZIP**. Imported music is bundled automatically. For personal songs without rebuilding, use the CustomMusic folders above. Use songs you own or have permission to distribute when sharing a build.
 
 ## If it is silent
 
@@ -45,6 +66,6 @@ After adding songs, use **Velocity Rivals → Build Windows ZIP**. Imported musi
 
 ## Source and checks
 
-`Tools/Audio/generate_soundtrack.py` creates the nine compositions using additive synthesis, generated percussion and a deterministic random seed. No external samples or recordings are used. It requires Python with NumPy and FFmpeg with libvorbis. Regenerating overwrites the nine named supplied tracks and `Tools/Audio/validation.json`; custom songs with other filenames are unaffected. `--expand` preserves the first three and regenerates only the six additions.
+`Tools/Audio/generate_soundtrack.py` creates the twelve compositions using additive synthesis, generated percussion and deterministic random seeds. No external samples or recordings are used. It requires Python with NumPy and FFmpeg with libvorbis. Regenerating overwrites the supplied tracks and `Tools/Audio/validation.json`; custom songs with other filenames are unaffected. `--extra` regenerates only Electric Afterglow, Nightshift Run and Apex Signal.
 
-The generator decodes the actual OGG deliveries and checks duration, stereo samples, finite values, audible signal level and peak below 1. All nine passed. This is file validation, not a listening review or Unity playback test. Imported clips are streamed; only the two crossfade sources play concurrently.
+The generator decodes the actual OGG deliveries and checks duration, stereo samples, finite values, audible signal level and peak below 1. All twelve passed. This is file validation, not a listening review or Unity playback test. Imported clips are streamed; only the two crossfade sources play concurrently.

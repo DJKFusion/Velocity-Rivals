@@ -66,8 +66,8 @@ report = json.loads((root / 'Tools/Blender/Generated/validation.json').read_text
 if len(report['assets']) != 8 or not all(a['passed'] for a in report['assets']):
     errors.append('Blender report does not contain eight passing exports.')
 audio_report = json.loads((root / 'Tools/Audio/validation.json').read_text())
-if len(audio_report['tracks']) != 9 or not all(track['passed'] for track in audio_report['tracks']):
-    errors.append('Audio report does not contain nine passing generated tracks.')
+if len(audio_report['tracks']) != 12 or not all(track['passed'] for track in audio_report['tracks']):
+    errors.append('Audio report does not contain twelve passing generated tracks.')
 for track in audio_report['tracks']:
     path = root / 'Assets/Resources/Music' / track['playlist'] / (track['track'] + '.ogg')
     if not path.is_file() or path.read_bytes()[:4] != b'OggS' or path.stat().st_size != track['bytes']:
@@ -77,6 +77,6 @@ if errors:
     raise SystemExit(1)
 print(f'PASS JSON manifests, {len(guids)} unique asset GUIDs, all asset references, six vehicle prefab/stat/model sets.')
 print(f'PASS C# syntax parsing: {parsed} files.' if parsed else 'C# syntax was not checked.')
-print('PASS nine supplied OGG files match the audio validation report.')
+print('PASS twelve supplied OGG files match the audio validation report.')
 print('PASS default single-player source boundaries; Unity build guard verifies the actual player assemblies.')
 print('Unity import, API compilation, tests, gameplay, multiplayer, builds and performance remain separate checks.')

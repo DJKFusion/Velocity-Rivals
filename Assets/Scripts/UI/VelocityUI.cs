@@ -21,6 +21,7 @@ namespace VelocityRivals
         private Text hint;
         private Text title;
         private Text nowPlaying;
+        private Text customMusicStatus;
         private Text countdownLabel;
         private int careerSelection;
         private int recordsPage;
@@ -105,6 +106,7 @@ namespace VelocityRivals
             if (session.ActionEnabled && session.Elapsed < .7f) countdownLabel.text = "GO!";
             mapPanel.SetActive(session.Running && !session.Finished && !session.Paused);
             if (nowPlaying) nowPlaying.text = sound.PlaylistName.ToUpperInvariant() + " PLAYLIST\n" + sound.NowPlaying;
+            if (customMusicStatus) customMusicStatus.text = sound.CustomMusicStatus;
 
             bool escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
             bool back = escape || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
@@ -135,6 +137,7 @@ namespace VelocityRivals
         {
             if (pageRoot) { pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             title = null; nowPlaying = null; panel = null; pageRoot = null; pageBack = null;
+            customMusicStatus = null;
             showcaseName = null; showcaseStats = null; showcaseProgress = null; pageFade = null;
         }
         private static string LapDisplay(float seconds) => seconds > 0 ? seconds.ToString("0.00") + "s" : "—";
@@ -367,6 +370,8 @@ namespace VelocityRivals
             Cycle("Effects volume", volumes, () => Mathf.RoundToInt(p.effectsVolume * 10), value => { p.effectsVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save(); });
             Button("DISPLAY & EFFECTS", () => DisplaySettings(paused));
             Cycle("Steering sensitivity", new[] { "50%", "75%", "100%", "125%", "150%" }, () => Mathf.RoundToInt((p.steeringSensitivity - .5f) * 4), value => { p.steeringSensitivity = .5f + value * .25f; SaveStore.Save(); });
+            Cycle("Camera sensitivity", new[] { "50%", "75%", "100%", "125%", "150%" }, () => Mathf.RoundToInt((p.cameraSensitivity - .5f) * 4), value => { p.cameraSensitivity = .5f + value * .25f; SaveStore.Save(); });
+            Cycle("Camera vertical", new[] { "Normal", "Inverted" }, () => p.invertCameraY ? 1 : 0, value => { p.invertCameraY = value == 1; SaveStore.Save(); });
             Label(panel, "Keyboard: WASD drive, Shift boost, Space jump, Ctrl drift, Q/E roll, R recover.\nGamepad: RT/LT drive, stick steer, A jump, B boost, X drift, Y recover.\nEsc / Start pauses. Full controls are under HOW TO PLAY.", 22, 140);
             Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); });
         }
@@ -393,6 +398,10 @@ namespace VelocityRivals
             nowPlaying = Label(panel, "", 32, 120);
             Label(panel, $"{sound.MenuTrackCount} menu tracks • {sound.RaceTrackCount} race tracks\nEach playlist shuffles without repeating a track until the cycle ends.", 24, 100);
             Focus(Button("NEXT TRACK", () => sound.NextTrack()));
+            Button("OPEN CUSTOM MUSIC FOLDER",sound.OpenCustomMusicFolder);
+            Button("RELOAD CUSTOM MUSIC",sound.ReloadCustomMusic);
+            Label(panel,"Add OGG, WAV or MP3 songs to the Menu or Race folders.\nChoose RELOAD CUSTOM MUSIC to mix them into the soundtrack.\nUp to 30 songs per playlist, 30 MB each.",22,115);
+            customMusicStatus=Label(panel,sound.CustomMusicStatus,20,65);
             string[] volumes = { "0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%" };
             Cycle("Music volume", volumes, () => Mathf.RoundToInt(SaveStore.Current.musicVolume * 10), value => {
                 SaveStore.Current.musicVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save();
@@ -403,6 +412,7 @@ namespace VelocityRivals
         private void HowToPlay(bool paused)
         {
             Page("How to play", "Start with Free Play in Cyber Dome to learn your car.");
+            Label(panel,"LOOK AROUND\nRight stick rotates the camera. Click the right stick (R3), or press C, to centre it.\nAfter releasing the stick, the camera returns behind your car.",23,115);
             Label(panel, "DRIVE\nW / S accelerate and reverse • A / D steer\nShift boost • Ctrl handbrake • Space jump, press again for an aerial jump\nQ / E roll in the air • R recover your car\nController: triggers + left stick, B boost, X drift, A jump, Y recover.", 24, 205);
             Label(panel, "WIN YOUR EVENT\nChampionship / Time Attack: follow the yellow map gate and complete three laps.\nArena Clash: push the white core into the orange goal. First to five wins.\nBoost Battle: hit opponents at speed; collect shields, overdrive and pulse pickups.\nStunt Rush: jump, rotate and land upright. Reach 1,000 points before time runs out.", 23, 215);
             Label(panel, "Esc / Start pauses. Earn XP to unlock cars in the garage.\nCyan on the map is you, orange is another vehicle, yellow is the next gate.", 23, 85);

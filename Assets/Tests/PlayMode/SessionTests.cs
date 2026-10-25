@@ -33,6 +33,67 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator CameraLookClampsRecentresAndSupportsInvertedY()
+        {
+            root=new GameObject("Camera orbit test",typeof(Camera),typeof(FollowCamera));
+            var follow=root.GetComponent<FollowCamera>();
+            follow.ApplyLook(new Vector2(1,1),1,false);
+            Assert.Greater(follow.LookAngles.x,0);Assert.AreEqual(45,follow.LookAngles.y);
+            follow.ApplyLook(Vector2.zero,0,true);Assert.AreEqual(Vector2.zero,follow.LookAngles);
+            SaveStore.Current.invertCameraY=true;
+            follow.ApplyLook(Vector2.up,1,false);Assert.AreEqual(-25,follow.LookAngles.y);
+            for(int i=0;i<50;i++)follow.ApplyLook(Vector2.zero,.1f,false);
+            Assert.AreEqual(Vector2.zero,follow.LookAngles);
+            follow.ApplyLook(Vector2.right,0,false);Assert.AreEqual(Vector2.zero,follow.LookAngles);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CustomMusicLoadsLocalWaveAndReloadDoesNotDuplicateTracks()
+        {
+            string folder=Path.Combine(directory,"CustomMusic","Menu");Directory.CreateDirectory(folder);
+            string file=Path.Combine(folder,"Local song.wav");
+            const int rate=22050, samples=22050;
+            using(var writer=new BinaryWriter(File.Create(file)))
+            {
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));writer.Write(36+samples*2);
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "));writer.Write(16);
+                writer.Write((short)1);writer.Write((short)1);writer.Write(rate);writer.Write(rate*2);
+                writer.Write((short)2);writer.Write((short)16);
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("data"));writer.Write(samples*2);
+                for(int i=0;i<samples;i++)writer.Write((short)(Mathf.Sin(i*2*Mathf.PI*220/rate)*4000));
+            }
+            root=new GameObject("Custom music test",typeof(SoundDirector));
+            var sound=root.GetComponent<SoundDirector>();int bundled=sound.MenuTrackCount;
+            float deadline=Time.realtimeSinceStartup+10;
+            while(sound.MenuTrackCount==bundled && Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.AreEqual(bundled+1,sound.MenuTrackCount,sound.CustomMusicStatus);
+            sound.ReloadCustomMusic();
+            deadline=Time.realtimeSinceStartup+10;
+            while(sound.CustomMusicStatus.StartsWith("Loading") && Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.AreEqual(bundled+1,sound.MenuTrackCount,sound.CustomMusicStatus);
+            StringAssert.Contains("1 custom songs loaded",sound.CustomMusicStatus);
+            File.Delete(file);sound.ReloadCustomMusic();yield return null;
+            Assert.AreEqual(bundled,sound.MenuTrackCount);
+        }
+
+        [UnityTest]
+        public IEnumerator RechargeLaneRestoresBoostThroughItsTrigger()
+        {
+            root=new GameObject("Recharge lane test",typeof(GameSession));
+            var session=root.GetComponent<GameSession>();session.StartMatch(GameMode.TimeAttack,0,0,Color.cyan);
+            typeof(GameSession).GetField("countdown",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(session,0f);
+            session.Player.ControlsEnabled=true;
+            typeof(VehicleController).GetProperty("BoostAmount").SetValue(session.Player,.1f);
+            var pad=Object.FindFirstObjectByType<TrackBoostPad>();Assert.IsNotNull(pad);
+            session.Player.Respawn(pad.transform.position,Quaternion.identity);
+            yield return new WaitForFixedUpdate();yield return new WaitForFixedUpdate();yield return null;
+            Assert.GreaterOrEqual(session.Player.BoostAmount,.55f);
+            Assert.Less(session.Player.BoostAmount,.8f,"Multiple car colliders must not recharge repeatedly.");
+            StringAssert.Contains("BOOST RECHARGED",session.RaceNotice);
+        }
+
+        [UnityTest]
         public IEnumerator CustomGraphicsProvideRenderersAndCoursePreviewSurvivesClipping()
         {
             root = new GameObject("Custom graphics regression", typeof(Canvas));

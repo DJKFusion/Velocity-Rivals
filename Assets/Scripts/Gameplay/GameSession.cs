@@ -33,7 +33,9 @@ namespace VelocityRivals
         public bool RecoveringFromBoundary => boundaryNotice > 0;
         private float boundaryNotice;
         private float lapNotice;
-        public string RaceNotice => lapNotice > 0 ? (PlayerLap == TotalLaps ? "FINAL LAP" : "LAP " + PlayerLap + " / " + TotalLaps) :
+        private float rechargeNotice;
+        public void NotifyRecharge() { rechargeNotice = 2; }
+        public string RaceNotice => rechargeNotice > 0 ? "BOOST RECHARGED  +45%" : lapNotice > 0 ? (PlayerLap == TotalLaps ? "FINAL LAP" : "LAP " + PlayerLap + " / " + TotalLaps) :
             racing && RemainingTime <= 60 ? "FINAL MINUTE — FINISH THE RACE" : "";
         public int ResultXp { get; private set; }
         public string UnlockedCarNames { get; private set; } = "";
@@ -129,6 +131,7 @@ namespace VelocityRivals
             wrongWaySeconds = 0;
             boundaryNotice = 0;
             lapNotice = 0;
+            rechargeNotice = 0;
             LapTimes = new LapTiming();
             countdown = 3;
             countdownBeat = 4;
@@ -264,6 +267,7 @@ namespace VelocityRivals
             elapsed += Time.deltaTime;
             boundaryNotice = Mathf.Max(0, boundaryNotice - Time.deltaTime);
             lapNotice = Mathf.Max(0, lapNotice - Time.deltaTime);
+            rechargeNotice = Mathf.Max(0, rechargeNotice - Time.deltaTime);
             bool manualRecovery = (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame) || (Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame);
             if (racing && manualRecovery)
                 Recover(Player, playerProgress.NextCheckpoint);
@@ -603,6 +607,25 @@ namespace VelocityRivals
             RenderSettings.ambientSkyColor = new Color(.48f, .56f, .68f);
             RenderSettings.ambientEquatorColor = new Color(.32f, .38f, .46f);
             RenderSettings.ambientGroundColor = new Color(.18f, .21f, .27f);
+            // Distinct light palettes keep each district readable without the same blue cast everywhere.
+            if(environment==2)
+            {
+                RenderSettings.ambientSkyColor=new Color(.64f,.69f,.76f);
+                RenderSettings.ambientEquatorColor=new Color(.50f,.42f,.32f);
+                RenderSettings.ambientGroundColor=new Color(.28f,.21f,.15f);
+            }
+            else if(environment==1)
+            {
+                RenderSettings.ambientSkyColor=new Color(.64f,.64f,.78f);
+                RenderSettings.ambientEquatorColor=new Color(.46f,.37f,.43f);
+            }
+            else if(environment==4)
+            {
+                RenderSettings.ambientSkyColor=new Color(.64f,.76f,.85f);
+                RenderSettings.ambientEquatorColor=new Color(.42f,.54f,.62f);
+                RenderSettings.ambientGroundColor=new Color(.32f,.42f,.48f);
+            }
+            RenderSettings.reflectionIntensity=1.15f;
             RenderSettings.ambientLight = new Color(.35f, .4f, .5f);
             RenderSettings.fog = true; RenderSettings.fogColor = new Color(.04f, .06f, .12f); RenderSettings.fogDensity = .0025f;
             track.Clear();
@@ -630,6 +653,26 @@ namespace VelocityRivals
                             Box("Fence rail", edge + Vector3.up * height, new Vector3(.15f, .12f, length), architecture, facing);
                     }
                     // Checkpoints are logical planes; the HUD marks the next one without striping every road segment.
+                    if (i % Mathf.Max(1,segments/4) == segments/8)
+                    {
+                        Vector3 padPosition=middle+facing*Vector3.right*(i%2==0?4:-4);
+                        for(int stripe=0;stripe<3;stripe++)
+                        {
+                            var glow=Box("Boost recharge marking",padPosition+facing*new Vector3(0,.04f,stripe*1.5f-1.5f),new Vector3(4,.06f,.45f),rail,facing);
+                            Destroy(glow.GetComponent<Collider>());
+                        }
+                        var pad=new GameObject("Boost recharge lane",typeof(BoxCollider),typeof(TrackBoostPad));
+                        pad.transform.SetParent(world);pad.transform.SetPositionAndRotation(padPosition+Vector3.up,facing);
+                        var trigger=pad.GetComponent<BoxCollider>();trigger.isTrigger=true;trigger.size=new Vector3(4,3,6);
+                    }
+                    if(i%8==0 && SaveStore.Current.quality>0)
+                    {
+                        var lamp=new GameObject("Road lighting",typeof(Light));lamp.transform.SetParent(world);
+                        lamp.transform.position=middle+Vector3.up*7;
+                        lamp.transform.rotation=Quaternion.Euler(90,0,0);
+                        var spot=lamp.GetComponent<Light>();spot.type=LightType.Spot;spot.range=22;spot.spotAngle=115;
+                        spot.intensity=32;spot.color=Color.Lerp(Color.white,accent,.22f);spot.shadows=LightShadows.None;
+                    }
                     if (i % 4 == 0)
                     {
                         Box("Gate left", a + facing * Vector3.left * 9.8f + Vector3.up * 3, new Vector3(.3f, 6, .3f), rail);

@@ -6,7 +6,7 @@ namespace VelocityRivals
     /// <summary>Authored control points, rounded into evenly spaced closed circuits.</summary>
     public static class CircuitLayout
     {
-        public const int Revision = 2;
+        public const int Revision = 3;
         public readonly struct Point
         {
             public readonly float X, Z;

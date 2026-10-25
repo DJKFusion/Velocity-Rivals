@@ -40,6 +40,8 @@ namespace VelocityRivals
         public int quality = 1;
         public int difficulty = 1;
         public float steeringSensitivity = 1;
+        public float cameraSensitivity = 1;
+        public bool invertCameraY;
         public List<RaceRecord> records = new List<RaceRecord>();
         public List<string> achievements = new List<string>();
         public int Level => 1 + xp / 500;
@@ -90,6 +92,7 @@ namespace VelocityRivals
                     profile.quality = Mathf.Clamp(profile.quality, 0, 2);
                     profile.difficulty = Mathf.Clamp(profile.difficulty, 0, 2);
                     if (profile.steeringSensitivity < .5f || profile.steeringSensitivity > 1.5f || float.IsNaN(profile.steeringSensitivity)) profile.steeringSensitivity = 1;
+                    if (profile.cameraSensitivity < .5f || profile.cameraSensitivity > 1.5f || float.IsNaN(profile.cameraSensitivity)) profile.cameraSensitivity = 1;
                     profile.masterVolume = SafeVolume(profile.masterVolume, .8f);
                     profile.musicVolume = SafeVolume(profile.musicVolume, .3f);
                     profile.effectsVolume = SafeVolume(profile.effectsVolume, .75f);

@@ -20,6 +20,7 @@ namespace VelocityRivals
         public Vector3 PhysicsPosition => body != null && !NetworkProxy ? body.position : transform.position;
         public float SpeedKmh => Velocity.magnitude * 3.6f;
         public float BoostAmount { get; private set; } = 1f;
+        public void RefillBoost(float amount) { BoostAmount = Mathf.Clamp01(BoostAmount + Mathf.Max(0,amount)); }
         public bool Grounded { get; private set; }
         public int StuntScore { get; private set; }
         public bool IsBoosting => NetworkProxy ? networkBoost : ControlsEnabled && input.Boost && BoostAmount > .01f;

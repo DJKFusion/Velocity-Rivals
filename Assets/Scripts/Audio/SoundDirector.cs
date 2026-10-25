@@ -5,7 +5,7 @@ namespace VelocityRivals
 {
     public enum GameCue { Countdown, Go, Goal, Pickup, Impact, Knockout, Jump, Boost, Drift }
     /// <summary>Streamed menu/race playlists with crossfades and original synthesized effects.</summary>
-    public sealed class SoundDirector : MonoBehaviour
+    public sealed partial class SoundDirector : MonoBehaviour
     {
         private readonly AudioSource[] music = new AudioSource[2];
         private AudioClip[] menuTracks, raceTracks;
@@ -175,6 +175,7 @@ namespace VelocityRivals
 
         private void OnDestroy()
         {
+            StopAllCoroutines();
             foreach (var source in music) if (source) { source.Stop(); source.clip = null; Destroy(source); }
             if (effects) { effects.Stop(); Destroy(effects); }
             // Imported assets are shared; only destroy clips created by this component.
@@ -182,6 +183,8 @@ namespace VelocityRivals
             if (click) Destroy(click);
             if (victory) Destroy(victory);
             foreach (var clip in cues.Values) if (clip != null) Destroy(clip);
+            foreach (var clip in customClips) if (clip) Destroy(clip);
+            foreach (var clip in pendingCustomClips) if (clip) Destroy(clip);
             if (Instance == this) Instance = null;
         }
     }

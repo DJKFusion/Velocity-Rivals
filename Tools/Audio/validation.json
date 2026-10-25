@@ -99,6 +99,39 @@
       "bytes": 1239461,
       "decoded_peak": 0.9533007740974426,
       "passed": true
+    },
+    {
+      "track": "04 - Electric Afterglow",
+      "playlist": "Menu",
+      "bpm": 104,
+      "seconds": 92.308,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1322352,
+      "decoded_peak": 0.9295139908790588,
+      "passed": true
+    },
+    {
+      "track": "07 - Nightshift Run",
+      "playlist": "Race",
+      "bpm": 132,
+      "seconds": 87.273,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1352454,
+      "decoded_peak": 0.9456422924995422,
+      "passed": true
+    },
+    {
+      "track": "08 - Apex Signal",
+      "playlist": "Race",
+      "bpm": 148,
+      "seconds": 77.838,
+      "channels": 2,
+      "sample_rate": 44100,
+      "bytes": 1190233,
+      "decoded_peak": 0.9507330060005188,
+      "passed": true
     }
   ]
 }
