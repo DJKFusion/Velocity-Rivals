@@ -11,6 +11,7 @@ namespace VelocityRivals
         public int environment = -1;
         public int vehicle = -1;
         public int layoutRevision;
+        public int upgradeSignature;
         public float bestSeconds;
         public int bestScore;
         public int finishes;
@@ -21,6 +22,7 @@ namespace VelocityRivals
         public int schemaVersion = 2;
         public string playerName = "Rival";
         public CareerProgress career = new CareerProgress();
+        public GarageProgress garage = new GarageProgress();
         public bool fullscreen = true;
         public bool reducedEffects;
         public bool trainingComplete;
@@ -45,7 +47,7 @@ namespace VelocityRivals
         public List<RaceRecord> records = new List<RaceRecord>();
         public List<string> achievements = new List<string>();
         public int Level => 1 + xp / 500;
-        public int UnlockedVehicles => Mathf.Clamp(1 + xp / 500, 1, 6);
+        public int UnlockedVehicles => Mathf.Clamp(Mathf.Max(1 + xp / 500, garage != null ? garage.purchasedCars : 1), 1, 6);
     }
 
     /// <summary>Local JSON persistence. Keep platform storage adapters behind this boundary.</summary>
@@ -82,6 +84,8 @@ namespace VelocityRivals
                     }
                     profile.career ??= new CareerProgress();
                     profile.career.Normalize();
+                    profile.garage ??= new GarageProgress();
+                    profile.garage.Normalize();
                     profile.selectedVehicle = Mathf.Clamp(profile.selectedVehicle, 0, profile.UnlockedVehicles - 1);
                     profile.paint = Mathf.Clamp(profile.paint, 0, 7);
                     profile.wheels = Mathf.Clamp(profile.wheels, 0, 2);
@@ -131,15 +135,35 @@ namespace VelocityRivals
 
         private static float SafeVolume(float value, float fallback) => float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Clamp01(value);
 
-        public static void RecordResult(string mode, bool won, float seconds, int score, int environment = -1, int vehicle = -1, bool completed = true)
+        public static bool PurchaseCar()
+        {
+            var p=Current;var previous=p.garage.Copy();int selected=p.selectedVehicle;
+            var achievements=new List<string>(p.achievements);
+            if(!p.garage.BuyNextCar(p.UnlockedVehicles))return false;
+            p.selectedVehicle=p.UnlockedVehicles-1;
+            Award("Full garage",p.UnlockedVehicles==6);
+            if(Save())return true;
+            p.garage=previous;p.selectedVehicle=selected;p.achievements=achievements;return false;
+        }
+        public static bool PurchaseUpgrade(int car,int category)
+        {
+            var p=Current;var previous=p.garage.Copy();
+            if(!p.garage.BuyUpgrade(car,category,p.UnlockedVehicles))return false;
+            if(Save())return true;
+            p.garage=previous;return false;
+        }
+
+        public static void RecordResult(string mode, bool won, float seconds, int score, int environment = -1, int vehicle = -1, bool completed = true, bool persist = true)
         {
             PlayerProfile profile = Current;
             profile.events++;
             if (won && completed) profile.wins++;
             profile.xp += completed ? 150 + (won ? 150 : 0) + Mathf.Clamp(score / 20, 0, 200) : 50;
+            profile.garage.Credit(GarageProgress.EventReward(completed,won,score));
             int revision = mode == "Championship" || mode == "TimeAttack" ? CircuitLayout.Revision : 0;
-            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision);
-            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle, layoutRevision = revision }; profile.records.Add(record); }
+            int setup = mode == "TimeAttack" ? 0 : profile.garage.Signature(vehicle);
+            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision && r.upgradeSignature == setup);
+            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle, layoutRevision = revision, upgradeSignature=setup }; profile.records.Add(record); }
             if (completed) record.finishes++;
             record.bestScore = Mathf.Max(record.bestScore, score);
             if (completed && seconds > 0 && !float.IsInfinity(seconds) && !float.IsNaN(seconds) && (record.bestSeconds <= 0 || seconds < record.bestSeconds))
@@ -149,7 +173,7 @@ namespace VelocityRivals
             Award("Ten victories", profile.wins >= 10);
             Award("Full garage", profile.UnlockedVehicles == 6);
             Award("Stunt specialist", mode == "StuntRush" && score >= 2000);
-            Save();
+            if(persist)Save();
         }
 
         private static void Award(string name, bool condition)

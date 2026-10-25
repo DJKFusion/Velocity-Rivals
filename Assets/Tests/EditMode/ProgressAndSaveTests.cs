@@ -81,6 +81,53 @@ namespace VelocityRivals.Tests
         }
 
         [Test]
+        public void OldProfileGetsWalletWithoutLosingCarsAndPurchasesPersist()
+        {
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(SaveStore.FilePath,"{\"schemaVersion\":2,\"xp\":1100,\"selectedVehicle\":2}");
+            SaveStore.Reload();
+            Assert.AreEqual(3,SaveStore.Current.UnlockedVehicles);
+            Assert.AreEqual(2,SaveStore.Current.selectedVehicle);
+            Assert.AreEqual(500,SaveStore.Current.garage.credits);
+            SaveStore.Current.garage.Credit(1000);
+            Assert.IsTrue(SaveStore.PurchaseCar());
+            Assert.AreEqual(4,SaveStore.Current.UnlockedVehicles);
+            Assert.IsTrue(SaveStore.PurchaseUpgrade(3,0));
+            int wallet=SaveStore.Current.garage.credits;SaveStore.Reload();
+            Assert.AreEqual(4,SaveStore.Current.UnlockedVehicles);
+            Assert.AreEqual(3,SaveStore.Current.selectedVehicle);
+            Assert.AreEqual(1,SaveStore.Current.garage.Level(3,0));
+            Assert.AreEqual(wallet,SaveStore.Current.garage.credits);
+        }
+
+        [Test]
+        public void FailedPurchaseSaveRestoresCreditsAndUpgrade()
+        {
+            int before=SaveStore.Current.garage.credits;
+            Directory.CreateDirectory(directory);string blocked=Path.Combine(directory,"blocked");File.WriteAllText(blocked,"file, not a directory");
+            SaveStore.StorageDirectoryOverride=blocked;
+            UnityEngine.TestTools.LogAssert.Expect(UnityEngine.LogType.Warning,new System.Text.RegularExpressions.Regex("Progress could not be saved:"));
+            Assert.IsFalse(SaveStore.PurchaseUpgrade(0,0));
+            Assert.AreEqual(before,SaveStore.Current.garage.credits);
+            Assert.AreEqual(0,SaveStore.Current.garage.Level(0,0));
+            SaveStore.StorageDirectoryOverride=directory;
+        }
+
+        [Test]
+        public void TunedRecordsStaySeparateButTimeAttackUsesStockIdentity()
+        {
+            SaveStore.RecordResult("Championship",true,100,30,0,0);
+            SaveStore.Current.garage.upgrades[0]=2;
+            SaveStore.RecordResult("Championship",true,90,30,0,0);
+            Assert.AreEqual(2,SaveStore.Current.records.Count);
+            SaveStore.RecordResult("TimeAttack",true,60,0,0,0);
+            SaveStore.Current.garage.upgrades[0]=3;
+            SaveStore.RecordResult("TimeAttack",true,55,0,0,0);
+            Assert.AreEqual(3,SaveStore.Current.records.Count);
+            Assert.AreEqual(0,SaveStore.Current.records[2].upgradeSignature);
+        }
+
+        [Test]
         public void LegacyProfileKeepsUnlocksAndMigratesRecordsWithoutInventingTrackIdentity()
         {
             Directory.CreateDirectory(directory);

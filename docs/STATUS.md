@@ -1,5 +1,12 @@
 # Implementation and verification ledger
 
+The career/garage expansion adds credits, early car purchases alongside existing
+XP unlocks, three per-car performance upgrade paths, first-improvement medal bonuses,
+transactional purchase saves and reward breakdowns. Time Attack stays stock;
+other records distinguish upgrade setups. 47 standalone checks pass. Added Unity
+save and UI integration tests await local execution. See
+[CAREER-GARAGE-EXPANSION.md](CAREER-GARAGE-EXPANSION.md).
+
 Latest work remains in 0.6.0: guided Driving School, live event/course briefings,
 career-to-garage return navigation, corrected bronze/game-over presentation,
 arena core boundary recovery, camera snapping after relocation, lap notices,

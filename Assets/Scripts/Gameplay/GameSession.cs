@@ -38,6 +38,8 @@ namespace VelocityRivals
         public string RaceNotice => rechargeNotice > 0 ? "BOOST RECHARGED  +45%" : lapNotice > 0 ? (PlayerLap == TotalLaps ? "FINAL LAP" : "LAP " + PlayerLap + " / " + TotalLaps) :
             racing && RemainingTime <= 60 ? "FINAL MINUTE — FINISH THE RACE" : "";
         public int ResultXp { get; private set; }
+        public int ResultCredits { get; private set; }
+        public int MedalCredits { get; private set; }
         public string UnlockedCarNames { get; private set; } = "";
         public bool FirstTourCompletion { get; private set; }
         public string LocationName => racing ? CircuitLayout.Section(environment, NextCheckpoint, track.Count) : EnvironmentNames[environment];
@@ -126,6 +128,7 @@ namespace VelocityRivals
             Time.timeScale = 1;
             Paused = Finished = ResultWon = false;
             ResultXp = 0; UnlockedCarNames = ""; FirstTourCompletion = false;
+            ResultCredits = MedalCredits = 0;
             Running = true;
             elapsed = collisionCooldown = goalCooldown = 0;
             wrongWaySeconds = 0;
@@ -232,6 +235,14 @@ namespace VelocityRivals
                 stats.Steering = new[] { 95f, 75f, 115f, 92f, 82f, 105f }[index];
                 stats.Grip = new[] { 8f, 7f, 10f, 9f, 8f, 6f }[index];
                 stats.BoostForce = index == 5 ? 34 : 24;
+            }
+            if (player && mode != GameMode.TimeAttack)
+            {
+                var garage=SaveStore.Current.garage;
+                int engine=garage.Level(index,0),handling=garage.Level(index,1),boost=garage.Level(index,2);
+                stats.MaxSpeed*=1+engine*.03f;stats.Acceleration*=1+engine*.05f;
+                stats.Grip*=1+handling*.08f;stats.Steering*=1+handling*.03f;
+                stats.BoostForce*=1+boost*.08f;
             }
             if (environment == 4) stats.Grip *= .45f;
             if (!player)
@@ -436,14 +447,17 @@ namespace VelocityRivals
             bool completed = !racing || playerProgress.Complete;
             float seconds = mode == GameMode.Championship ? championshipElapsed : elapsed;
             int previousXp = SaveStore.Current.xp, previousCars = SaveStore.Current.UnlockedVehicles;
+            int previousCredits = SaveStore.Current.garage.credits;
             bool tourWasComplete = SaveStore.Current.career.Complete;
-            SaveStore.RecordResult(mode.ToString(), won, seconds, score, initialEnvironment, selectedVehicle, completed);
+            SaveStore.RecordResult(mode.ToString(), won, seconds, score, initialEnvironment, selectedVehicle, completed, persist:false);
             ResultXp = SaveStore.Current.xp - previousXp;
             for (int i = previousCars; i < SaveStore.Current.UnlockedVehicles; i++)
                 UnlockedCarNames += (UnlockedCarNames.Length == 0 ? "" : " • ") + VehicleNames[i];
             if (CareerEventIndex >= 0)
             {
                 LastCareerMedal = CareerTour.Get(CareerEventIndex).Medal(completed, won, seconds, score);
+                int beforeMedal=SaveStore.Current.career.medals[CareerEventIndex];
+                MedalCredits=SaveStore.Current.garage.Credit(GarageProgress.MedalReward(beforeMedal,LastCareerMedal));
                 SaveStore.Current.career.Record(CareerEventIndex, LastCareerMedal);
                 ResultText += "\nCAREER: " + CareerTour.MedalName(LastCareerMedal);
                 if (SaveStore.Current.career.Complete)
@@ -454,8 +468,9 @@ namespace VelocityRivals
                 }
                 if (SaveStore.Current.career.TotalMedals == CareerTour.Count * 3 && !SaveStore.Current.achievements.Contains("All gold champion"))
                     SaveStore.Current.achievements.Add("All gold champion");
-                SaveStore.Save();
             }
+            SaveStore.Save(); // Event rewards, medals and their bonuses are one atomic profile update.
+            ResultCredits=SaveStore.Current.garage.credits-previousCredits;
             MatchEnded?.Invoke();
         }
 

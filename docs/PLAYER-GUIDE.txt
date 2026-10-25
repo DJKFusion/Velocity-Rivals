@@ -17,6 +17,13 @@ Failed events offer TRY AGAIN. A career bronze medal counts as event completion.
 Leaving the track returns your car to safety without skipping checkpoints; the
 event clock keeps running. R / Y also recovers you if stuck or facing the wrong way.
 
+GARAGE AND CREDITS
+Finish events to earn credits. Improved career medals earn a one-time bonus.
+The dealership lets you buy the next car early; free XP unlocks still work.
+The performance workshop offers Engine, Handling and Boost upgrades for each car.
+Stages cost 150, 300 and 450 credits. Time Attack always uses stock performance.
+Purchases need confirmation and are saved automatically. Existing cars stay owned.
+
 CONTROLS
 Keyboard: W/S accelerate/reverse, A/D steer, Shift boost, Ctrl handbrake,
 Space jump (press again for an aerial jump), Q/E air roll, R recover, Esc pause.

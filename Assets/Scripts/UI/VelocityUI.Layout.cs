@@ -119,9 +119,9 @@ namespace VelocityRivals
                 displayedStats=Resources.Load<VehicleStats>("VehicleStats/"+GameSession.VehicleNames[p.selectedVehicle]);
             }
             var stats=displayedStats;
-            showcaseStats.text=stats?$"UNBOOSTED SPEED  {stats.MaxSpeed*3.6f:0} km/h\nACCELERATION  {stats.Acceleration:0} m/s²    STEERING  {stats.Steering:0}°/s":"";
-            showcaseProgress.text=$"LEVEL {p.Level}   /   {p.xp} XP\n{p.career.TotalMedals}/36 MEDAL POINTS   •   {p.UnlockedVehicles}/6 CARS\n"+
-                (p.UnlockedVehicles<6?$"{500-p.xp%500} XP to your next car":"FULL GARAGE UNLOCKED")+
+            showcaseStats.text=stats?$"STOCK SPEED  {stats.MaxSpeed*3.6f:0} km/h • ACCEL  {stats.Acceleration:0} m/s²\nENGINE {p.garage.Level(p.selectedVehicle,0)}/3 • HANDLING {p.garage.Level(p.selectedVehicle,1)}/3 • BOOST {p.garage.Level(p.selectedVehicle,2)}/3":"";
+            showcaseProgress.text=$"{p.garage.credits:N0} CR   •   LEVEL {p.Level}   /   {p.xp} XP\n{p.career.TotalMedals}/36 MEDAL POINTS   •   {p.UnlockedVehicles}/6 CARS\n"+
+                (p.UnlockedVehicles<6?$"NEXT CAR: {p.UnlockedVehicles*500-p.xp} XP or visit dealership":"FULL GARAGE UNLOCKED")+
                 "\n"+(p.career.Complete?"TOUR COMPLETE — chase every gold":"NEXT: "+CareerTour.Get(p.career.NextEvent).Name);
         }
         void BuildRaceCards()

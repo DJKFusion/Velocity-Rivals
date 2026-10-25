@@ -195,7 +195,8 @@ namespace VelocityRivals
             Button button = null;
             button = Button(name + ": " + values[Mathf.Clamp(read(), 0, values.Count - 1)], () => {
                 int next = (read() + 1) % values.Count;
-                write(next); button.GetComponentInChildren<Text>().text = name + ": " + values[next];
+                button.GetComponentInChildren<Text>().text = name + ": " + values[next];
+                write(next); // A selection callback may replace the page and deactivate this button.
             });
             return button;
         }
@@ -344,11 +345,13 @@ namespace VelocityRivals
         private void Garage(Action returnTo)
         {
             var p = SaveStore.Current;
-            Page("Garage", p.UnlockedVehicles == 6 ? "ALL SIX VEHICLES UNLOCKED\nCustomise your car for your next event." : $"{p.UnlockedVehicles}/6 vehicles unlocked • Next unlock at {p.UnlockedVehicles * 500} XP\nSelections apply to your vehicle on the next event.");
+            Page("Garage", $"{p.garage.credits:N0} CREDITS • {p.UnlockedVehicles}/6 CARS OWNED\nCustomise your car, install upgrades or visit the dealership.");
             panel.GetComponent<VerticalLayoutGroup>().spacing = 6;
             var vehicles = new List<string>();
             for (int i = 0; i < p.UnlockedVehicles; i++) vehicles.Add(GameSession.VehicleNames[i]);
             Focus(Cycle("Vehicle", vehicles, () => p.selectedVehicle, value => { p.selectedVehicle = value; SaveStore.Save(); }));
+            Button("PERFORMANCE WORKSHOP",()=>Workshop(returnTo));
+            Button("VEHICLE DEALERSHIP",()=>Dealership(returnTo));
             Cycle("Paint", PaintNames, () => p.paint, value => { p.paint = value; SaveStore.Save(); });
             Cycle("Wheels", new[] { "Street", "Sport", "Aero" }, () => p.wheels, value => { p.wheels = value; SaveStore.Save(); });
             Cycle("Boost trail", new[] { "Ion", "Plasma", "Solar" }, () => p.trail, value => { p.trail = value; SaveStore.Save(); });
@@ -463,6 +466,8 @@ namespace VelocityRivals
             Page(session.IsTraining ? "Training complete" : session.GameOver ? "GAME OVER" : session.FirstTourCompletion ? "Tour complete" : "Event complete", session.ResultText);
             string reward = session.IsTraining ? "DRIVING SCHOOL COMPLETED" : session.CanAdvanceChampionship ? "Points recorded — XP awarded after the final round" : "+" + session.ResultXp + " XP";
             Label(panel, $"{reward}\nLEVEL {SaveStore.Current.Level} • {SaveStore.Current.xp} XP • {SaveStore.Current.UnlockedVehicles}/6 CARS", 28, 95);
+            if(!session.IsTraining && !session.CanAdvanceChampionship)
+                Label(panel,$"+{session.ResultCredits:N0} CREDITS\nEvent: {session.ResultCredits-session.MedalCredits:N0} • New medal bonus: {session.MedalCredits:N0}\nWallet: {SaveStore.Current.garage.credits:N0} credits",24,110);
             if (!string.IsNullOrEmpty(session.UnlockedCarNames)) Label(panel, "NEW CAR UNLOCKED: " + session.UnlockedCarNames, 26, 55);
             if (!string.IsNullOrEmpty(SaveStore.LastError)) Label(panel, SaveStore.LastError, 18, 70);
             if (session.IsTraining)
@@ -493,6 +498,7 @@ namespace VelocityRivals
                 Button("REPLAY EVENT", RestartCurrent);
             }
             else Focus(Button("RACE AGAIN", RestartCurrent));
+            if(!session.CanAdvanceChampionship)Button("GARAGE & UPGRADES",()=>{session.ReturnToMenu();Garage();});
             Button("MAIN MENU", MainMenu);
         }
 
@@ -508,6 +514,7 @@ namespace VelocityRivals
                 var r = records[i];
                 string environment = r.environment >= 0 && r.environment < 5 ? GameSession.EnvironmentNames[r.environment] : "Earlier version";
                 string vehicle = r.vehicle >= 0 && r.vehicle < 6 ? GameSession.VehicleNames[r.vehicle] : "All vehicles";
+                vehicle += r.upgradeSignature==0 ? " • STOCK" : $" • E{r.upgradeSignature%4}/H{r.upgradeSignature/4%4}/B{r.upgradeSignature/16%4}";
                 if ((r.mode == "TimeAttack" || r.mode == "Championship") && r.layoutRevision != CircuitLayout.Revision) environment += " (old layout)";
                 text += $"{r.mode} • {environment} • {vehicle}\n{r.finishes} finishes • Best {LapDisplay(r.bestSeconds)} • Score {r.bestScore}\n\n";
             }

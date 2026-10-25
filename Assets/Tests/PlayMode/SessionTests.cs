@@ -33,6 +33,72 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator DealershipAndWorkshopPurchaseThroughMenusAndSwitchCars()
+        {
+            SaveStore.Current.garage.Credit(1000);
+            root=new GameObject("Garage menu purchase test",typeof(GameBootstrap));
+            yield return null;yield return null;
+            void Click(string prefix)
+            {
+                foreach(var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                    if(button.name.StartsWith(prefix)){Assert.IsTrue(button.interactable);button.onClick.Invoke();return;}
+                Assert.Fail("Missing button: "+prefix);
+            }
+            Click("GARAGE");yield return null;
+            Click("VEHICLE DEALERSHIP");yield return null;
+            Click("BUY BULWARK");yield return null;
+            Click("CONFIRM PURCHASE");yield return null;
+            Assert.AreEqual(2,SaveStore.Current.UnlockedVehicles);Assert.AreEqual(1,SaveStore.Current.selectedVehicle);
+            Click("BACK");yield return null;
+            Click("PERFORMANCE WORKSHOP");yield return null;
+            Click("UPGRADE ENGINE");yield return null;
+            Click("CONFIRM UPGRADE");yield return null;
+            Assert.AreEqual(1,SaveStore.Current.garage.Level(1,0));
+            Click("Vehicle:");yield return null;yield return null;
+            Assert.AreEqual(0,SaveStore.Current.selectedVehicle);
+            SaveStore.Reload();Assert.AreEqual(850,SaveStore.Current.garage.credits);
+            Assert.AreEqual(1,SaveStore.Current.garage.Level(1,0));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator UpgradesApplyToDrivingButTimeAttackRemainsStock()
+        {
+            root=new GameObject("Workshop stats test",typeof(GameSession));
+            var session=root.GetComponent<GameSession>();var template=Resources.Load<VehicleStats>("VehicleStats/Viper");
+            SaveStore.Current.garage.upgrades[0]=3;SaveStore.Current.garage.upgrades[1]=2;SaveStore.Current.garage.upgrades[2]=1;
+            session.StartMatch(GameMode.FreePlay,0,0,Color.cyan);
+            Assert.AreEqual(template.MaxSpeed*1.09f,session.Player.Stats.MaxSpeed,.001f);
+            Assert.AreEqual(template.Grip*1.16f,session.Player.Stats.Grip,.001f);
+            Assert.AreEqual(template.BoostForce*1.08f,session.Player.Stats.BoostForce,.001f);
+            session.StartMatch(GameMode.TimeAttack,0,0,Color.cyan);
+            Assert.AreEqual(template.MaxSpeed,session.Player.Stats.MaxSpeed,.001f);
+            Assert.AreEqual(template.Grip,session.Player.Stats.Grip,.001f);
+            Assert.AreEqual(template.BoostForce,session.Player.Stats.BoostForce,.001f);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CareerMedalBonusIsPaidOnlyWhenImproved()
+        {
+            root=new GameObject("Career rewards test",typeof(GameSession));var session=root.GetComponent<GameSession>();
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            for(int run=0;run<2;run++)
+            {
+                session.StartCareerEvent(0,0,Color.cyan);
+                typeof(GameSession).GetField("elapsed",flags).SetValue(session,120f);
+                var progress=(RaceProgress)typeof(GameSession).GetField("playerProgress",flags).GetValue(session);
+                while(!progress.Complete)progress.Cross(progress.NextCheckpoint,true);
+                typeof(GameSession).GetMethod("UpdateRace",flags).Invoke(session,null);
+                Assert.IsTrue(session.Finished);Assert.AreEqual(3,session.LastCareerMedal);
+                Assert.AreEqual(run==0?300:0,session.MedalCredits);
+                Assert.AreEqual(run==0?700:400,session.ResultCredits);
+                yield return null;
+            }
+            SaveStore.Reload();Assert.AreEqual(1600,SaveStore.Current.garage.credits);
+        }
+
+        [UnityTest]
         public IEnumerator CameraLookClampsRecentresAndSupportsInvertedY()
         {
             root=new GameObject("Camera orbit test",typeof(Camera),typeof(FollowCamera));

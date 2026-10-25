@@ -19,6 +19,35 @@ static class Program
         try
         {
             if (args.Length == 2 && args[0] == "--relay") { RelayIntegration.Run(args[1]).GetAwaiter().GetResult(); return 0; }
+            Test("garage purchases spend once and stop at the last car", () => {
+                var garage=new GarageProgress();Check(garage.BuyNextCar(1));Check(garage.credits==0 && garage.purchasedCars==2);
+                Check(!garage.BuyNextCar(2) && garage.credits==0);
+                garage.Credit(10000);Check(garage.BuyNextCar(5) && garage.purchasedCars==6);
+                int balance=garage.credits;Check(!garage.BuyNextCar(6) && garage.credits==balance);
+            });
+            Test("upgrades enforce ownership, category, price and stage cap", () => {
+                var garage=new GarageProgress();int original=garage.credits;
+                Check(!garage.BuyUpgrade(1,0,1) && !garage.BuyUpgrade(0,3,1) && garage.credits==original);
+                Check(garage.BuyUpgrade(0,0,1));Check(garage.credits==350 && garage.Level(0,0)==1);
+                Check(garage.BuyUpgrade(0,0,1));Check(garage.credits==50 && garage.Level(0,0)==2);
+                Check(!garage.BuyUpgrade(0,0,1));garage.Credit(400);Check(garage.BuyUpgrade(0,0,1));
+                Check(garage.Level(0,0)==3 && !garage.BuyUpgrade(0,0,1));
+                Check(garage.Signature(0)==3 && garage.Signature(1)==0);
+            });
+            Test("credits and medal bonuses reject repeats, failures and overflow", () => {
+                Check(GarageProgress.EventReward(false,true,99999)==0);
+                Check(GarageProgress.EventReward(true,true,99999)==400);
+                Check(GarageProgress.EventReward(true,false,-500)==150);
+                Check(GarageProgress.MedalReward(0,3)==300 && GarageProgress.MedalReward(3,3)==0 && GarageProgress.MedalReward(3,1)==0);
+                var garage=new GarageProgress();garage.Credit(int.MaxValue);Check(garage.credits==GarageProgress.MaxCredits);
+                Check(garage.Credit(1)==0 && garage.Credit(-100)==0);
+            });
+            Test("garage normalization and rollback copy retain valid progression", () => {
+                var garage=new GarageProgress { credits=-20,purchasedCars=9,upgrades=new[]{-1,7,2} };garage.Normalize();
+                Check(garage.credits==0 && garage.purchasedCars==6 && garage.upgrades.Length==18);
+                Check(garage.Level(0,0)==0 && garage.Level(0,1)==3 && garage.Level(0,2)==2);
+                var copy=garage.Copy();copy.upgrades[0]=3;Check(garage.upgrades[0]==0);
+            });
             Test("driving school requires ordered actions and an upright landing", () => {
                 var lesson=new DrivingLesson();
                 for(int i=0;i<22;i++)lesson.Tick(.1f,30,false,true,true,false);
