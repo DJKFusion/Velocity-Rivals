@@ -146,10 +146,10 @@ namespace VelocityRivals.Tests
                 foreach(var control in action.controls)if(control==button)bound=true;
                 Assert.IsTrue(bound,"Production item action did not bind the synthetic device.");
                 int performed=0;action.performed+=_=>performed++;
-                // Enter a player input update explicitly. Then change the button's state
+                // Process the configured manual input update. Then change the button's state
                 // synchronously: this notifies the real InputAction's state monitors,
                 // without timestamped events waiting in the native editor event queue.
-                UnityEngine.InputSystem.InputSystem.Update(UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
+                UnityEngine.InputSystem.InputSystem.Update();
                 void Tick(bool pressed)
                 {
                     UnityEngine.InputSystem.LowLevel.InputState.Change(keyboard.fKey,
