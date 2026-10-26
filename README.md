@@ -1,6 +1,6 @@
 # Velocity Rivals — Single Player
 
-Latest update: [cornering and screenshot fixes](docs/HANDLING-POLISH.md). Stronger steering at speed, controlled drifts, gentle corner braking, softer ice grip, transparent boost trails and reduced showroom glare. Includes all earlier larger-map, UI, soundtrack and career updates in the same 0.6.0 project. Source and 55 standalone checks pass; Unity driving and visual acceptance remain pending.
+Latest update: [held power-ups and developer music](docs/HELD-ITEMS.md). Collect Shield, Overdrive or Pulse and press F / RB to activate in Championship, Elimination and Boost Battle. Music is configured in `MusicLibrary.cs`; player-side music importing is removed. All earlier maps, handling, career and presentation changes remain included.
 
 An original Unity 6 arcade racing and vehicle-sports project for DJKFusion. The current edition plays offline and has no multiplayer menu, room setup or networking component. Multiplayer source is retained behind a disabled assembly constraint for future work.
 

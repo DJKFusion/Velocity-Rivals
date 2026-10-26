@@ -1,5 +1,11 @@
 # Implementation and verification ledger
 
+Held items now use a one-slot inventory in Championship, Elimination and Boost
+Battle, with F/RB activation, AI use and a HUD slot. Player music import/auto-load
+is removed; MusicLibrary.cs defines bundled playlists with build-path checks.
+56 standalone checks pass; new Unity item/input/music tests are authored but unrun.
+See [HELD-ITEMS.md](HELD-ITEMS.md) and [MUSIC.md](MUSIC.md).
+
 The handling pass responds to the owner reporting poor cornering with the Bulwark.
 High-speed steering, yaw response, grip and drift control are increased; a shared
 corner-speed target gently slows strong turns unless boosting/drifting. Glacier

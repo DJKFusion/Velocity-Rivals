@@ -50,7 +50,7 @@ namespace VelocityRivals.Editor
             File.Copy(source, destination, false);
             AssetDatabase.ImportAsset(destination, ImportAssetOptions.ForceSynchronousImport);
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<AudioClip>(destination);
-            Debug.Log("Music added to " + playlist + ". Stop and start Play Mode to refresh the playlist: " + destination);
+            Debug.Log("Music imported. Add this path (without extension) to MusicLibrary." + playlist + "Tracks: " + Path.ChangeExtension(destination.Substring("Assets/Resources/".Length), null));
         }
     }
 }

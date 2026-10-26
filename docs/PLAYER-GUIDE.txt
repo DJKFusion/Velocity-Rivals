@@ -26,9 +26,9 @@ Purchases need confirmation and are saved automatically. Existing cars stay owne
 
 CONTROLS
 Keyboard: W/S accelerate/reverse, A/D steer, Shift boost, Ctrl handbrake,
-Space jump (press again for an aerial jump), Q/E air roll, R recover, Esc pause.
+Space jump (press again for an aerial jump), Q/E air roll, R recover, F use item, Esc pause.
 Controller: triggers accelerate/reverse, left stick steer, B boost, X handbrake,
-A jump, LB plus stick air roll, Y recover, Start pause.
+A jump, LB plus stick air roll, Y recover, RB use item, Start pause.
 Right stick looks around; click it (R3) or press C to centre the camera.
 Camera sensitivity and inverted vertical look are available in SETTINGS.
 The camera returns behind your car after you release the stick.
@@ -112,3 +112,16 @@ drift, then release to recover grip. S / LT brakes and reverses. Steering
 sensitivity remains adjustable under Settings. Glacier is still slippery but
 retains more grip. Earlier records are labeled as earlier handling; career
 medals, credits and cars are retained. New Time Attack ghosts start separately.
+
+HELD POWER-UPS
+Championship, Elimination and Boost Battle have coloured item crates. Carry one
+item at a time. A full slot does not replace your item or consume another crate.
+Press F / RB to use the item shown in the HUD. Crates return after twelve seconds.
+Cyan SHIELD: six seconds of pulse protection in races or damage protection in combat.
+Orange OVERDRIVE: 60 percent boost fuel plus a grounded speed kick in races;
+eight seconds of double damage in combat.
+Purple PULSE: pushes nearby unshielded racers, or damages nearby combat opponents.
+AI rivals also collect/use items. Pausing freezes effects and blocks activation.
+Restarting or advancing rounds clears held items; combat knockouts also clear them.
+Time Attack, Arena Clash, Stunt Rush and Free Play have no held items.
+Soundtrack plays the music supplied with the game; player music importing is removed.

@@ -166,7 +166,7 @@ namespace VelocityRivals
             profile.garage.Credit(GarageProgress.EventReward(completed,won,score));
             int revision = environment >= 0 ? CircuitLayout.Revision : 0;
             int setup = mode == "TimeAttack" ? 0 : profile.garage.Signature(vehicle);
-            int rules = mode=="Championship" || mode=="Elimination" ? RaceCraft.RulesVersion : 0;
+            int rules = mode=="Championship" || mode=="Elimination" || mode=="BoostBattle" ? RaceCraft.RulesVersion : 0;
             RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision && r.upgradeSignature == setup && r.raceRulesRevision==rules && r.handlingRevision==HandlingModel.Revision);
             if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle, layoutRevision = revision, upgradeSignature=setup, raceRulesRevision=rules, handlingRevision=HandlingModel.Revision }; profile.records.Add(record); }
             if (completed) record.finishes++;

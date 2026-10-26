@@ -10,7 +10,8 @@ namespace VelocityRivals
         {
             public VehicleController Car;
             public CombatVitals Vitals = new CombatVitals();
-            public float NextHit;
+            public float NextHit, UseAt;
+            public readonly PowerupSlot Slot=new PowerupSlot();
             public Vector3 Spawn;
         }
         sealed class Pickup
@@ -60,10 +61,25 @@ namespace VelocityRivals
                     (v.DamageMultiplier(now) > 1 ? " · OVERDRIVE " + Mathf.CeilToInt(v.OverdriveUntil - now) + "s" : "");
             }
         }
+        public PowerupKind Held(VehicleController car)=>Find(car)?.Slot.Held??PowerupKind.None;
+        public bool Use(VehicleController car)
+        {
+            var fighter=Find(car);float now=session.Elapsed;
+            if(fighter==null || !fighter.Slot.Use(session.ActionEnabled&&!fighter.Vitals.KnockedOut&&car.ControlsEnabled,out var kind))return false;
+            if(kind==PowerupKind.Shield)fighter.Vitals.Shield(now);
+            else if(kind==PowerupKind.Overdrive)fighter.Vitals.Overdrive(now);
+            else foreach(var opponent in fighters)
+                if(opponent!=fighter&&!opponent.Vitals.KnockedOut&&(opponent.Car.PhysicsPosition-car.PhysicsPosition).sqrMagnitude<18*18)
+                    Damage(fighter,opponent,35);
+            MatchEffects.Burst(car.PhysicsPosition+Vector3.up,RaceItems.Tint(kind));
+            if(car==session.Player)SoundDirector.Instance?.Cue(GameCue.Boost);
+            return true;
+        }
         Fighter Find(VehicleController car) => fighters.Find(f => f.Car == car);
         public bool TryPickupTarget(VehicleController car, out Vector3 target)
         {
             target = Vector3.zero; float best = 22 * 22;
+            if(Held(car)!=PowerupKind.None)return false;
             foreach (var pickup in pickups)
             {
                 float distance = (pickup.Position - car.transform.position).sqrMagnitude;
@@ -91,7 +107,7 @@ namespace VelocityRivals
             body.AddForce((destination.Car.transform.position - source.Car.transform.position).normalized * 12 + Vector3.up * 4, ForceMode.VelocityChange);
             MatchEffects.Burst(destination.Car.transform.position + Vector3.up, destination.Vitals.KnockedOut ? Color.red : Color.yellow);
             SoundDirector.Instance?.Cue(destination.Vitals.KnockedOut ? GameCue.Knockout : GameCue.Impact);
-            if (destination.Vitals.KnockedOut) SetVisible(destination, false);
+            if (destination.Vitals.KnockedOut) { destination.Slot.Clear(); SetVisible(destination, false); }
         }
         void SetVisible(Fighter fighter, bool visible)
         {
@@ -122,20 +138,28 @@ namespace VelocityRivals
                 pickup.Visual.rotation = Quaternion.Euler(45, now * 75, 45);
                 foreach (var fighter in fighters)
                 {
-                    if (fighter.Vitals.KnockedOut || (fighter.Car.transform.position - pickup.Position).sqrMagnitude > 10) continue;
+                    if (fighter.Vitals.KnockedOut || !fighter.Car.ControlsEnabled || (fighter.Car.PhysicsPosition - pickup.Position).sqrMagnitude > 10 || !fighter.Slot.Collect((PowerupKind)(pickup.Kind+1))) continue;
+                    fighter.UseAt=now+1;
                     pickup.ReadyAt = now + 12;
                     pickup.Visual.gameObject.SetActive(false);
                     SoundDirector.Instance?.Cue(GameCue.Pickup);
                     MatchEffects.Burst(fighter.Car.transform.position + Vector3.up, Colours[pickup.Kind]);
-                    if (pickup.Kind == 0) fighter.Vitals.Shield(now);
-                    else if (pickup.Kind == 1) fighter.Vitals.Overdrive(now);
-                    else foreach (var opponent in fighters)
-                        if (opponent != fighter && !opponent.Vitals.KnockedOut && (opponent.Car.transform.position - fighter.Car.transform.position).sqrMagnitude < 18 * 18)
-                            Damage(fighter, opponent, 35);
                     break;
                 }
             }
+            UseAiItems();
         }
+        void UseAiItems()
+        {
+            foreach(var fighter in fighters)
+            {
+                if(fighter.Car==session.Player || fighter.Vitals.KnockedOut || session.Elapsed<fighter.UseAt || fighter.Slot.Held==PowerupKind.None)continue;
+                bool nearby=false;
+                foreach(var other in fighters)if(other!=fighter&&!other.Vitals.KnockedOut&&(other.Car.PhysicsPosition-fighter.Car.PhysicsPosition).sqrMagnitude<16*16)nearby=true;
+                if(fighter.Slot.Held!=PowerupKind.Pulse || nearby)Use(fighter.Car);
+            }
+        }
+
         void OnDestroy() { foreach (var material in materials) if (material != null) Destroy(material); }
     }
 }

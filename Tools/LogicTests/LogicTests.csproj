@@ -23,6 +23,7 @@
     <Compile Include="RelayIntegration.cs" />
     <Compile Include="../../Assets/Scripts/Multiplayer/LanFrameBuffer.cs" Link="LanFrameBuffer.cs" />
     <Compile Include="../../Assets/Scripts/Vehicles/HandlingModel.cs" Link="HandlingModel.cs" />
+    <Compile Include="../../Assets/Scripts/Gameplay/PowerupSlot.cs" Link="PowerupSlot.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>

@@ -33,6 +33,66 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator RaceItemCollectUsePauseAndRestartRespectInventory()
+        {
+            root=new GameObject("Held item test",typeof(GameSession));var session=root.GetComponent<GameSession>();
+            session.StartMatch(GameMode.Championship,0,0,Color.cyan);
+            yield return null;
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            typeof(GameSession).GetField("countdown",flags).SetValue(session,0f);
+            session.Player.ControlsEnabled=true;
+            var items=Object.FindFirstObjectByType<RaceItems>();Assert.IsNotNull(items);
+            Assert.IsTrue(items.Collect(session.Player,PowerupKind.Shield));
+            Assert.IsFalse(items.Collect(session.Player,PowerupKind.Pulse));
+            Assert.AreEqual(PowerupKind.Shield,session.HeldItem);Assert.AreEqual("",session.ItemEffect);
+            session.SetPaused(true);Assert.IsFalse(session.UseItem());Assert.AreEqual(PowerupKind.Shield,session.HeldItem);
+            session.SetPaused(false);Assert.IsTrue(session.UseItem());Assert.IsFalse(session.UseItem());
+            StringAssert.StartsWith("SHIELD",session.ItemEffect);Assert.AreEqual(PowerupKind.None,session.HeldItem);
+            typeof(VehicleController).GetProperty("BoostAmount").SetValue(session.Player,.1f);
+            Assert.IsTrue(items.Collect(session.Player,PowerupKind.Overdrive));Assert.IsTrue(session.UseItem());
+            Assert.AreEqual(.7f,session.Player.BoostAmount,.001f);
+            Assert.IsTrue(items.Collect(session.Player,PowerupKind.Pulse));
+            session.RestartMatch();Assert.AreEqual(PowerupKind.None,session.HeldItem);
+            session.StartMatch(GameMode.TimeAttack,0,0,Color.cyan);yield return null;
+            Assert.IsFalse(session.HasItems);Assert.IsFalse(session.UseItem());Assert.IsNull(Object.FindFirstObjectByType<RaceItems>());
+        }
+
+        [UnityTest]
+        public IEnumerator FKeyActivatesHeldRaceItem()
+        {
+            var keyboard=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();keyboard.MakeCurrent();
+            try
+            {
+                root=new GameObject("Item key binding",typeof(GameSession));var session=root.GetComponent<GameSession>();
+                session.StartMatch(GameMode.Championship,0,0,Color.cyan);yield return null;
+                typeof(GameSession).GetField("countdown",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(session,0f);
+                session.Player.ControlsEnabled=true;
+                Assert.IsTrue(Object.FindFirstObjectByType<RaceItems>().Collect(session.Player,PowerupKind.Shield));
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.F));
+                yield return null;yield return null;
+                Assert.AreEqual(PowerupKind.None,session.HeldItem);StringAssert.StartsWith("SHIELD",session.ItemEffect);
+            }
+            finally { UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard); }
+        }
+
+        [UnityTest]
+        public IEnumerator CombatPickupIsHeldUntilPlayerUsesIt()
+        {
+            root=new GameObject("Combat inventory",typeof(GameSession));var session=root.GetComponent<GameSession>();
+            session.StartMatch(GameMode.BoostBattle,0,0,Color.cyan);yield return null;
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            typeof(GameSession).GetField("countdown",flags).SetValue(session,0f);
+            session.Player.ControlsEnabled=true;
+            var crate=GameObject.Find("Flux Shield");Assert.IsNotNull(crate);
+            session.Player.Respawn(crate.transform.position,Quaternion.identity);
+            yield return null;yield return null;
+            Assert.AreEqual(PowerupKind.Shield,session.HeldItem);
+            Assert.IsFalse(session.CombatStatus.Contains("SHIELD"));
+            Assert.IsTrue(session.UseItem());Assert.AreEqual(PowerupKind.None,session.HeldItem);
+            StringAssert.Contains("SHIELD",session.CombatStatus);
+        }
+
+        [UnityTest]
         public IEnumerator HeavyCarTurnsAtRoadSpeedAndBoostUsesTransparentTrail()
         {
             root=new GameObject("Handling regression");
@@ -269,32 +329,22 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
-        public IEnumerator CustomMusicLoadsLocalWaveAndReloadDoesNotDuplicateTracks()
+        public IEnumerator SoundtrackUsesCodeLibraryAndHasNoPlayerImportControls()
         {
             string folder=Path.Combine(directory,"CustomMusic","Menu");Directory.CreateDirectory(folder);
-            string file=Path.Combine(folder,"Local song.wav");
-            const int rate=22050, samples=22050;
-            using(var writer=new BinaryWriter(File.Create(file)))
+            File.WriteAllText(Path.Combine(folder,"Ignored.ogg"),"not an audio file");
+            root=new GameObject("Bundled music test",typeof(GameBootstrap));
+            yield return null;yield return null;
+            Assert.AreEqual(MusicLibrary.MenuTracks.Length,SoundDirector.Instance.MenuTrackCount);
+            Assert.AreEqual(MusicLibrary.RaceTracks.Length,SoundDirector.Instance.RaceTrackCount);
+            foreach(var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
+                if(button.name=="SOUNDTRACK"){button.onClick.Invoke();break;}
+            yield return null;
+            foreach(var button in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None))
             {
-                writer.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));writer.Write(36+samples*2);
-                writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "));writer.Write(16);
-                writer.Write((short)1);writer.Write((short)1);writer.Write(rate);writer.Write(rate*2);
-                writer.Write((short)2);writer.Write((short)16);
-                writer.Write(System.Text.Encoding.ASCII.GetBytes("data"));writer.Write(samples*2);
-                for(int i=0;i<samples;i++)writer.Write((short)(Mathf.Sin(i*2*Mathf.PI*220/rate)*4000));
+                Assert.AreNotEqual("OPEN CUSTOM MUSIC FOLDER",button.name);
+                Assert.AreNotEqual("RELOAD CUSTOM MUSIC",button.name);
             }
-            root=new GameObject("Custom music test",typeof(SoundDirector));
-            var sound=root.GetComponent<SoundDirector>();int bundled=sound.MenuTrackCount;
-            float deadline=Time.realtimeSinceStartup+10;
-            while(sound.MenuTrackCount==bundled && Time.realtimeSinceStartup<deadline)yield return null;
-            Assert.AreEqual(bundled+1,sound.MenuTrackCount,sound.CustomMusicStatus);
-            sound.ReloadCustomMusic();
-            deadline=Time.realtimeSinceStartup+10;
-            while(sound.CustomMusicStatus.StartsWith("Loading") && Time.realtimeSinceStartup<deadline)yield return null;
-            Assert.AreEqual(bundled+1,sound.MenuTrackCount,sound.CustomMusicStatus);
-            StringAssert.Contains("1 custom songs loaded",sound.CustomMusicStatus);
-            File.Delete(file);sound.ReloadCustomMusic();yield return null;
-            Assert.AreEqual(bundled,sound.MenuTrackCount);
         }
 
         [UnityTest]
@@ -708,7 +758,7 @@ namespace VelocityRivals.Tests
             var sound = SoundDirector.Instance;
             Assert.IsNotNull(sound);
             Assert.GreaterOrEqual(sound.MenuTrackCount, 1);
-            Assert.GreaterOrEqual(sound.RaceTrackCount, 2);
+            Assert.GreaterOrEqual(sound.RaceTrackCount, 1);
             Assert.AreEqual("Menu", sound.PlaylistName);
             foreach (var clip in Resources.LoadAll<AudioClip>("Music"))
             {
@@ -729,7 +779,7 @@ namespace VelocityRivals.Tests
             yield return null;
             yield return null;
             Assert.AreEqual("Menu", sound.PlaylistName);
-            var imported = Resources.LoadAll<AudioClip>("Music/Menu")[0];
+            var imported = Resources.Load<AudioClip>(MusicLibrary.MenuTracks[0]);
             Object.Destroy(sound);
             yield return null;
             Assert.IsTrue(imported != null, "Destroying the director must not destroy imported music assets.");

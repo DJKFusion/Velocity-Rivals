@@ -31,8 +31,15 @@ namespace VelocityRivals.Editor
                 var shader = Resources.Load<Shader>(name);
                 if (!shader || ShaderUtil.ShaderHasError(shader)) throw new BuildFailedException("Resolve shader import/compilation errors: " + name);
             }
-            if (Resources.LoadAll<AudioClip>("Music/Menu").Length == 0 || Resources.LoadAll<AudioClip>("Music/Race").Length == 0)
-                throw new BuildFailedException("Both music playlists need at least one imported track.");
+            foreach(var playlist in new[]{MusicLibrary.MenuTracks,MusicLibrary.RaceTracks})
+            {
+                if(playlist.Length==0)throw new BuildFailedException("MusicLibrary needs at least one song in each playlist.");
+                foreach(var path in playlist)
+                {
+                    var clip=string.IsNullOrWhiteSpace(path)?null:Resources.Load<AudioClip>(path);
+                    if(!clip || clip.length<=.1f)throw new BuildFailedException("Fix this MusicLibrary resource path: "+path);
+                }
+            }
             PlayerSettings.bundleVersion = Version;
             Debug.Log("Single-player build checks passed. Unity playtests and target-PC acceptance remain required.");
         }

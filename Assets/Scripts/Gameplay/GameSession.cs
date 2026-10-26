@@ -67,6 +67,11 @@ namespace VelocityRivals
         public bool WrongWay => wrongWaySeconds >= 1.5f;
         private float wrongWaySeconds;
         private ArenaBattle battle;
+        private RaceItems raceItems;
+        public bool HasItems => !NetworkControlled && (mode==GameMode.Championship || mode==GameMode.Elimination || mode==GameMode.BoostBattle);
+        public PowerupKind HeldItem => battle?battle.Held(Player):raceItems?raceItems.Held(Player):PowerupKind.None;
+        public string ItemEffect => raceItems?raceItems.PlayerEffect:"";
+        public bool UseItem() => ActionEnabled && (battle?battle.Use(Player):raceItems&&raceItems.Use(Player));
         private int countdownBeat;
         public bool CanAdvanceChampionship => mode == GameMode.Championship && Finished && round < 2 && playerProgress != null && playerProgress.Complete;
 
@@ -171,6 +176,10 @@ namespace VelocityRivals
             {
                 battle = world.gameObject.AddComponent<ArenaBattle>();
                 battle.Initialize(this, cars);
+            }
+            if (!NetworkControlled && (mode==GameMode.Championship || mode==GameMode.Elimination))
+            {
+                raceItems=world.gameObject.AddComponent<RaceItems>();raceItems.Initialize(this);
             }
             Camera camera = Camera.main;
             if (camera == null)
@@ -298,6 +307,7 @@ namespace VelocityRivals
                 return;
             }
             elapsed += Time.deltaTime;
+            if((Keyboard.current!=null&&Keyboard.current.fKey.wasPressedThisFrame)||(Gamepad.current!=null&&Gamepad.current.rightShoulder.wasPressedThisFrame))UseItem();
             boundaryNotice = Mathf.Max(0, boundaryNotice - Time.deltaTime);
             lapNotice = Mathf.Max(0, lapNotice - Time.deltaTime);
             rechargeNotice = Mathf.Max(0, rechargeNotice - Time.deltaTime);
@@ -752,7 +762,7 @@ namespace VelocityRivals
             foreach (var m in materials) if (m != null) Destroy(m);
             if (corePhysics != null) Destroy(corePhysics);
             temporaryStats.Clear(); materials.Clear(); racers.Clear(); cars.Clear(); track.Clear();
-            Player = null; core = null; ghost = null; world = null; battle = null;
+            Player = null; core = null; ghost = null; world = null; battle = null; raceItems=null;
         }
     }
 

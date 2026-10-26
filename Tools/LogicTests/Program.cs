@@ -19,6 +19,15 @@ static class Program
         try
         {
             if (args.Length == 2 && args[0] == "--relay") { RelayIntegration.Run(args[1]).GetAwaiter().GetResult(); return 0; }
+            Test("held items collect once and only consume on an allowed activation", () => {
+                var slot=new PowerupSlot();Check(slot.Held==PowerupKind.None);
+                Check(!slot.Collect(PowerupKind.None)&&!slot.Collect((PowerupKind)99));
+                Check(slot.Collect(PowerupKind.Shield));Check(!slot.Collect(PowerupKind.Pulse));
+                Check(!slot.Use(false,out var denied)&&denied==PowerupKind.None&&slot.Held==PowerupKind.Shield);
+                Check(slot.Use(true,out var used)&&used==PowerupKind.Shield&&slot.Held==PowerupKind.None);
+                Check(!slot.Use(true,out _));Check(slot.Collect(PowerupKind.Overdrive));slot.Clear();
+                Check(slot.Held==PowerupKind.None&&slot.Collect(PowerupKind.Pulse));
+            });
             Test("heavy car retains cornering authority at speed and reverses steering correctly", () => {
                 float yaw=HandlingModel.YawDegrees(1,34,34,75,false);
                 Check(yaw>65 && yaw<80);

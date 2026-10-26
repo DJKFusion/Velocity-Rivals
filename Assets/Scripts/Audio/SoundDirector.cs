@@ -43,8 +43,8 @@ namespace VelocityRivals
             effects = gameObject.AddComponent<AudioSource>();
             effects.spatialBlend = 0;
             effects.playOnAwake = false;
-            menuTracks = LoadTracks("Music/Menu");
-            raceTracks = LoadTracks("Music/Race");
+            menuTracks = LoadTracks(MusicLibrary.MenuTracks);
+            raceTracks = LoadTracks(MusicLibrary.RaceTracks);
             menuOrder = new ShufflePlaylist(menuTracks.Length, System.Environment.TickCount);
             raceOrder = new ShufflePlaylist(raceTracks.Length, System.Environment.TickCount ^ 7919);
             click = Tone("Menu pulse", 660, 0.08f);
@@ -62,12 +62,16 @@ namespace VelocityRivals
             AdvanceTrack();
         }
 
-        private static AudioClip[] LoadTracks(string folder)
+        private static AudioClip[] LoadTracks(string[] paths)
         {
-            var tracks = new List<AudioClip>();
-            foreach (var clip in Resources.LoadAll<AudioClip>(folder))
-                if (clip != null && clip.length > .1f) tracks.Add(clip);
-            tracks.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+            var tracks=new List<AudioClip>();
+            foreach(var path in paths)
+            {
+                if(string.IsNullOrWhiteSpace(path))continue;
+                var clip=Resources.Load<AudioClip>(path);
+                if(clip && clip.length>.1f && !tracks.Contains(clip))tracks.Add(clip);
+                else if(!clip)Debug.LogWarning("MusicLibrary track was not found: "+path);
+            }
             return tracks.ToArray();
         }
 
@@ -187,8 +191,6 @@ namespace VelocityRivals
             if (click) Destroy(click);
             if (victory) Destroy(victory);
             foreach (var clip in cues.Values) if (clip != null) Destroy(clip);
-            foreach (var clip in customClips) if (clip) Destroy(clip);
-            foreach (var clip in pendingCustomClips) if (clip) Destroy(clip);
             if (Instance == this) Instance = null;
         }
     }

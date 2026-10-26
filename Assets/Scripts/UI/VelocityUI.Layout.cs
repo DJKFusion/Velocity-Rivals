@@ -10,7 +10,8 @@ namespace VelocityRivals
         CanvasGroup pageFade;
         float pageOpened;
         Text showcaseName, showcaseStats, showcaseProgress, speedText, boostText, timingText, warningText;
-        Text positionText, positionCaption, eventCaption, radioText, footerRadio;
+        Text positionText, positionCaption, eventCaption, radioText, footerRadio, itemText;
+        GameObject itemCard;
         GameObject radioCard;
         string lastRadioTrack;
         float radioChangedAt;
@@ -201,6 +202,9 @@ namespace VelocityRivals
             var radio=Plate("Now playing toast",canvas.transform,new Color(.018f,.03f,.055f,.92f));
             radio.anchorMin=radio.anchorMax=new Vector2(0,0);radio.pivot=Vector2.zero;radio.anchoredPosition=new Vector2(28,28);radio.sizeDelta=new Vector2(460,85);
             radioText=FixedText(radio,"",17,18,8,424,68,new Color(.65f,.83f,.9f));radioCard=radio.gameObject;
+            var slot=Plate("Held powerup",canvas.transform,new Color(.018f,.03f,.055f,.92f));
+            slot.anchorMin=slot.anchorMax=new Vector2(1,0);slot.pivot=new Vector2(1,0);slot.anchoredPosition=new Vector2(-28,256);slot.sizeDelta=new Vector2(340,105);
+            itemText=FixedText(slot,"",19,20,10,300,85,cyan);itemCard=slot.gameObject;itemCard.SetActive(false);
             raceInfoCard.SetActive(false);speedCard.SetActive(false);timingCard.SetActive(false);hintCard.SetActive(false);radioCard.SetActive(false);
         }
         void RefreshPresentation()
@@ -210,6 +214,14 @@ namespace VelocityRivals
             if(footerRadio && sound)footerRadio.text="ON AIR  /  "+sound.NowPlaying+"   [N]";
             bool driving=session.Running&&!session.Paused&&!session.Finished&&session.Player;
             raceInfoCard.SetActive(driving);speedCard.SetActive(driving);
+            itemCard.SetActive(driving&&session.HasItems);
+            if(itemCard.activeSelf)
+            {
+                var held=session.HeldItem;
+                itemText.color=held==PowerupKind.None?new Color(.6f,.75f,.83f):RaceItems.Tint(held);
+                itemText.text=held==PowerupKind.None?"ITEM SLOT EMPTY\nDrive through a coloured crate":held.ToString().ToUpperInvariant()+" READY\n[F] / [RB]  USE ITEM";
+                if(!string.IsNullOrEmpty(session.ItemEffect))itemText.text+="\n"+session.ItemEffect;
+            }
             bool helpVisible=driving&&(session.Elapsed<8||session.RecoveringFromBoundary||session.IsTraining);
             timingCard.SetActive(driving&&session.IsCircuit);hintCard.SetActive(helpVisible);
             if(helpVisible)radioChangedAt=Time.unscaledTime;

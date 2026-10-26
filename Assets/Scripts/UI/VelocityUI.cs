@@ -22,7 +22,6 @@ namespace VelocityRivals
         private Text title;
         private Text nowPlaying;
         private Text mapLegend;
-        private Text customMusicStatus;
         private RectTransform soundtrackProgress;
         private Text countdownLabel;
         private int careerSelection;
@@ -111,7 +110,6 @@ namespace VelocityRivals
             if (session.ActionEnabled && session.Elapsed < .7f) countdownLabel.text = "GO!";
             mapPanel.SetActive(session.Running && !session.Finished && !session.Paused);
             if (nowPlaying) nowPlaying.text = sound.PlaylistName.ToUpperInvariant() + " PLAYLIST\n" + sound.NowPlaying;
-            if (customMusicStatus) customMusicStatus.text = sound.CustomMusicStatus;
             if (soundtrackProgress) soundtrackProgress.anchorMax=new Vector2(sound.TrackProgress,1);
             if (Keyboard.current != null && Keyboard.current.nKey.wasPressedThisFrame) sound.NextTrack();
 
@@ -146,7 +144,6 @@ namespace VelocityRivals
             if(sound)sound.EndPlaylistPreview();
             soundtrackProgress=null;
             title = null; nowPlaying = null; panel = null; pageRoot = null; pageBack = null;
-            customMusicStatus = null;
             showcaseName = null; showcaseStats = null; showcaseProgress = null; pageFade = null; footerRadio=null;
         }
         private static string LapDisplay(float seconds) => seconds > 0 ? seconds.ToString("0.00") + "s" : "—";
@@ -226,7 +223,7 @@ namespace VelocityRivals
             HomeTile("RECORDS & ACHIEVEMENTS","YOUR PERSONAL BESTS", Records);
             var training=HomeTile("DRIVING SCHOOL",SaveStore.Current.trainingComplete ? "TRAINING COMPLETE" : "NEW DRIVER? START HERE", StartDrivingSchool);
             if(!SaveStore.Current.trainingComplete && SaveStore.Current.events==0)Focus(training);
-            HomeTile("SOUNDTRACK","12 TRACKS / YOUR MUSIC", () => Soundtrack(false));
+            HomeTile("SOUNDTRACK","VELOCITY RADIO / PLAYLISTS", () => Soundtrack(false));
             HomeTile("SETTINGS","DISPLAY / AUDIO / CAMERA", () => Settings(false));
             HomeTile("HOW TO PLAY","CONTROLS / EVENT RULES", () => HowToPlay(false));
             HomeTile("CREDITS","THE GAME / THE MUSIC", Credits);
@@ -436,10 +433,6 @@ namespace VelocityRivals
             Focus(Button("NEXT TRACK", () => sound.NextTrack()));
             Button("PREVIEW MENU PLAYLIST",()=>sound.PreviewPlaylist(false));
             Button("PREVIEW RACE PLAYLIST",()=>sound.PreviewPlaylist(true));
-            Button("OPEN CUSTOM MUSIC FOLDER",sound.OpenCustomMusicFolder);
-            Button("RELOAD CUSTOM MUSIC",sound.ReloadCustomMusic);
-            Label(panel,"Add OGG, WAV or MP3 songs to the Menu or Race folders.\nChoose RELOAD CUSTOM MUSIC to mix them into the soundtrack.\nUp to 30 songs per playlist, 30 MB each.",22,115);
-            customMusicStatus=Label(panel,sound.CustomMusicStatus,20,65);
             string[] volumes = { "0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%" };
             Cycle("Music volume", volumes, () => Mathf.RoundToInt(SaveStore.Current.musicVolume * 10), value => {
                 SaveStore.Current.musicVolume = value / 10f; sound.ApplyVolumes(); SaveStore.Save();
@@ -455,6 +448,7 @@ namespace VelocityRivals
             Label(panel, "WIN YOUR EVENT\nChampionship / Time Attack: follow the yellow map gate and complete three laps.\nArena Clash: push the white core into the orange goal. First to five wins.\nBoost Battle: hit opponents at speed; collect shields, overdrive and pulse pickups.\nStunt Rush: jump, rotate and land upright. Reach 1,000 points before time runs out.", 23, 215);
             Label(panel, "Esc / Start pauses. Earn XP to unlock cars in the garage.\nCyan on the map is you, orange is another vehicle, yellow is the next gate.", 23, 85);
             Label(panel,"CORNERING\nRelease boost before a bend. Steering retains control at speed and gently reduces speed in hard turns.\nTap Ctrl / X for a tighter drift; release it to regain grip. S / LT brakes and reverses.",23,135);
+            Label(panel,"HELD ITEMS — CHAMPIONSHIP / ELIMINATION / BOOST BATTLE\nCollect one coloured crate, then press F / RB to activate it. Cyan: shield. Orange: overdrive. Purple: pulse.\nIn races, shield blocks pulses; overdrive adds boost fuel and a grounded speed kick. Pulse pushes nearby rivals.\nIn combat, shield blocks damage, overdrive doubles damage and pulse damages nearby rivals. Items are lost on knockout.",21,180);
             Label(panel,"RACE CRAFT\nChampionship / Elimination: follow a moving rival 5–30 metres ahead to build slipstream, then pull out to pass.\nElimination removes last place every 45 seconds. Keep passing ordered checkpoints; the last survivor wins.",23,145);
             if (!paused) Button("START PRACTICE", StartDrivingSchool);
             Focus(Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); }));
@@ -554,7 +548,7 @@ namespace VelocityRivals
                 string vehicle = r.vehicle >= 0 && r.vehicle < 6 ? GameSession.VehicleNames[r.vehicle] : "All vehicles";
                 vehicle += r.upgradeSignature==0 ? " • STOCK" : $" • E{r.upgradeSignature%4}/H{r.upgradeSignature/4%4}/B{r.upgradeSignature/16%4}";
                 if (r.environment >= 0 && r.layoutRevision != CircuitLayout.Revision) environment += " (old layout)";
-                if ((r.mode=="Championship" || r.mode=="Elimination") && r.raceRulesRevision!=RaceCraft.RulesVersion) environment += " (earlier race rules)";
+                if ((r.mode=="Championship" || r.mode=="Elimination" || r.mode=="BoostBattle") && r.raceRulesRevision!=RaceCraft.RulesVersion) environment += " (earlier race rules)";
                 if(r.handlingRevision!=HandlingModel.Revision)vehicle+=" (earlier handling)";
                 text += $"{r.mode} • {environment} • {vehicle}\n{r.finishes} finishes • Best {LapDisplay(r.bestSeconds)} • Score {r.bestScore}\n\n";
             }
