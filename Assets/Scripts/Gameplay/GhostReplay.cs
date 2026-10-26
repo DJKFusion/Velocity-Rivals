@@ -19,7 +19,7 @@ namespace VelocityRivals
         public void Begin(int environment, int vehicle, Transform target)
         {
             player = target;
-            file = Path.Combine(Path.GetDirectoryName(SaveStore.FilePath), "ghost-v" + CircuitLayout.Revision + "-" + environment + "-" + vehicle + ".json");
+            file = Path.Combine(Path.GetDirectoryName(SaveStore.FilePath), "ghost-v" + CircuitLayout.Revision + "-h" + HandlingModel.Revision + "-" + environment + "-" + vehicle + ".json");
             try
             {
                 if (File.Exists(file) && new FileInfo(file).Length < 8 * 1024 * 1024)

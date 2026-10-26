@@ -33,6 +33,31 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator HeavyCarTurnsAtRoadSpeedAndBoostUsesTransparentTrail()
+        {
+            root=new GameObject("Handling regression");
+            var floor=GameObject.CreatePrimitive(PrimitiveType.Cube);floor.transform.SetParent(root.transform);
+            floor.transform.position=new Vector3(0,-.5f,0);floor.transform.localScale=new Vector3(300,1,300);
+            var stats=Resources.Load<VehicleStats>("VehicleStats/Bulwark");
+            var car=VehicleController.Spawn("Handling test",Vector3.up*.4f,Quaternion.identity,stats,Color.cyan,false);
+            car.transform.SetParent(root.transform);car.ControlsEnabled=true;
+            yield return new WaitForSeconds(.5f);
+            var body=car.GetComponent<Rigidbody>();body.linearVelocity=Vector3.forward*28;
+            float initialYaw=car.transform.eulerAngles.y;
+            for(int i=0;i<60;i++)
+            {
+                car.SetInput(new DriveInput{Throttle=1,Steering=1});
+                yield return new WaitForFixedUpdate();
+            }
+            Assert.Greater(Mathf.DeltaAngle(initialYaw,car.transform.eulerAngles.y),30,"Bulwark should take a sustained corner at road speed.");
+            Assert.Less(car.SpeedKmh,100,"Corner assistance should reduce speed even while throttle is held.");
+            var trail=car.GetComponentInChildren<TrailRenderer>();Assert.IsNotNull(trail);
+            Assert.AreEqual("Velocity Rivals/Soft Effects",trail.sharedMaterial.shader.name);
+            Assert.Less(trail.startColor.a,1);Assert.AreEqual(0,trail.endColor.a);
+            car.Respawn(Vector3.up,Quaternion.identity);Assert.AreEqual(0,trail.positionCount);
+        }
+
+        [UnityTest]
         public IEnumerator ResumeFreezesClockAndPreservesStoppedDrivers()
         {
             root=new GameObject("Pause safety",typeof(GameSession));var session=root.GetComponent<GameSession>();

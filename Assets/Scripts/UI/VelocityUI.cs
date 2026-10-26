@@ -454,6 +454,7 @@ namespace VelocityRivals
             Label(panel, "DRIVE\nW / S accelerate and reverse • A / D steer\nShift boost • Ctrl handbrake • Space jump, press again for an aerial jump\nQ / E roll in the air • R recover your car\nController: triggers + left stick, B boost, X drift, A jump, Y recover.", 24, 205);
             Label(panel, "WIN YOUR EVENT\nChampionship / Time Attack: follow the yellow map gate and complete three laps.\nArena Clash: push the white core into the orange goal. First to five wins.\nBoost Battle: hit opponents at speed; collect shields, overdrive and pulse pickups.\nStunt Rush: jump, rotate and land upright. Reach 1,000 points before time runs out.", 23, 215);
             Label(panel, "Esc / Start pauses. Earn XP to unlock cars in the garage.\nCyan on the map is you, orange is another vehicle, yellow is the next gate.", 23, 85);
+            Label(panel,"CORNERING\nRelease boost before a bend. Steering retains control at speed and gently reduces speed in hard turns.\nTap Ctrl / X for a tighter drift; release it to regain grip. S / LT brakes and reverses.",23,135);
             Label(panel,"RACE CRAFT\nChampionship / Elimination: follow a moving rival 5–30 metres ahead to build slipstream, then pull out to pass.\nElimination removes last place every 45 seconds. Keep passing ordered checkpoints; the last survivor wins.",23,145);
             if (!paused) Button("START PRACTICE", StartDrivingSchool);
             Focus(Button("BACK", () => { if (paused) PauseMenu(); else MainMenu(); }));
@@ -554,6 +555,7 @@ namespace VelocityRivals
                 vehicle += r.upgradeSignature==0 ? " • STOCK" : $" • E{r.upgradeSignature%4}/H{r.upgradeSignature/4%4}/B{r.upgradeSignature/16%4}";
                 if (r.environment >= 0 && r.layoutRevision != CircuitLayout.Revision) environment += " (old layout)";
                 if ((r.mode=="Championship" || r.mode=="Elimination") && r.raceRulesRevision!=RaceCraft.RulesVersion) environment += " (earlier race rules)";
+                if(r.handlingRevision!=HandlingModel.Revision)vehicle+=" (earlier handling)";
                 text += $"{r.mode} • {environment} • {vehicle}\n{r.finishes} finishes • Best {LapDisplay(r.bestSeconds)} • Score {r.bestScore}\n\n";
             }
             Label(panel, string.IsNullOrEmpty(text) ? "Finish your first event to set a record." : text, 22, 340);

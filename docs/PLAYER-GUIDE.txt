@@ -104,3 +104,11 @@ The event preview shows lap length. Arenas now measure 126 × 140 metres.
 Career time-trial gold targets are 270 / 297 / 315 / 342 seconds in tour order.
 Previously earned medals, cars, credits and upgrades stay unlocked. Earlier
 records remain visible as old layouts; new personal ghosts use the larger routes.
+
+CORNERING UPDATE
+Release boost before a corner. Strong steering now gently reduces the car's
+target speed even while the accelerator is held. Tap Ctrl / X for a tighter
+drift, then release to recover grip. S / LT brakes and reverses. Steering
+sensitivity remains adjustable under Settings. Glacier is still slippery but
+retains more grip. Earlier records are labeled as earlier handling; career
+medals, credits and cars are retained. New Time Attack ghosts start separately.

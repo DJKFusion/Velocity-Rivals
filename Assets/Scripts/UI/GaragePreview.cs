@@ -24,7 +24,7 @@ namespace VelocityRivals
             platform.transform.localPosition = new Vector3(0,-.16f,0);
             platform.transform.localScale = new Vector3(4.8f,.12f,4.8f);
             platform.GetComponent<Collider>().enabled = false; Destroy(platform.GetComponent<Collider>());
-            platform.GetComponent<Renderer>().sharedMaterial = Material(new Color(.035f,.05f,.07f), .7f, .8f);
+            platform.GetComponent<Renderer>().sharedMaterial = Material(new Color(.035f,.05f,.07f), .25f, .35f);
             var ringObject = new GameObject("Showroom light ring", typeof(LineRenderer)); ringObject.layer = 30;
             ringObject.transform.SetParent(stage.transform, false);
             var ring = ringObject.GetComponent<LineRenderer>();
@@ -45,9 +45,9 @@ namespace VelocityRivals
             int height = Mathf.Clamp(Mathf.RoundToInt(rect.height), 128, 768);
             texture = new RenderTexture(width, height, 24, RenderTextureFormat.DefaultHDR); texture.Create();
             camera.targetTexture = texture; GetComponent<RawImage>().texture = texture;
-            Light("Showroom key", LightType.Directional, Vector3.zero, new Vector3(35,-145,0), Color.white, 2.5f);
-            Light("Showroom cyan rim", LightType.Point, new Vector3(-3,2,-2), Vector3.zero, new Color(.65f,.85f,1), 12);
-            Light("Showroom warm fill", LightType.Point, new Vector3(3,1,2), Vector3.zero, new Color(1,.85f,.65f), 12);
+            Light("Showroom key", LightType.Directional, Vector3.zero, new Vector3(35,-145,0), Color.white, 1.5f);
+            Light("Showroom cyan rim", LightType.Point, new Vector3(-3,2,-2), Vector3.zero, new Color(.65f,.85f,1), 6);
+            Light("Showroom warm fill", LightType.Point, new Vector3(3,1,2), Vector3.zero, new Color(1,.85f,.65f), 5);
             BuildStudio();
             UpdateModel();
             var probeObject=new GameObject("Studio reflections",typeof(ReflectionProbe));
@@ -69,12 +69,12 @@ namespace VelocityRivals
         void BuildStudio()
         {
             var graphite=Material(new Color(.055f,.065f,.085f),.35f,.45f);
-            var white=Material(new Color(.7f,.83f,1),0,.3f);white.EnableKeyword("_EMISSION");white.SetColor("_EmissionColor",new Color(.7f,.83f,1)*2.5f);
+            var white=Material(new Color(.7f,.83f,1),0,.3f);white.EnableKeyword("_EMISSION");white.SetColor("_EmissionColor",new Color(.7f,.83f,1)*.8f);
             StudioBlock("Studio floor",new Vector3(0,-.35f,0),new Vector3(18,.1f,18),graphite);
             StudioBlock("Studio backdrop",new Vector3(0,3,-5),new Vector3(18,7,.15f),graphite);
             for(int i=-3;i<=3;i++)StudioBlock("Backdrop light strip",new Vector3(i*1.7f,2.5f,-4.9f),new Vector3(.045f,4,.03f),white);
             StudioBlock("Overhead softbox",new Vector3(0,5,0),new Vector3(5,.08f,1.3f),white);
-            StudioBlock("Side softbox",new Vector3(-4,2,0),new Vector3(.08f,2.5f,4),white);
+            // The off-camera fill light replaces the visible white side panel.
         }
         Material Material(Color color, float metallic, float smoothness)
         {

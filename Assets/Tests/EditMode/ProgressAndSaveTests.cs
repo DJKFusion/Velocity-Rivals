@@ -168,6 +168,19 @@ namespace VelocityRivals.Tests
         }
 
         [Test]
+        public void HandlingUpdatePreservesEarlierTimesAndStartsNewRecordGroup()
+        {
+            SaveStore.Current.records.Add(new RaceRecord { mode="TimeAttack",environment=0,vehicle=0,layoutRevision=CircuitLayout.Revision,bestSeconds=40,finishes=1 });
+            SaveStore.RecordResult("TimeAttack",true,90,100,0,0);
+            SaveStore.RecordResult("TimeAttack",true,80,200,0,0);
+            Assert.AreEqual(2,SaveStore.Current.records.Count);
+            Assert.AreEqual(40,SaveStore.Current.records[0].bestSeconds);
+            Assert.AreEqual(HandlingModel.Revision,SaveStore.Current.records[1].handlingRevision);
+            Assert.AreEqual(80,SaveStore.Current.records[1].bestSeconds);
+            Assert.AreEqual(2,SaveStore.Current.records[1].finishes);
+        }
+
+        [Test]
         public void ExpandedArenaKeepsEarlierRecordsSeparate()
         {
             SaveStore.Current.records.Add(new RaceRecord { mode="ArenaClash",environment=3,vehicle=0,layoutRevision=0,bestSeconds=20,finishes=1 });

@@ -42,6 +42,7 @@ namespace VelocityRivals
         InputActionMap controls;
         InputAction throttle, steering, brake, boost, jump, roll, rollAxis, reset;
         bool jumpQueued, previousJump;
+        float groundedSteering;
         int jumps;
         float lastJump = -10f, invertedTime, airRotation, airTime;
         Vector3 safePosition;
@@ -137,7 +138,8 @@ namespace VelocityRivals
         void FixedUpdate()
         {
             if (NetworkProxy) return;
-            if (!ControlsEnabled) { input = default; jumpQueued = false; }
+            if (!ControlsEnabled) { input = default; jumpQueued = false; groundedSteering=0; }
+            groundedSteering=Mathf.MoveTowards(groundedSteering,input.Steering,Time.fixedDeltaTime*9);
             float acceleration = Stats != null ? Stats.Acceleration : 24f;
             float maxSpeed = Stats != null ? Stats.MaxSpeed : 38f;
             acceleration *= 1 + DraftStrength * .08f;
@@ -168,15 +170,16 @@ namespace VelocityRivals
                     StuntScore += Mathf.RoundToInt(airRotation * 12f + airTime * 20f);
                 airRotation = 0; airTime = 0;
                 Vector3 side = Vector3.ProjectOnPlane(transform.right, groundNormal).normalized;
-                body.AddForce(-side * Vector3.Dot(body.linearVelocity, side) * (input.Brake ? grip * .16f : grip), ForceMode.Acceleration);
+                body.AddForce(-side * Vector3.Dot(body.linearVelocity, side) * HandlingModel.Grip(grip,input.Brake), ForceMode.Acceleration);
                 Vector3 forward = Vector3.ProjectOnPlane(transform.forward, groundNormal).normalized;
-                if ((input.Throttle > 0 && forwardSpeed < maxSpeed) || (input.Throttle < 0 && forwardSpeed > -maxSpeed * .34f))
+                float driveLimit=HandlingModel.CornerSpeed(groundedSteering,maxSpeed,IsBoosting,input.Brake);
+                if ((input.Throttle > 0 && forwardSpeed < driveLimit) || (input.Throttle < 0 && forwardSpeed > -maxSpeed * .34f))
                     body.AddForce(forward * input.Throttle * acceleration, ForceMode.Acceleration);
                 if (input.Brake) body.AddForce(-forward * forwardSpeed * .8f, ForceMode.Acceleration);
-                float speedFactor = Mathf.Lerp(1f, .43f, Mathf.Clamp01(Mathf.Abs(forwardSpeed) / maxSpeed));
-                float moving = Mathf.Clamp01(Mathf.Abs(forwardSpeed) / 3f);
-                float desiredYaw = input.Steering * steerSpeed * Mathf.Deg2Rad * speedFactor * moving * (forwardSpeed < -.5f ? -1f : 1f);
-                body.AddTorque(groundNormal * (desiredYaw - Vector3.Dot(body.angularVelocity, groundNormal)) * 8f, ForceMode.Acceleration);
+                float desiredYaw = HandlingModel.YawDegrees(groundedSteering,forwardSpeed,maxSpeed,steerSpeed,input.Brake)*Mathf.Deg2Rad;
+                body.AddTorque(groundNormal * (desiredYaw - Vector3.Dot(body.angularVelocity, groundNormal)) * 16f, ForceMode.Acceleration);
+                float cornerBrake=HandlingModel.CornerDeceleration(groundedSteering,forwardSpeed,maxSpeed,IsBoosting,input.Brake);
+                body.AddForce(-forward*cornerBrake,ForceMode.Acceleration);
                 Vector3 tiltVelocity = Vector3.ProjectOnPlane(body.angularVelocity, groundNormal);
                 body.AddTorque(Vector3.Cross(transform.up, groundNormal) * 18f - tiltVelocity * 4f, ForceMode.Acceleration);
                 // Adhesion works when the suspension rays can reach a smoothly joined wall surface.
@@ -235,7 +238,8 @@ namespace VelocityRivals
             body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero;
             safePosition = position; safeRotation = rotation;
             jumps = 0; invertedTime = 0; airTime = 0; airRotation = 0;
-            jumpQueued = false;
+            jumpQueued = false; groundedSteering=0;
+            if(exhaust)exhaust.Clear();
         }
 
         public void SetPaint(Color color)
@@ -253,7 +257,7 @@ namespace VelocityRivals
             if (exhaust != null)
             {
                 Color c = Color.HSVToRGB((Mathf.Abs(trail) % 8) / 8f, .75f, 1f);
-                exhaust.startColor = c; exhaust.endColor = new Color(c.r, c.g, c.b, 0f);
+               exhaust.startColor = new Color(c.r,c.g,c.b,.65f); exhaust.endColor = new Color(c.r, c.g, c.b, 0f);
             }
             if (decalObject != null)
             {
@@ -267,8 +271,8 @@ namespace VelocityRivals
             }
             if (paintMaterial != null)
             {
-                paintMaterial.SetFloat("_Smoothness", finish == 1 ? .22f : finish == 2 ? .82f : .76f);
-                paintMaterial.SetFloat("_Metallic", finish == 2 ? .8f : .45f);
+                paintMaterial.SetFloat("_Smoothness", finish == 1 ? .22f : finish == 2 ? .66f : .57f);
+                paintMaterial.SetFloat("_Metallic", finish == 2 ? .6f : .28f);
             }
         }
 
@@ -315,7 +319,7 @@ namespace VelocityRivals
             var headlights = MakeMaterial(new Color(.78f,.9f,1),true);
             var caliper = MakeMaterial(new Color(.65f,.035f,.02f));
             caliper.SetFloat("_Metallic",.35f);caliper.SetFloat("_Smoothness",.45f);
-            paintMaterial.SetFloat("_Metallic", .65f); paintMaterial.SetFloat("_Smoothness", .8f);
+            paintMaterial.SetFloat("_Metallic", .28f); paintMaterial.SetFloat("_Smoothness", .57f);
             string[] modelNames = { "Viper", "Bulwark", "Phantom", "Apex", "Nomad", "Comet" };
             int style = Stats != null ? System.Array.IndexOf(modelNames, Stats.DisplayName) : 0;
             float width = style == 3 ? 1.95f : style == 2 ? 1.55f : 1.8f;
@@ -367,8 +371,18 @@ namespace VelocityRivals
             spoilerObject = Part("Spoiler", new Vector3(0, 1.05f, -1.45f), new Vector3(width + .2f, .1f, .4f), paintMaterial);
             decalObject = Part("Center stripe", new Vector3(0, .858f, .95f), new Vector3(.18f, .008f, .9f), glow);
             var jet = new GameObject("Boost trail"); jet.transform.SetParent(transform, false); jet.transform.localPosition = new Vector3(0, .5f, -1.8f);
-            exhaust = jet.AddComponent<TrailRenderer>(); exhaust.time = .23f; exhaust.startWidth = .65f; exhaust.endWidth = .03f;
-            exhaust.sharedMaterial = glow; exhaust.startColor = Color.cyan; exhaust.endColor = Color.clear; exhaust.emitting = false;
+            exhaust = jet.AddComponent<TrailRenderer>(); exhaust.time = .16f; exhaust.startWidth = .32f; exhaust.endWidth = 0;
+            exhaust.minVertexDistance=.15f;exhaust.numCornerVertices=3;exhaust.numCapVertices=3;
+            exhaust.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;exhaust.receiveShadows=false;
+            var trailShader=Resources.Load<Shader>("VelocityEffects");
+            if(trailShader)
+            {
+                var trailMaterial=new Material(trailShader);trailMaterial.SetColor("_Color",Color.white);
+                trailMaterial.SetTexture("_MainTex",Resources.Load<Texture2D>("SurfaceTextures/Smoke"));
+                ownedMaterials.Add(trailMaterial);exhaust.sharedMaterial=trailMaterial;
+            }
+            else exhaust.enabled=false;
+            exhaust.startColor = new Color(0,1,1,.65f); exhaust.endColor = Color.clear; exhaust.emitting = false;
             if (IsPlayer && Application.isPlaying) CreateEngineAudio();
         }
 

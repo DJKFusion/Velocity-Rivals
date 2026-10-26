@@ -1,5 +1,12 @@
 # Implementation and verification ledger
 
+The handling pass responds to the owner reporting poor cornering with the Bulwark.
+High-speed steering, yaw response, grip and drift control are increased; a shared
+corner-speed target gently slows strong turns unless boosting/drifting. Glacier
+retains more grip. Transparent trails and reduced showroom reflections address
+the supplied screenshots. 55 standalone checks pass; Unity cornering/record tests
+are authored, unrun here. See [HANDLING-POLISH.md](HANDLING-POLISH.md).
+
 All five circuits are now about 80% longer and arenas have 1.96× the floor area.
 Scenery, goal scoring, arena bounds, minimaps, pickups and medal targets match the
 expanded layouts. Old records/ghosts are separated by layout revision 4; saved

@@ -265,7 +265,7 @@ namespace VelocityRivals
                 stats.Grip*=1+handling*.08f;stats.Steering*=1+handling*.03f;
                 stats.BoostForce*=1+boost*.08f;
             }
-            if (environment == 4) stats.Grip *= .45f;
+            if (environment == 4) stats.Grip *= .8f;
             if (!player)
             {
                 int level = CareerEventIndex >= 0 ? CareerTour.Get(CareerEventIndex).Difficulty : SaveStore.Current.difficulty;

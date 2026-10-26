@@ -13,6 +13,7 @@ namespace VelocityRivals
         public int layoutRevision;
         public int upgradeSignature;
         public int raceRulesRevision;
+        public int handlingRevision;
         public float bestSeconds;
         public int bestScore;
         public int finishes;
@@ -166,8 +167,8 @@ namespace VelocityRivals
             int revision = environment >= 0 ? CircuitLayout.Revision : 0;
             int setup = mode == "TimeAttack" ? 0 : profile.garage.Signature(vehicle);
             int rules = mode=="Championship" || mode=="Elimination" ? RaceCraft.RulesVersion : 0;
-            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision && r.upgradeSignature == setup && r.raceRulesRevision==rules);
-            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle, layoutRevision = revision, upgradeSignature=setup, raceRulesRevision=rules }; profile.records.Add(record); }
+            RaceRecord record = profile.records.Find(r => r.mode == mode && r.environment == environment && r.vehicle == vehicle && r.layoutRevision == revision && r.upgradeSignature == setup && r.raceRulesRevision==rules && r.handlingRevision==HandlingModel.Revision);
+            if (record == null) { record = new RaceRecord { mode = mode, environment = environment, vehicle = vehicle, layoutRevision = revision, upgradeSignature=setup, raceRulesRevision=rules, handlingRevision=HandlingModel.Revision }; profile.records.Add(record); }
             if (completed) record.finishes++;
             record.bestScore = Mathf.Max(record.bestScore, score);
             if (completed && seconds > 0 && !float.IsInfinity(seconds) && !float.IsNaN(seconds) && (record.bestSeconds <= 0 || seconds < record.bestSeconds))

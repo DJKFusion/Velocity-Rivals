@@ -19,6 +19,27 @@ static class Program
         try
         {
             if (args.Length == 2 && args[0] == "--relay") { RelayIntegration.Run(args[1]).GetAwaiter().GetResult(); return 0; }
+            Test("heavy car retains cornering authority at speed and reverses steering correctly", () => {
+                float yaw=HandlingModel.YawDegrees(1,34,34,75,false);
+                Check(yaw>65 && yaw<80);
+                Check(HandlingModel.YawDegrees(0,34,34,75,false)==0);
+                Check(HandlingModel.YawDegrees(1,0,34,75,false)==0);
+                Check(HandlingModel.YawDegrees(1,-10,34,75,false)<0);
+                Check(Math.Abs(HandlingModel.YawDegrees(-1,34,34,75,false)+yaw)<.001f);
+                Check(HandlingModel.YawDegrees(1,34,34,75,true)>yaw);
+            });
+            Test("corner braking lowers throttle target without opposing boost or reverse", () => {
+                Check(HandlingModel.CornerSpeed(1,34,false,false)<23);
+                Check(HandlingModel.CornerSpeed(.2f,34,false,false)==34);
+                Check(HandlingModel.CornerSpeed(1,34,true,false)==34);
+                Check(HandlingModel.CornerDeceleration(1,34,34,false,false)==9);
+                Check(HandlingModel.CornerDeceleration(1,20,34,false,false)==0);
+                Check(HandlingModel.CornerDeceleration(1,-10,34,false,false)==0);
+                Check(HandlingModel.CornerDeceleration(1,34,34,true,false)==0);
+                Check(HandlingModel.CornerDeceleration(1,34,34,false,true)==0);
+                Check(HandlingModel.YawDegrees(float.NaN,34,34,75,false)==0);
+                Check(HandlingModel.Grip(7,true)>3 && HandlingModel.Grip(7,true)<HandlingModel.Grip(7,false));
+            });
             Test("elimination cuts last place at exact intervals and declares one survivor", () => {
                 var race=new EliminationRace();double[] progress={10.5,9.9,8.3,7.7};
                 Check(race.EliminateDue(44.99f,progress)==-1 && race.ActiveCount==4);
