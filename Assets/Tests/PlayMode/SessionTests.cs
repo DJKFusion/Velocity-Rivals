@@ -113,21 +113,63 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
-        public IEnumerator FKeyActivatesHeldRaceItem()
+        public IEnumerator FKeyActivatesHeldRaceItem() => CheckHeldItemInput(false);
+
+        [UnityTest]
+        public IEnumerator RightShoulderActivatesHeldRaceItem() => CheckHeldItemInput(true);
+
+        IEnumerator CheckHeldItemInput(bool useGamepad)
         {
-            var keyboard=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();keyboard.MakeCurrent();
+            var oldMode=UnityEngine.InputSystem.InputSystem.settings.updateMode;
+            var previousKeyboard=UnityEngine.InputSystem.Keyboard.current;
+            var previousPad=UnityEngine.InputSystem.Gamepad.current;
+            var keyboard=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
+            var pad=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Gamepad>();
             try
             {
                 root=new GameObject("Item key binding",typeof(GameSession));var session=root.GetComponent<GameSession>();
                 session.StartMatch(GameMode.Championship,0,0,Color.cyan);yield return null;
                 typeof(GameSession).GetField("countdown",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(session,0f);
                 session.Player.ControlsEnabled=true;
-                Assert.IsTrue(Object.FindFirstObjectByType<RaceItems>().Collect(session.Player,PowerupKind.Shield));
-                UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.F));
-                yield return null;yield return null;
-                Assert.AreEqual(PowerupKind.None,session.HeldItem);StringAssert.StartsWith("SHIELD",session.ItemEffect);
+                var items=Object.FindFirstObjectByType<RaceItems>();
+                // Own the input tick so the Editor/player loop cannot clear a one-frame
+                // press between event delivery and the production Update handler.
+                UnityEngine.InputSystem.InputSystem.settings.updateMode=UnityEngine.InputSystem.InputSettings.UpdateMode.ProcessEventsManually;
+                void Tick(bool pressed)
+                {
+                    UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,
+                        pressed && !useGamepad ? new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.F) : new UnityEngine.InputSystem.LowLevel.KeyboardState());
+                    UnityEngine.InputSystem.InputSystem.QueueStateEvent(pad,
+                        pressed && useGamepad ? new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.RightShoulder) : new UnityEngine.InputSystem.LowLevel.GamepadState());
+                    UnityEngine.InputSystem.InputSystem.Update();
+                    keyboard.MakeCurrent();pad.MakeCurrent();
+                    session.SendMessage("Update");
+                }
+                Tick(false); // Establish released state and prime edge detection.
+                Assert.IsTrue(items.Collect(session.Player,PowerupKind.Shield));
+                Assert.IsTrue(session.ActionEnabled);
+                Tick(true);
+                Assert.AreEqual(PowerupKind.None,session.HeldItem);
+                StringAssert.StartsWith("SHIELD",session.ItemEffect);
+                Assert.IsTrue(items.Collect(session.Player,PowerupKind.Overdrive));
+                Tick(true); // Holding the button must not spend a newly collected item.
+                Assert.AreEqual(PowerupKind.Overdrive,session.HeldItem);
+                Tick(false);
+                session.SetPaused(true);Tick(true);
+                Assert.AreEqual(PowerupKind.Overdrive,session.HeldItem);
+                Tick(false);session.SetPaused(false);Tick(true);
+                Assert.AreEqual(PowerupKind.None,session.HeldItem);
+                Tick(false);
             }
-            finally { UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard); }
+            finally
+            {
+                // Restore global input state even when an assertion fails.
+                UnityEngine.InputSystem.InputSystem.settings.updateMode=oldMode;
+                if(keyboard.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard);
+                if(pad.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(pad);
+                if(previousKeyboard!=null && previousKeyboard.added)previousKeyboard.MakeCurrent();
+                if(previousPad!=null && previousPad.added)previousPad.MakeCurrent();
+            }
         }
 
         [UnityTest]
