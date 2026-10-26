@@ -36,3 +36,23 @@ Synthetic tests temporarily ignore window focus and restore the previous input
 settings/devices in finally. Gameplay focus-pause behaviour is unchanged.
 This addresses the input implementation as well as the test harness; a fresh
 Unity run is still necessary to confirm success on the affected machine.
+
+## 14:18 UTC rerun and focused diagnostics
+
+The next report still has 39/41 passing. Keyboard reaches the consumption assertion;
+gamepad now explicitly fails the device-state delivery assertion. This proves the
+queued synthetic gamepad input is unreliable in this harness; it does not prove
+that either physical gameplay binding is broken or fixed.
+
+Tests now enter a Dynamic input update and synchronously apply button state through
+InputState.Change, which notifies the production action's state monitors. No direct
+UseItem call substitutes for input handling. Additional assertions check the action
+exists, is enabled, binds the test device, performs once, and does not repeat while
+held. Pause and inventory assertions remain. Runtime input code is unchanged from
+the preceding action-based commit.
+
+Run Test-Item-Controls.cmd with Unity closed for the two focused tests. It writes
+Artifacts/ItemControls.xml and ItemControls.log and requires exactly two passes.
+It does not package a player or bypass Build-SinglePlayer.cmd's full test gates.
+Windows/Unity execution is still pending; do not call this a confirmed fix until
+those tests pass on the affected machine.

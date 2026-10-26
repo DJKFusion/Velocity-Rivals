@@ -137,24 +137,38 @@ namespace VelocityRivals.Tests
                 // batchmode window focus only in this synthetic-device test.
                 UnityEngine.InputSystem.InputSystem.settings.updateMode=UnityEngine.InputSystem.InputSettings.UpdateMode.ProcessEventsManually;
                 UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior=UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus;
+                var action=(UnityEngine.InputSystem.InputAction)typeof(GameSession)
+                    .GetField("useItemAction",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(session);
+                Assert.IsNotNull(action,"Session did not create its item action.");
+                Assert.IsTrue(action.enabled,"Session item action is disabled.");
+                var button=useGamepad?pad.rightShoulder:keyboard.fKey;
+                bool bound=false;
+                foreach(var control in action.controls)if(control==button)bound=true;
+                Assert.IsTrue(bound,"Production item action did not bind the synthetic device.");
+                int performed=0;action.performed+=_=>performed++;
+                // Enter a player input update explicitly. Then change the button's state
+                // synchronously: this notifies the real InputAction's state monitors,
+                // without timestamped events waiting in the native editor event queue.
+                UnityEngine.InputSystem.InputSystem.Update(UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
                 void Tick(bool pressed)
                 {
-                    UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,
-                        pressed && !useGamepad ? new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.F) : new UnityEngine.InputSystem.LowLevel.KeyboardState());
-                    UnityEngine.InputSystem.InputSystem.QueueStateEvent(pad,
-                        pressed && useGamepad ? new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.RightShoulder) : new UnityEngine.InputSystem.LowLevel.GamepadState());
-                    UnityEngine.InputSystem.InputSystem.Update();
-                    Assert.AreEqual(pressed,useGamepad?pad.rightShoulder.isPressed:keyboard.fKey.isPressed,
-                        "Synthetic button state was not delivered to the Input System.");
+                    UnityEngine.InputSystem.LowLevel.InputState.Change(keyboard.fKey,
+                        pressed && !useGamepad?1f:0f,UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
+                    UnityEngine.InputSystem.LowLevel.InputState.Change(pad.rightShoulder,
+                        pressed && useGamepad?1f:0f,UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
+                    Assert.AreEqual(pressed,button.isPressed,"Synthetic button state injection failed.");
                 }
                 Tick(false); // Establish released state before the first press.
                 Assert.IsTrue(items.Collect(session.Player,PowerupKind.Shield));
                 Assert.IsTrue(session.ActionEnabled);
                 Tick(true);
+                Assert.AreEqual(1,performed,"The bound InputAction did not perform exactly once for the first press.");
+                Assert.IsTrue(session.Player.ControlsEnabled,"Player controls were disabled during activation.");
                 Assert.AreEqual(PowerupKind.None,session.HeldItem,"A fresh press must activate the held shield through the production InputAction.");
                 StringAssert.StartsWith("SHIELD",session.ItemEffect);
                 Assert.IsTrue(items.Collect(session.Player,PowerupKind.Overdrive));
                 Tick(true); // Holding the button must not spend a newly collected item.
+                Assert.AreEqual(1,performed,"Holding retriggered the item action.");
                 Assert.AreEqual(PowerupKind.Overdrive,session.HeldItem);
                 Tick(false);
                 session.SetPaused(true);Tick(true);
