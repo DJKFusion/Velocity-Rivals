@@ -122,6 +122,9 @@ namespace VelocityRivals.Tests
         {
             var oldMode=UnityEngine.InputSystem.InputSystem.settings.updateMode;
             var oldBackground=UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior;
+#if UNITY_EDITOR
+            var oldEditorRouting=UnityEngine.InputSystem.InputSystem.settings.editorInputBehaviorInPlayMode;
+#endif
             var previousKeyboard=UnityEngine.InputSystem.Keyboard.current;
             var previousPad=UnityEngine.InputSystem.Gamepad.current;
             var keyboard=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
@@ -137,6 +140,12 @@ namespace VelocityRivals.Tests
                 // batchmode window focus only in this synthetic-device test.
                 UnityEngine.InputSystem.InputSystem.settings.updateMode=UnityEngine.InputSystem.InputSettings.UpdateMode.ProcessEventsManually;
                 UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior=UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus;
+#if UNITY_EDITOR
+                // Unity requires BOTH settings for gameShouldGetInputRegardlessOfFocus.
+                // Otherwise Update() can select Editor buffers in a headless test run.
+                UnityEngine.InputSystem.InputSystem.settings.editorInputBehaviorInPlayMode=
+                    UnityEngine.InputSystem.InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+#endif
                 var action=(UnityEngine.InputSystem.InputAction)typeof(GameSession)
                     .GetField("useItemAction",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(session);
                 Assert.IsNotNull(action,"Session did not create its item action.");
@@ -150,6 +159,9 @@ namespace VelocityRivals.Tests
                 // synchronously: this notifies the real InputAction's state monitors,
                 // without timestamped events waiting in the native editor event queue.
                 UnityEngine.InputSystem.InputSystem.Update();
+                Assert.AreEqual(UnityEngine.InputSystem.LowLevel.InputUpdateType.Manual,
+                    UnityEngine.InputSystem.LowLevel.InputState.currentUpdateType,
+                    "Input test must read and write the player buffer, not the Editor buffer.");
                 void Tick(bool pressed)
                 {
                     // Individual keys/buttons are bitfields. InputState.Change requires
@@ -161,10 +173,8 @@ namespace VelocityRivals.Tests
                     var padState=pressed && useGamepad
                         ? new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.RightShoulder)
                         : new UnityEngine.InputSystem.LowLevel.GamepadState();
-                    UnityEngine.InputSystem.LowLevel.InputState.Change(keyboard,keyboardState,
-                        UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
-                    UnityEngine.InputSystem.LowLevel.InputState.Change(pad,padState,
-                        UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
+                    UnityEngine.InputSystem.LowLevel.InputState.Change(keyboard,keyboardState);
+                    UnityEngine.InputSystem.LowLevel.InputState.Change(pad,padState);
                     Assert.AreEqual(pressed,button.isPressed,"Synthetic button state injection failed.");
                 }
                 Tick(false); // Establish released state before the first press.
@@ -191,6 +201,9 @@ namespace VelocityRivals.Tests
                 // Restore global input state even when an assertion fails.
                 UnityEngine.InputSystem.InputSystem.settings.updateMode=oldMode;
                 UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior=oldBackground;
+#if UNITY_EDITOR
+                UnityEngine.InputSystem.InputSystem.settings.editorInputBehaviorInPlayMode=oldEditorRouting;
+#endif
                 if(keyboard.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard);
                 if(pad.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(pad);
                 if(previousKeyboard!=null && previousKeyboard.added)previousKeyboard.MakeCurrent();

@@ -70,3 +70,20 @@ and its CoreTests_State.cs full-device state-change/monitor tests. The harness n
 passes the entire Keyboard with KeyboardState and entire Gamepad with GamepadState.
 It retains real production-action monitoring and all activation assertions. This
 corrects the reported bitfield exception; Unity runtime confirmation is pending.
+
+## Editor/player buffer routing
+
+The 14:34 UTC report has 39 passes and both synthetic button-state assertions
+failing. Reading InputManager.defaultUpdateType and gameShouldGetInputRegardlessOfFocus
+in Unity Input System 1.20.0 shows that BackgroundBehavior.IgnoreFocus only bypasses
+Editor focus routing when editorInputBehaviorInPlayMode is also
+AllDeviceInputAlwaysGoesToGameView. The harness had set only the first flag. Its
+Update() could therefore select Editor buffers while explicit Dynamic writes
+updated player buffers. This explains why writes could not be read back.
+
+The harness now sets both supported public settings, asserts that Update() entered
+Manual (player) input processing, and uses the same default update context for
+whole-device writes. Both focus settings and update mode are restored in finally.
+No production gameplay settings or test gates were relaxed. API names checked
+against InputSettings.cs and InputState.cs. Runtime verification in Unity remains
+pending, and earlier claims of a confirmed input-test fix remain withdrawn.
