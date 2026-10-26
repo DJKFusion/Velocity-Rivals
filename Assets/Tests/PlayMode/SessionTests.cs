@@ -152,10 +152,19 @@ namespace VelocityRivals.Tests
                 UnityEngine.InputSystem.InputSystem.Update();
                 void Tick(bool pressed)
                 {
-                    UnityEngine.InputSystem.LowLevel.InputState.Change(keyboard.fKey,
-                        pressed && !useGamepad?1f:0f,UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
-                    UnityEngine.InputSystem.LowLevel.InputState.Change(pad.rightShoulder,
-                        pressed && useGamepad?1f:0f,UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
+                    // Individual keys/buttons are bitfields. InputState.Change requires
+                    // a byte-aligned control and matching state memory, so write each
+                    // whole device with its own state struct, never a float to a key.
+                    var keyboardState=pressed && !useGamepad
+                        ? new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.F)
+                        : new UnityEngine.InputSystem.LowLevel.KeyboardState();
+                    var padState=pressed && useGamepad
+                        ? new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.RightShoulder)
+                        : new UnityEngine.InputSystem.LowLevel.GamepadState();
+                    UnityEngine.InputSystem.LowLevel.InputState.Change(keyboard,keyboardState,
+                        UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
+                    UnityEngine.InputSystem.LowLevel.InputState.Change(pad,padState,
+                        UnityEngine.InputSystem.LowLevel.InputUpdateType.Dynamic);
                     Assert.AreEqual(pressed,button.isPressed,"Synthetic button state injection failed.");
                 }
                 Tick(false); // Establish released state before the first press.

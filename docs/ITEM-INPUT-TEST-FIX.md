@@ -56,3 +56,17 @@ Artifacts/ItemControls.xml and ItemControls.log and requires exactly two passes.
 It does not package a player or bypass Build-SinglePlayer.cmd's full test gates.
 Windows/Unity execution is still pending; do not call this a confirmed fix until
 those tests pass on the affected machine.
+
+## Bitfield exception correction
+
+The 14:29 UTC report has 39 passing tests and two errors before the activation
+assertions. Both throw ArgumentException: Cannot change state of bitfield control
+Key:/Keyboard/f using this method. The preceding direct-control injection was
+incorrect: InputState.Change rejects controls with nonzero bit offsets or sizes
+not divisible by eight. Source parsing could not detect that runtime restriction.
+
+Checked Unity Input System source (1.20.0 Runtime/State/InputState.cs lines 129-132)
+and its CoreTests_State.cs full-device state-change/monitor tests. The harness now
+passes the entire Keyboard with KeyboardState and entire Gamepad with GamepadState.
+It retains real production-action monitoring and all activation assertions. This
+corrects the reported bitfield exception; Unity runtime confirmation is pending.
