@@ -17,3 +17,22 @@ Coverage now includes F and right shoulder, one activation per new press, holdin
 without consuming another item, and refusing activation while paused. Cloud syntax
 validation and 58 standalone checks pass. The revised Unity tests have not been
 run here; a Windows test/build rerun is required to verify resolution.
+
+## Follow-up: direct input actions
+
+The 14:15 UTC rerun had 41 tests: the same 39 passed, and both F and RB tests
+failed to consume Shield. The first test-only change did not resolve the issue.
+It should not be regarded as a confirmed fix.
+
+Item activation now uses a Unity InputAction bound to keyboard F and gamepad
+right shoulder, with the performed callback calling the guarded UseItem path.
+The action is enabled/disabled with the session and disposed on destruction.
+Frame-polled wasPressedThisFrame activation was removed to prevent duplicate
+handling. Presses while unavailable are not queued for later activation.
+
+Tests now deliver device events to that production action, assert the actual
+button state, and verify consumption without invoking Update via SendMessage.
+Synthetic tests temporarily ignore window focus and restore the previous input
+settings/devices in finally. Gameplay focus-pause behaviour is unchanged.
+This addresses the input implementation as well as the test harness; a fresh
+Unity run is still necessary to confirm success on the affected machine.

@@ -105,7 +105,7 @@ namespace VelocityRivals
         }
 
         private void Awake() { Instance = this; }
-        private void OnDestroy() { Time.timeScale = 1; if (Instance == this) Instance = null; Cleanup(); }
+        private void OnDestroy() { useItemAction?.Dispose(); Time.timeScale = 1; if (Instance == this) Instance = null; Cleanup(); }
 
         public void StartMatch(GameMode newMode, int newEnvironment, int vehicle, Color color, bool networkControlled = false, int careerEvent = -1)
         {
@@ -307,7 +307,6 @@ namespace VelocityRivals
                 return;
             }
             elapsed += Time.deltaTime;
-            if((Keyboard.current!=null&&Keyboard.current.fKey.wasPressedThisFrame)||(Gamepad.current!=null&&Gamepad.current.rightShoulder.wasPressedThisFrame))UseItem();
             boundaryNotice = Mathf.Max(0, boundaryNotice - Time.deltaTime);
             lapNotice = Mathf.Max(0, lapNotice - Time.deltaTime);
             rechargeNotice = Mathf.Max(0, rechargeNotice - Time.deltaTime);

@@ -11,8 +11,30 @@ namespace VelocityRivals
         public string PauseReason { get; private set; } = "Your event is paused.";
         public int ChampionshipPoints(int driver) => driver >= 0 && driver < championshipPoints.Length ? championshipPoints[driver] : 0;
 
-        void OnEnable() { InputSystem.onDeviceChange += DeviceChanged; }
-        void OnDisable() { InputSystem.onDeviceChange -= DeviceChanged; }
+        InputAction useItemAction;
+        void OnEnable()
+        {
+            InputSystem.onDeviceChange += DeviceChanged;
+            if(useItemAction==null)
+            {
+                useItemAction=new InputAction("Use held item",InputActionType.Button);
+                useItemAction.AddBinding("<Keyboard>/f");
+                useItemAction.AddBinding("<Gamepad>/rightShoulder");
+                useItemAction.performed += ItemPressed;
+            }
+            useItemAction.Enable();
+        }
+        void ItemPressed(InputAction.CallbackContext context)
+        {
+            // Button actions perform once per press. An unavailable press is discarded,
+            // never queued to consume a pickup after a pause/countdown/menu transition.
+            if(HasItems && !NetworkControlled)UseItem();
+        }
+        void OnDisable()
+        {
+            InputSystem.onDeviceChange -= DeviceChanged;
+            useItemAction?.Disable();
+        }
         void DeviceChanged(InputDevice device, InputDeviceChange change)
         {
             if (!(device is Gamepad) || !Player || Player.LastInputDeviceId != device.deviceId) return;

@@ -121,6 +121,7 @@ namespace VelocityRivals.Tests
         IEnumerator CheckHeldItemInput(bool useGamepad)
         {
             var oldMode=UnityEngine.InputSystem.InputSystem.settings.updateMode;
+            var oldBackground=UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior;
             var previousKeyboard=UnityEngine.InputSystem.Keyboard.current;
             var previousPad=UnityEngine.InputSystem.Gamepad.current;
             var keyboard=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
@@ -132,9 +133,10 @@ namespace VelocityRivals.Tests
                 typeof(GameSession).GetField("countdown",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(session,0f);
                 session.Player.ControlsEnabled=true;
                 var items=Object.FindFirstObjectByType<RaceItems>();
-                // Own the input tick so the Editor/player loop cannot clear a one-frame
-                // press between event delivery and the production Update handler.
+                // Deliver real device states through the production InputAction. Ignore
+                // batchmode window focus only in this synthetic-device test.
                 UnityEngine.InputSystem.InputSystem.settings.updateMode=UnityEngine.InputSystem.InputSettings.UpdateMode.ProcessEventsManually;
+                UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior=UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus;
                 void Tick(bool pressed)
                 {
                     UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,
@@ -142,14 +144,14 @@ namespace VelocityRivals.Tests
                     UnityEngine.InputSystem.InputSystem.QueueStateEvent(pad,
                         pressed && useGamepad ? new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.RightShoulder) : new UnityEngine.InputSystem.LowLevel.GamepadState());
                     UnityEngine.InputSystem.InputSystem.Update();
-                    keyboard.MakeCurrent();pad.MakeCurrent();
-                    session.SendMessage("Update");
+                    Assert.AreEqual(pressed,useGamepad?pad.rightShoulder.isPressed:keyboard.fKey.isPressed,
+                        "Synthetic button state was not delivered to the Input System.");
                 }
-                Tick(false); // Establish released state and prime edge detection.
+                Tick(false); // Establish released state before the first press.
                 Assert.IsTrue(items.Collect(session.Player,PowerupKind.Shield));
                 Assert.IsTrue(session.ActionEnabled);
                 Tick(true);
-                Assert.AreEqual(PowerupKind.None,session.HeldItem);
+                Assert.AreEqual(PowerupKind.None,session.HeldItem,"A fresh press must activate the held shield through the production InputAction.");
                 StringAssert.StartsWith("SHIELD",session.ItemEffect);
                 Assert.IsTrue(items.Collect(session.Player,PowerupKind.Overdrive));
                 Tick(true); // Holding the button must not spend a newly collected item.
@@ -165,6 +167,7 @@ namespace VelocityRivals.Tests
             {
                 // Restore global input state even when an assertion fails.
                 UnityEngine.InputSystem.InputSystem.settings.updateMode=oldMode;
+                UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior=oldBackground;
                 if(keyboard.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard);
                 if(pad.added)UnityEngine.InputSystem.InputSystem.RemoveDevice(pad);
                 if(previousKeyboard!=null && previousKeyboard.added)previousKeyboard.MakeCurrent();
