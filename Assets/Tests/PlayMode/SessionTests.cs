@@ -33,6 +33,30 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator RacingSoundsLoadAndMuteDuringPause()
+        {
+            foreach(string name in new[]{"EngineSport","EngineHeavy","EngineExotic","Tyres","Boost","Wind","Impact","Shift"})
+            {
+                var clip=Resources.Load<AudioClip>("RacingAudio/"+name);
+                Assert.IsNotNull(clip,name);Assert.Greater(clip.length,.1f);
+                Assert.AreEqual(AudioClipLoadType.DecompressOnLoad,clip.loadType,name);
+            }
+            root=new GameObject("Race audio test",typeof(GameSession));
+            var session=root.GetComponent<GameSession>();session.StartMatch(GameMode.Championship,0,0,Color.cyan);
+            yield return null;yield return null;yield return null;
+            var sound=session.Player.GetComponent<RacingAudio>();Assert.IsNotNull(sound);
+            Assert.Greater(sound.EngineVolume,0);
+            Assert.GreaterOrEqual(Object.FindObjectsByType<RacingAudio>(FindObjectsSortMode.None).Length,4);
+            session.SetPaused(true);yield return null;
+            foreach(var source in session.Player.GetComponents<AudioSource>()) Assert.AreEqual(0,source.volume);
+            session.SetPaused(false);yield return null;yield return null;
+            Assert.Greater(sound.EngineVolume,0);
+            SaveStore.Current.effectsVolume=0;
+            yield return null;
+            Assert.AreEqual(0,sound.EngineVolume,.001f);
+        }
+
+        [UnityTest]
         public IEnumerator RaceItemCollectUsePauseAndRestartRespectInventory()
         {
             root=new GameObject("Held item test",typeof(GameSession));var session=root.GetComponent<GameSession>();

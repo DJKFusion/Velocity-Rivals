@@ -55,15 +55,14 @@ namespace VelocityRivals
         [SerializeField] Transform spoilerObject, decalObject;
         [SerializeField] TrailRenderer exhaust;
         [SerializeField] Material paintMaterial, trimMaterial;
-        AudioSource engine;
-        AudioClip engineClip;
+        public float AudioThrottle => ControlsEnabled ? input.Throttle : 0;
 
         void Start()
         {
             if (!GetComponent<VehicleEffects>()) gameObject.AddComponent<VehicleEffects>();
             if (paintMaterial == null) BuildVisuals(Color.cyan);
             foreach (var wheel in wheels) if (wheel != null && !wheelScales.ContainsKey(wheel)) wheelScales[wheel] = wheel.localScale;
-            if (IsPlayer && engine == null) CreateEngineAudio();
+            if (!GetComponent<RacingAudio>()) gameObject.AddComponent<RacingAudio>();
             if (IsPlayer && Gamepad.current != null) LastInputDeviceId = Gamepad.current.deviceId;
         }
 
@@ -122,17 +121,10 @@ namespace VelocityRivals
                 SetInput(new DriveInput { Throttle = throttle.ReadValue<float>(), Steering = Mathf.Clamp((Mathf.Abs(airRollInput) > .1f ? airRollInput : steering.ReadValue<float>()) * SaveStore.Current.steeringSensitivity, -1, 1),
                     Brake = brake.IsPressed(), Boost = boost.IsPressed(), Jump = jump.IsPressed(), AirRoll = roll.IsPressed() || Mathf.Abs(airRollInput) > .1f });
                 if (AllowLocalRecovery && reset.WasPressedThisFrame()) Respawn(safePosition + Vector3.up, safeRotation);
-                if (IsBoosting) SoundDirector.Instance?.Cue(GameCue.Boost);
-                if (Grounded && input.Brake && SpeedKmh > 35) SoundDirector.Instance?.Cue(GameCue.Drift);
             }
             if (!ControlsEnabled) { input = default; jumpQueued = false; }
             if (exhaust != null) exhaust.emitting = IsBoosting;
             foreach (var wheel in wheels) wheel.Rotate(Vector3.right, SpeedKmh * Time.deltaTime * 9f, Space.Self);
-            if (engine != null)
-            {
-                engine.pitch = .55f + Mathf.Clamp01(SpeedKmh / 180f) * 1.5f;
-                engine.volume = (ControlsEnabled || NetworkProxy ? .10f + Mathf.Clamp01(SpeedKmh / 160) * .04f : .015f) * SaveStore.Current.effectsVolume;
-            }
         }
 
         void FixedUpdate()
@@ -383,28 +375,17 @@ namespace VelocityRivals
             }
             else exhaust.enabled=false;
             exhaust.startColor = new Color(0,1,1,.65f); exhaust.endColor = Color.clear; exhaust.emitting = false;
-            if (IsPlayer && Application.isPlaying) CreateEngineAudio();
-        }
-
-        void CreateEngineAudio()
-        {
-            engine = gameObject.AddComponent<AudioSource>(); engine.loop = true; engine.spatialBlend = .1f;
-            const int sampleRate = 22050; var data = new float[sampleRate];
-            for (int i = 0; i < data.Length; i++) data[i] = (Mathf.Sin(i * 2f * Mathf.PI * 70 / sampleRate) + .3f * Mathf.Sin(i * 2f * Mathf.PI * 140 / sampleRate)) * .23f;
-            engineClip = AudioClip.Create("Original procedural engine", data.Length, 1, sampleRate, false); engineClip.SetData(data, 0); engine.clip = engineClip; engine.Play();
         }
 
         void OnDestroy()
         {
             controls?.Disable(); controls?.Dispose();
             foreach (var material in ownedMaterials) if (material != null) Release(material);
-            if (engineClip != null) Release(engineClip);
         }
 
         void OnCollisionEnter(Collision collision)
         {
             if (!IsPlayer || collision.relativeVelocity.magnitude < 6 || collision.contactCount == 0) return;
-            SoundDirector.Instance?.Cue(GameCue.Impact);
             MatchEffects.Burst(collision.GetContact(0).point, Color.yellow);
         }
 
