@@ -88,6 +88,7 @@ namespace VelocityRivals
             var light = go.GetComponent<Light>(); light.type = type; light.color = color; light.intensity = intensity;
             light.range = 15; light.cullingMask = 1 << 30; light.shadows = LightShadows.None;
         }
+        Color previewPaint;
         void UpdateModel()
         {
             var p = SaveStore.Current;
@@ -96,16 +97,16 @@ namespace VelocityRivals
                 if (car) { car.gameObject.SetActive(false); Destroy(car.gameObject); }
                 vehicle = Mathf.Clamp(p.selectedVehicle, 0, 5); cosmetics = -1;
                 var stats = Resources.Load<VehicleStats>("VehicleStats/" + GameSession.VehicleNames[vehicle]);
-                car = VehicleController.Spawn("Showroom " + GameSession.VehicleNames[vehicle], stage.transform.position + Vector3.up * .22f, Quaternion.Euler(0,25,0), stats, VelocityUI.Paints[p.paint], false);
+                car = VehicleController.Spawn("Showroom " + GameSession.VehicleNames[vehicle], stage.transform.position + Vector3.up * .22f, Quaternion.Euler(0,25,0), stats, CosmeticPacks.SelectedColor(p), false);
                 car.transform.SetParent(stage.transform, true); car.ControlsEnabled = false; car.enabled = false;
                 car.GetComponent<Rigidbody>().isKinematic = true;
                 foreach (var collider in car.GetComponentsInChildren<Collider>()) collider.enabled = false;
                 foreach (var item in car.GetComponentsInChildren<Transform>(true)) item.gameObject.layer = 30;
             }
             int selection = p.paint + p.wheels * 10 + p.trail * 100 + p.decal * 1000 + p.spoiler * 10000 + p.finish * 100000;
-            if (cosmetics != selection)
+            if (cosmetics != selection || previewPaint != CosmeticPacks.SelectedColor(p))
             {
-                cosmetics = selection; car.SetPaint(VelocityUI.Paints[p.paint]);
+                cosmetics = selection; previewPaint=CosmeticPacks.SelectedColor(p); car.SetPaint(previewPaint);
                 car.SetCosmetics(p.wheels,p.trail,p.decal,p.spoiler,p.finish);
             }
         }

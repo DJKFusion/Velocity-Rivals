@@ -72,3 +72,5 @@ python Tools/validate_source.py
 ```
 
 41 standalone C# checks passed here. They test shared logic and archive fixtures, including preserved networking regression sources; they are not Unity gameplay tests. [Testing evidence](docs/TESTING.md), [feature ledger](docs/STATUS.md), [asset provenance](docs/ART.md), and [release preparation](docs/RELEASE.md) describe the remaining work.
+
+Optional itch.io cosmetic store: setup and limitations in [docs/COSMETIC-STORE.md](docs/COSMETIC-STORE.md). Checkout is disabled until a published product URL is configured.

@@ -51,6 +51,33 @@ namespace VelocityRivals.Tests
             SaveStore.StorageDirectoryOverride = previousDirectory;
             SaveStore.Reload();
             if (Directory.Exists(directory)) Directory.Delete(directory, true);
+            CosmeticPacks.Reload();
+        }
+
+        [Test]
+        public void CosmeticPackInstallationValidatesManifestAndFallsBackWhenRemoved()
+        {
+            CosmeticPacks.Reload();
+            Assert.IsFalse(CosmeticPacks.Installed);
+            var profile=SaveStore.Current;profile.paint=2;
+            profile.cosmeticPaint=CosmeticCatalog.PaintId(0);
+            Assert.AreEqual(VelocityUI.Paints[2],CosmeticPacks.SelectedColor(profile));
+            string path=Path.Combine(CosmeticPacks.InstallDirectory,CosmeticCatalog.PackId+".json");
+            File.WriteAllText(path,"{\"schema\":1,\"packId\":\"unknown\"}");
+            CosmeticPacks.Reload();Assert.IsFalse(CosmeticPacks.Installed);
+            File.WriteAllText(path,"{\"schema\":2,\"packId\":\"aurora-paints\"}");
+            CosmeticPacks.Reload();Assert.IsFalse(CosmeticPacks.Installed);
+            File.WriteAllText(path,"{\"schema\":1,\"packId\":\"aurora-paints\"}");
+            CosmeticPacks.Reload();Assert.IsTrue(CosmeticPacks.Installed);
+            UnityEngine.ColorUtility.TryParseHtmlString(CosmeticCatalog.Colors[0],out var expected);
+            Assert.AreEqual(expected,CosmeticPacks.SelectedColor(profile));
+            Assert.IsTrue(SaveStore.Save());SaveStore.Reload();
+            Assert.AreEqual(CosmeticCatalog.PaintId(0),SaveStore.Current.cosmeticPaint);
+            Assert.AreEqual(expected,CosmeticPacks.SelectedColor(SaveStore.Current));
+            File.Delete(path);CosmeticPacks.Reload();Assert.IsFalse(CosmeticPacks.Installed);
+            Assert.AreEqual(VelocityUI.Paints[2],CosmeticPacks.SelectedColor(SaveStore.Current));
+            File.WriteAllText(path,new string('x',4097));
+            CosmeticPacks.Reload();Assert.IsFalse(CosmeticPacks.Installed);
         }
 
         [Test]

@@ -24,6 +24,7 @@
     <Compile Include="../../Assets/Scripts/Multiplayer/LanFrameBuffer.cs" Link="LanFrameBuffer.cs" />
     <Compile Include="../../Assets/Scripts/Vehicles/HandlingModel.cs" Link="HandlingModel.cs" />
     <Compile Include="../../Assets/Scripts/Gameplay/PowerupSlot.cs" Link="PowerupSlot.cs" />
+    <Compile Include="../../Assets/Scripts/Gameplay/CosmeticCatalog.cs" Link="CosmeticCatalog.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>

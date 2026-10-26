@@ -38,7 +38,7 @@ namespace VelocityRivals
         {
             ClearPanel();showingResults=false;
             var p=SaveStore.Current;
-            session.StartTraining(p.selectedVehicle,Paints[p.paint]);ApplyCarCosmetics();
+            session.StartTraining(p.selectedVehicle,CosmeticPacks.SelectedColor(p));ApplyCarCosmetics();
         }
     }
 }

@@ -19,6 +19,13 @@ static class Program
         try
         {
             if (args.Length == 2 && args[0] == "--relay") { RelayIntegration.Run(args[1]).GetAwaiter().GetResult(); return 0; }
+            Test("store checkout only accepts HTTPS itch product pages", () => {
+                Check(!CosmeticCatalog.ValidCheckout(CosmeticCatalog.CheckoutUrl));
+                Check(CosmeticCatalog.ValidCheckout("https://creator.itch.io/aurora"));
+                foreach(var bad in new[]{"http://creator.itch.io/aurora","https://itch.io.evil.test/pack","https://creator.itch.io/","file:///tmp/pay","https://user@creator.itch.io/pack","https://creator.itch.io:444/pack"}) Check(!CosmeticCatalog.ValidCheckout(bad));
+                Check(CosmeticCatalog.Index(null)==-1 && CosmeticCatalog.Index("unknown")==-1);
+                for(int i=0;i<CosmeticCatalog.Names.Length;i++) Check(CosmeticCatalog.Index(CosmeticCatalog.PaintId(i))==i);
+            });
             Test("held items collect once and only consume on an allowed activation", () => {
                 var slot=new PowerupSlot();Check(slot.Held==PowerupKind.None);
                 Check(!slot.Collect(PowerupKind.None)&&!slot.Collect((PowerupKind)99));

@@ -33,6 +33,7 @@ namespace VelocityRivals
         public int events;
         public int selectedVehicle;
         public int paint;
+        public string cosmeticPaint = "";
         public int wheels;
         public int trail;
         public int decal;

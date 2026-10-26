@@ -323,7 +323,7 @@ namespace VelocityRivals
         {
             ClearPanel(); showingResults = false;
             var p = SaveStore.Current;
-            session.StartCareerEvent(careerSelection, p.selectedVehicle, Paints[p.paint]);
+            session.StartCareerEvent(careerSelection, p.selectedVehicle, CosmeticPacks.SelectedColor(p));
             ApplyCarCosmetics();
         }
 
@@ -362,7 +362,7 @@ namespace VelocityRivals
             ClearPanel();
             showingResults = false;
             var p = SaveStore.Current;
-            session.StartMatch(selectedMode, selectedEnvironment, p.selectedVehicle, Paints[Mathf.Clamp(p.paint, 0, Paints.Length - 1)]);
+            session.StartMatch(selectedMode, selectedEnvironment, p.selectedVehicle, CosmeticPacks.SelectedColor(p));
             if (session.Player) session.Player.SetCosmetics(p.wheels, p.trail, p.decal, p.spoiler, p.finish);
             if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
         }
@@ -378,7 +378,8 @@ namespace VelocityRivals
             Focus(Cycle("Vehicle", vehicles, () => p.selectedVehicle, value => { p.selectedVehicle = value; SaveStore.Save(); }));
             Button("PERFORMANCE WORKSHOP",()=>Workshop(returnTo));
             Button("VEHICLE DEALERSHIP",()=>Dealership(returnTo));
-            Cycle("Paint", PaintNames, () => p.paint, value => { p.paint = value; SaveStore.Save(); });
+            Button("COSMETIC STORE",()=>CosmeticStore(returnTo));
+            Cycle("Paint", PaintNames, () => p.paint, value => { p.paint = value; p.cosmeticPaint = ""; SaveStore.Save(); });
             Cycle("Wheels", new[] { "Street", "Sport", "Aero" }, () => p.wheels, value => { p.wheels = value; SaveStore.Save(); });
             Cycle("Boost trail", new[] { "Ion", "Plasma", "Solar" }, () => p.trail, value => { p.trail = value; SaveStore.Save(); });
             Cycle("Decal", new[] { "Clean", "Twin stripes", "Race panel" }, () => p.decal, value => { p.decal = value; SaveStore.Save(); });
