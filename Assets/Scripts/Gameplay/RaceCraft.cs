@@ -4,7 +4,7 @@ namespace VelocityRivals
 {
     public static class RaceCraft
     {
-        public const int RulesVersion = 2;
+        public const int RulesVersion = 3;
         public static float DraftStrength(float ahead,float side,float height,float alignment,float speedKmh)
         {
             if(float.IsNaN(ahead+side+height+alignment+speedKmh) || float.IsInfinity(ahead+side+height+alignment+speedKmh))return 0;

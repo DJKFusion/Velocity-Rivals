@@ -55,6 +55,17 @@ namespace VelocityRivals
         [SerializeField] Transform spoilerObject, decalObject;
         [SerializeField] TrailRenderer exhaust;
         [SerializeField] Material paintMaterial, trimMaterial;
+        float oilUntil, hazardGraceUntil;
+        public bool OilAffected => Time.time<oilUntil;
+        public bool ApplyRaceHazard(bool oil)
+        {
+            if(!ControlsEnabled || !Grounded || Time.time<hazardGraceUntil)return false;
+            hazardGraceUntil=Time.time+2;
+            if(oil)oilUntil=Time.time+1.6f;
+            var velocity=body.linearVelocity;
+            body.linearVelocity=new Vector3(velocity.x*(oil?.8f:.55f),velocity.y,velocity.z*(oil?.8f:.55f));
+            return true;
+        }
         public float AudioThrottle => ControlsEnabled ? input.Throttle : 0;
 
         void Start()
@@ -162,7 +173,7 @@ namespace VelocityRivals
                     StuntScore += Mathf.RoundToInt(airRotation * 12f + airTime * 20f);
                 airRotation = 0; airTime = 0;
                 Vector3 side = Vector3.ProjectOnPlane(transform.right, groundNormal).normalized;
-                body.AddForce(-side * Vector3.Dot(body.linearVelocity, side) * HandlingModel.Grip(grip,input.Brake), ForceMode.Acceleration);
+                body.AddForce(-side * Vector3.Dot(body.linearVelocity, side) * HandlingModel.Grip(grip,input.Brake)*(OilAffected?.4f:1), ForceMode.Acceleration);
                 Vector3 forward = Vector3.ProjectOnPlane(transform.forward, groundNormal).normalized;
                 float driveLimit=HandlingModel.CornerSpeed(groundedSteering,maxSpeed,IsBoosting,input.Brake);
                 if ((input.Throttle > 0 && forwardSpeed < driveLimit) || (input.Throttle < 0 && forwardSpeed > -maxSpeed * .34f))
@@ -226,6 +237,7 @@ namespace VelocityRivals
 
         public void Respawn(Vector3 position, Quaternion rotation)
         {
+            oilUntil=0;hazardGraceUntil=Time.time+2;
             body.position = position; body.rotation = rotation;
             body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero;
             safePosition = position; safeRotation = rotation;

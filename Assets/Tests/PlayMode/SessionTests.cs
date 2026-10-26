@@ -33,6 +33,37 @@ namespace VelocityRivals.Tests
         }
 
         [UnityTest]
+        public IEnumerator DroppedHazardsExpirePauseAndClearOnRestart()
+        {
+            root=new GameObject("Hazard test",typeof(GameSession));var session=root.GetComponent<GameSession>();
+            session.StartMatch(GameMode.Championship,0,0,Color.cyan);yield return null;
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            typeof(GameSession).GetField("countdown",flags).SetValue(session,0f);
+            var car=session.Player;car.ControlsEnabled=true;
+            var items=Object.FindFirstObjectByType<RaceItems>();
+            Assert.IsTrue(items.Collect(car,PowerupKind.OilSlick));
+            typeof(VehicleController).GetProperty("Grounded").SetValue(car,false);
+            Assert.IsFalse(items.Use(car));Assert.AreEqual(PowerupKind.OilSlick,items.Held(car));
+            // Put hazards away from racers to test lifetime and limits deterministically.
+            var drop=typeof(RaceItems).GetMethod("DropHazard",flags);
+            for(int i=0;i<15;i++)drop.Invoke(items,new object[]{car,PowerupKind.ShockMine,new Vector3(1000+i*5,0,1000)});
+            Assert.AreEqual(12,items.ActiveHazardCount);
+            session.SetPaused(true);float before=session.Elapsed;yield return null;
+            Assert.AreEqual(before,session.Elapsed);Assert.AreEqual(12,items.ActiveHazardCount);
+            session.SetPaused(false);
+            typeof(GameSession).GetField("elapsed",flags).SetValue(session,session.Elapsed+21);
+            items.SendMessage("FixedUpdate");Assert.AreEqual(0,items.ActiveHazardCount);
+            typeof(VehicleController).GetProperty("Grounded").SetValue(car,true);
+            car.GetComponent<Rigidbody>().linearVelocity=Vector3.forward*30;
+            typeof(VehicleController).GetField("hazardGraceUntil",flags).SetValue(car,0f);
+            Assert.IsTrue(car.ApplyRaceHazard(true));Assert.IsTrue(car.OilAffected);
+            Assert.IsFalse(car.ApplyRaceHazard(false));
+            car.Respawn(car.PhysicsPosition,car.PhysicsRotation);Assert.IsFalse(car.OilAffected);
+            session.RestartMatch();yield return null;
+            Assert.AreEqual(0,Object.FindFirstObjectByType<RaceItems>().ActiveHazardCount);
+        }
+
+        [UnityTest]
         public IEnumerator RacingSoundsLoadAndMuteDuringPause()
         {
             foreach(string name in new[]{"EngineSport","EngineHeavy","EngineExotic","Tyres","Boost","Wind","Impact","Shift"})

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace VelocityRivals
 {
     /// <summary>Match-owned race pickups. No inventory or timers survive a restart.</summary>
-    public sealed class RaceItems : MonoBehaviour
+    public sealed partial class RaceItems : MonoBehaviour
     {
         sealed class Driver
         {
@@ -18,9 +18,9 @@ namespace VelocityRivals
         readonly List<Material> materials=new List<Material>();
         GameSession session;
         public PowerupKind Held(VehicleController car)=>Find(car)?.Slot.Held??PowerupKind.None;
-        public string PlayerEffect => Find(session.Player) is Driver d && d.ShieldUntil>session.Elapsed ? "SHIELD  "+Mathf.CeilToInt(d.ShieldUntil-session.Elapsed)+"s" : "";
+        public string PlayerEffect => session.Player && session.Player.OilAffected ? "OIL SLICK — REDUCED GRIP" : session.Elapsed<playerHitUntil ? "HAZARD HIT!" : Find(session.Player) is Driver d && d.ShieldUntil>session.Elapsed ? "SHIELD  "+Mathf.CeilToInt(d.ShieldUntil-session.Elapsed)+"s" : "";
         Driver Find(VehicleController car)=>drivers.Find(d=>d.Car==car);
-        public static Color Tint(PowerupKind kind)=>kind==PowerupKind.Shield?Color.cyan:kind==PowerupKind.Overdrive?new Color(1,.4f,.08f):new Color(.75f,.3f,1);
+        public static Color Tint(PowerupKind kind)=>kind==PowerupKind.Shield?Color.cyan:kind==PowerupKind.Overdrive?new Color(1,.4f,.08f):kind==PowerupKind.OilSlick?new Color(.3f,1,.15f):kind==PowerupKind.ShockMine?new Color(1,.15f,.12f):new Color(.75f,.3f,1);
         public void Initialize(GameSession owner)
         {
             session=owner;
@@ -32,7 +32,7 @@ namespace VelocityRivals
                 Quaternion facing=Quaternion.LookRotation(route[(index+1)%route.Count]-route[index]);
                 for(int lane=-1;lane<=1;lane++)
                 {
-                    var kind=(PowerupKind)(1+(station+lane+1)%3);
+                    var kind=(PowerupKind)(1+(station+lane+1)%5);
                     Vector3 position=route[index]+facing*Vector3.right*(lane*5)+Vector3.up*1.5f;
                     var go=GameObject.CreatePrimitive(PrimitiveType.Cube);go.name=kind+" item crate";go.transform.SetParent(transform);
                     go.transform.position=position;go.transform.localScale=Vector3.one*1.2f;
@@ -55,6 +55,9 @@ namespace VelocityRivals
         public bool Use(VehicleController car)
         {
             var d=Find(car);
+            Vector3 drop=Vector3.zero;
+            bool dropping=d!=null && (d.Slot.Held==PowerupKind.OilSlick || d.Slot.Held==PowerupKind.ShockMine);
+            if(dropping && !TryDropPosition(car,out drop))return false;
             if(d==null || !d.Slot.Use(session.ActionEnabled&&car&&car.ControlsEnabled&&car.isActiveAndEnabled,out var kind))return false;
             if(kind==PowerupKind.Shield)d.ShieldUntil=session.Elapsed+6;
             else if(kind==PowerupKind.Overdrive)
@@ -62,6 +65,7 @@ namespace VelocityRivals
                 car.RefillBoost(.6f);
                 if(car.Grounded)car.GetComponent<Rigidbody>().AddForce(car.PhysicsRotation*Vector3.forward*7,ForceMode.VelocityChange);
             }
+            else if(dropping)DropHazard(car,kind,drop);
             else foreach(var target in drivers)
             {
                 if(target==d || !target.Car || !target.Car.isActiveAndEnabled || !target.Car.ControlsEnabled || target.ShieldUntil>session.Elapsed)continue;

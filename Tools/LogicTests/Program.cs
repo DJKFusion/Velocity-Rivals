@@ -26,6 +26,14 @@ static class Program
                 Check(CosmeticCatalog.Index(null)==-1 && CosmeticCatalog.Index("unknown")==-1);
                 for(int i=0;i<CosmeticCatalog.Names.Length;i++) Check(CosmeticCatalog.Index(CosmeticCatalog.PaintId(i))==i);
             });
+            Test("dropped hazards use the one-item inventory without replacing held pickups", () => {
+                var slot=new PowerupSlot();
+                Check(slot.Collect(PowerupKind.OilSlick));Check(!slot.Collect(PowerupKind.ShockMine));
+                Check(!slot.Use(false,out _) && slot.Held==PowerupKind.OilSlick);
+                Check(slot.Use(true,out var oil) && oil==PowerupKind.OilSlick);
+                Check(slot.Collect(PowerupKind.ShockMine));Check(slot.Use(true,out var mine) && mine==PowerupKind.ShockMine);
+                Check(!slot.Collect((PowerupKind)6));
+            });
             Test("held items collect once and only consume on an allowed activation", () => {
                 var slot=new PowerupSlot();Check(slot.Held==PowerupKind.None);
                 Check(!slot.Collect(PowerupKind.None)&&!slot.Collect((PowerupKind)99));

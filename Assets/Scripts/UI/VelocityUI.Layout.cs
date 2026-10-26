@@ -219,7 +219,7 @@ namespace VelocityRivals
             {
                 var held=session.HeldItem;
                 itemText.color=held==PowerupKind.None?new Color(.6f,.75f,.83f):RaceItems.Tint(held);
-                itemText.text=held==PowerupKind.None?"ITEM SLOT EMPTY\nDrive through a coloured crate":held.ToString().ToUpperInvariant()+" READY\n[F] / [RB]  USE ITEM";
+                itemText.text=held==PowerupKind.None?"ITEM SLOT EMPTY\nDrive through a coloured crate":RaceItems.ItemName(held)+" READY\n[F] / [RB]  USE ITEM";
                 if(!string.IsNullOrEmpty(session.ItemEffect))itemText.text+="\n"+session.ItemEffect;
             }
             bool helpVisible=driving&&(session.Elapsed<8||session.RecoveringFromBoundary||session.IsTraining);
